@@ -131,6 +131,11 @@ type retryPolicy struct {
 	o    RetryOptions
 }
 
+// According to https://github.com/golang/go/wiki/CompilerOptimizations, the compiler will inline this method and hopefully optimize all calls to it away
+var logf = func(format string, a ...interface{}) {}
+
+//var logf = fmt.Printf // Use this version to see the retry method's code path (import "fmt")
+
 func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
 	// Before each try, we'll select either the primary or secondary URL.
 	secondaryHost := ""
@@ -149,20 +154,26 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 	//    For a primary wait ((2 ^ primaryTries - 1) * delay * random(0.8, 1.2)
 	//    If secondary gets a 404, don't fail, retry but future retries are only against the primary
 	//    When retrying against a secondary, ignore the retry count and wait (.1 second * random(0.8, 1.2))
-	for try := 0; try < p.o.MaxTries; try++ {
-		// Determine which endpoint to try. It's primary if there is no secondary or if it is an even attempt.
-		tryingPrimary := !considerSecondary || (try%2 == 0)
+	for try := 1; try <= p.o.MaxTries; try++ {
+		logf("\n=====> Try=%d\n", try)
+
+		// Determine which endpoint to try. It's primary if there is no secondary or if it is an add # attempt.
+		tryingPrimary := !considerSecondary || (try%2 == 1)
 		// Select the correct host and delay
 		if tryingPrimary {
 			primaryTry++
-			time.Sleep(p.o.calcDelay(primaryTry)) // The 1st try returns 0 delay
+			delay := p.o.calcDelay(primaryTry)
+			logf("Primary try=%d, Delay=%v\n", primaryTry, delay)
+			time.Sleep(delay) // The 1st try returns 0 delay
 		} else {
-			time.Sleep(time.Second * time.Duration(rand.Float32()/2+0.8)) // Delay with some jitter before trying secondary
+			delay := time.Second * time.Duration(rand.Float32()/2+0.8)
+			logf("Secondary try=%d, Delay=%v\n", try-primaryTry, delay)
+			time.Sleep(delay) // Delay with some jitter before trying secondary
 		}
 
 		// Clone the original request to ensure that each try starts with the original (unmutated) request.
 		requestCopy := request.Copy()
-		if try > 0 {
+		if try > 1 {
 			// For a retry, seek to the beginning of the Body stream.
 			if err = requestCopy.RewindBody(); err != nil {
 				panic(err)
@@ -176,50 +187,49 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 		timeout := int(p.o.TryTimeout.Seconds()) // Max seconds per try
 		if deadline, ok := ctx.Deadline(); ok {  // If user's ctx has a deadline, make the timeout the smaller of the two
 			t := int(deadline.Sub(time.Now()).Seconds()) // Duration from now until user's ctx reaches its deadline
+			logf("MaxTryTimeout=%d secs, TimeTilDeadline=%d sec\n", timeout, t)
 			if t < timeout {
 				timeout = t
 			}
+			if timeout < 0 {
+				timeout = 0 // If timeout ever goes negative, set it to zero; this happen while debugging
+			}
+			logf("TryTimeout adjusted to=%d sec\n", timeout)
 		}
 		q := requestCopy.Request.URL.Query()
 		q.Set("timeout", strconv.Itoa(timeout))
 		requestCopy.Request.URL.RawQuery = q.Encode()
+		logf("Url=%s\n", requestCopy.Request.URL.String())
 
 		// Set the time for this particular retry operation and then Do the operation.
 		tryCtx, tryCancel := context.WithTimeout(ctx, time.Second*time.Duration(timeout))
 		response, err = p.node.Do(tryCtx, requestCopy) // Make the request
+		logf("Err=%v, response=%v\n", err, response)
 
-		action := "" // This MUST get changed by the code below
-		if ctx.Err() != nil {
+		action := "" // This MUST get changed within the switch code below
+		switch {
+		case ctx.Err() != nil:
 			action = "NoRetry: Op timeout"
-		} else if err != nil { // Protocol Responder returns non-nil if REST API returns invalid status code
-			if nerr, ok := err.(net.Error); ok {
-				// We have a network or StorageError
-				if nerr.Temporary() { // If a StorageError, an HTTP 500/503 returns true (service throttling)
-					action = "Retry: Temporary"
-				} else if nerr.Timeout() && (tryCtx.Err() != nil) {
-					action = "Retry: Timeout"
-				} else if !tryingPrimary {
-					// If attempt was against the secondary & it returned a StatusNotFound (404), then
-					// the resource was not found. This may be due to replication delay. So, in this
-					// case, we'll never try the secondary again for this operation.
-					if resp := response.Response(); resp != nil && resp.StatusCode == http.StatusNotFound {
-						considerSecondary = false
-						action = "Retry: Secondary URL 404"
-					} else {
-						// An error (against secondary DC) that is neither temporary or timeout; no retry
-						action = "NoRetry: error (secondary; not-retryable & not 404)"
-					}
-				} else {
-					// An error that is neither temporary or timeout; no retry
-					action = "NoRetry: error (not-retryable)"
-				}
+		case !tryingPrimary && response != nil && response.Response().StatusCode == http.StatusNotFound:
+			// If attempt was against the secondary & it returned a StatusNotFound (404), then
+			// the resource was not found. This may be due to replication delay. So, in this
+			// case, we'll never try the secondary again for this operation.
+			considerSecondary = false
+			action = "Retry: Secondary URL returned 404"
+		case err == context.DeadlineExceeded: // tryCtx.Err should also return context.DeadlineExceeded
+			action = "Retry: timeout"
+		case err != nil:
+			// NOTE: Protocol Responder returns non-nil if REST API returns invalid status code for the invoked operation
+			if nerr, ok := err.(net.Error); ok && (nerr.Temporary() || nerr.Timeout()) { // We have a network or StorageError
+				action = "Retry: net.Error and Temporary() or Timeout()"
 			} else {
-				// A non-net.Error error; no retry
-				action = "NoRetry: error (non-net.Error)"
+				action = "NoRetry: unrecognized error"
 			}
-		} else {
-			action = "NoRetry: success" // no error
+		default:
+			action = "NoRetry: successful HTTP request" // no error
 		}
+
+		logf("Action=%s\n", action)
 		// fmt.Println(action + "\n") // This is where we could log the retry operation; action is why we're retrying
 		if action[0] != 'R' { // Retry only if action starts with 'R'
 			if err != nil {

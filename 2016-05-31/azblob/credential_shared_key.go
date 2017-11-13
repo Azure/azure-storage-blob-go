@@ -121,9 +121,8 @@ func (f *SharedKeyCredential) buildStringToSign(request pipeline.Request) string
 		headers.Get(headerIfUnmodifiedSince),
 		headers.Get(headerRange),
 		buildCanonicalizedHeader(headers),
-		f.buildCanonicalizedResource(request),
+		f.buildCanonicalizedResource(request.URL),
 	}, "\n")
-
 	return stringToSign
 }
 
@@ -156,43 +155,42 @@ func buildCanonicalizedHeader(headers http.Header) string {
 	return string(ch.Bytes())
 }
 
-func (f *SharedKeyCredential) buildCanonicalizedResource(request pipeline.Request) string {
+func (f *SharedKeyCredential) buildCanonicalizedResource(u *url.URL) string {
+	// https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
 	cr := bytes.NewBufferString("/")
 	cr.WriteString(f.accountName)
 
-	if len(request.URL.Path) > 0 {
+	if len(u.Path) > 0 {
 		// Any portion of the CanonicalizedResource string that is derived from
 		// the resource's URI should be encoded exactly as it is in the URI.
 		// -- https://msdn.microsoft.com/en-gb/library/azure/dd179428.aspx
-		cr.WriteString(request.URL.EscapedPath())
+		cr.WriteString(u.EscapedPath())
 	} else {
 		// a slash is required to indicate the root path
 		cr.WriteString("/")
 	}
 
-	params, err := url.ParseQuery(request.URL.RawQuery)
+	// params is a map[string][]string; param name is key; params values is []string
+	params, err := url.ParseQuery(u.RawQuery) // Returns URL decoded values
 	if err != nil {
 		panic(err)
 	}
 
-	if len(params) > 0 {
-		cr.WriteRune('\n')
-
-		keys := []string{}
-		for key := range params {
-			keys = append(keys, key)
+	if len(params) > 0 { // There is at least 1 query parameter
+		paramNames := []string{} // We use this to sort the parameter key names
+		for paramName := range params {
+			paramNames = append(paramNames, paramName) // paramNames must be lowercase
 		}
-		sort.Strings(keys)
+		sort.Strings(paramNames)
 
-		completeParams := []string{}
-		for _, key := range keys {
-			if len(params[key]) > 1 {
-				sort.Strings(params[key])
-			}
+		for _, paramName := range paramNames {
+			paramValues := params[paramName]
+			sort.Strings(paramValues)
 
-			completeParams = append(completeParams, strings.Join([]string{key, ":", strings.Join(params[key], ",")}, ""))
+			// Join the sorted key values separated by ','
+			// Then prepend "keyName:"; then add this string to the buffer
+			cr.WriteString("\n" + paramName + ":" + strings.Join(paramValues, ","))
 		}
-		cr.WriteString(strings.Join(completeParams, "\n"))
 	}
 	return string(cr.Bytes())
 }
