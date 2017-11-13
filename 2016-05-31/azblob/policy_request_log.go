@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
@@ -22,7 +24,7 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 	if o.LogWarningIfTryOverThreshold == 0 {
 		// It would be good to relate this to https://azure.microsoft.com/en-us/support/legal/sla/storage/v1_2/
 		// But this monitors the time to get the HTTP response; NOT the time to download the response body.
-		o.LogWarningIfTryOverThreshold = 2 * time.Second // Default to 2 seconds
+		o.LogWarningIfTryOverThreshold = 3 * time.Second // Default to 3 seconds
 	}
 	return &requestLogPolicyFactory{o: o}
 }
@@ -36,20 +38,47 @@ func (f *requestLogPolicyFactory) New(node pipeline.Node) pipeline.Policy {
 }
 
 type requestLogPolicy struct {
-	node pipeline.Node
-	o    RequestLogOptions
-	try  int
+	node           pipeline.Node
+	o              RequestLogOptions
+	try            int
+	operationStart time.Time
+}
+
+func redactSigQueryParam(rawQuery string) (bool, string) {
+	sigFound := strings.EqualFold(rawQuery, "?sig=")
+	if !sigFound {
+		sigFound = strings.EqualFold(rawQuery, "&sig=")
+		if !sigFound {
+			return sigFound, rawQuery // [?|&]sig= not found; return same rawQuery passed in (no memory allocation)
+		}
+	}
+	// [?|&]sig= was found, redact its value
+	values, _ := url.ParseQuery(rawQuery)
+	for name := range values {
+		if strings.EqualFold(name, "sig") {
+			values[name] = []string{"(redacted)"}
+		}
+	}
+	return sigFound, values.Encode()
 }
 
 func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
 	p.try++ // The first try is #1 (not #0)
-	operationStart := time.Now()
+	if p.try == 1 {
+		p.operationStart = time.Now() // If this is the 1st try, record the operation state time
+	}
 
 	// Log the outgoing request as informational
 	if p.node.WouldLog(pipeline.LogInfo) {
 		b := &bytes.Buffer{}
 		fmt.Fprintf(b, "==> OUTGOING REQUEST (Try=%d)\n", p.try)
-		pipeline.WriteRequest(b, request.Request)
+		req := request
+		if sigFound, rawQuery := redactSigQueryParam(req.URL.RawQuery); sigFound {
+			// TODO: Make copy so we dont' destroy the query parameters we actually need to send in the request
+			req = request.Copy()
+			req.Request.URL.RawQuery = rawQuery
+		}
+		pipeline.WriteRequest(b, req.Request)
 		p.node.Log(pipeline.LogInfo, b.String())
 	}
 
@@ -58,11 +87,11 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 	response, err = p.node.Do(ctx, request) // Make the request
 	tryEnd := time.Now()
 	tryDuration := tryEnd.Sub(tryStart)
-	opDuration := tryEnd.Sub(operationStart)
+	opDuration := tryEnd.Sub(p.operationStart)
 
 	severity := pipeline.LogInfo // Assume success and default to informational logging
 	logMsg := func(b *bytes.Buffer) {
-		b.WriteString("SUCCESS\n")
+		b.WriteString("SUCCESSFUL OPERATION\n")
 		pipeline.WriteResponseWithRequest(b, response.Response())
 	}
 
@@ -71,32 +100,35 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 		// Log a warning if the try duration exceeded the specified threshold
 		severity = pipeline.LogWarning
 		logMsg = func(b *bytes.Buffer) {
-			fmt.Fprintf(b, "SLOW [tryDuration > %v]\n", p.o.LogWarningIfTryOverThreshold)
+			fmt.Fprintf(b, "SLOW OPERATION [tryDuration > %v]\n", p.o.LogWarningIfTryOverThreshold)
 			pipeline.WriteResponseWithRequest(b, response.Response())
 		}
 	}
 
-	if err != nil {
-		if serr, ok := err.(StorageError); ok && serr.Response() != nil {
-			// This Storage Error did get a HTTP response from the service, so we won't change the severity
-			logMsg = func(b *bytes.Buffer) {
-				fmt.Fprintf(b, "OPERATION ERROR:\n%v\n", serr)
-			}
-		} else {
-			// This error did not get an HTTP response from the service; upgrade the severity to Error
-			severity = pipeline.LogError
+	if err == nil { // We got a response from the service
+		sc := response.Response().StatusCode
+		if ((sc >= 400 && sc <= 499) && sc != http.StatusNotFound && sc != http.StatusConflict && sc != http.StatusPreconditionFailed && sc != http.StatusRequestedRangeNotSatisfiable) || (sc >= 500 && sc <= 599) {
+			severity = pipeline.LogError // Promote to Error any 4xx (except those listed is an error) or any 5xx
 			logMsg = func(b *bytes.Buffer) {
 				// Write the error, the originating request and the stack
-				fmt.Fprintf(b, "NETWORK ERROR:\n%v\n", err)
-				pipeline.WriteRequest(b, request.Request)
+				fmt.Fprintf(b, "OPERATION ERROR:\n%v\n", err)
+				pipeline.WriteResponseWithRequest(b, response.Response())
 				b.Write(stack()) // For errors, we append the stack trace (an expensive operation)
 			}
+		} else {
+			// For other status codes, we leave the severity as is.
 		}
-	} else if response.Response().StatusCode == http.StatusInternalServerError || response.Response().StatusCode == http.StatusServiceUnavailable {
-		severity = pipeline.LogError // If the service returns 500 or 503, then log this as an error
+	} else { // This error did not get an HTTP response from the service; upgrade the severity to Error
+		severity = pipeline.LogError
+		logMsg = func(b *bytes.Buffer) {
+			// Write the error, the originating request and the stack
+			fmt.Fprintf(b, "NETWORK ERROR:\n%v\n", err)
+			pipeline.WriteRequest(b, request.Request)
+			b.Write(stack()) // For errors, we append the stack trace (an expensive operation)
+		}
 	}
 
-	if p.node.WouldLog(severity) || true { // true is for testing
+	if p.node.WouldLog(severity) || false { // Change false to true for testing
 		// We're going to log this; build the string to log
 		b := &bytes.Buffer{}
 		fmt.Fprintf(b, "==> REQUEST/RESPONSE (Try=%d, TryDuration=%v, OpDuration=%v) -- ", p.try, tryDuration, opDuration)

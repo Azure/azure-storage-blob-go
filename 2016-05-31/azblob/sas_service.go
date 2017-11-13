@@ -81,11 +81,11 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 func getCanonicalName(account string, containerName string, blobName string) string {
 	// Container: "/blob/account/containername"
 	// Blob:      "/blob/account/containername/blobname"
-	elems := []string{"/blob/", account, "/", containerName}
+	elements := []string{"/blob/", account, "/", containerName}
 	if blobName != "" {
-		elems = append(elems, "/", strings.Replace(blobName, "\\", "/", -1))
+		elements = append(elements, "/", strings.Replace(blobName, "\\", "/", -1))
 	}
-	return strings.Join(elems, "")
+	return strings.Join(elements, "")
 }
 
 // The ContainerSASPermissions type simplifies creating the permissions string for an Azure Storage container SAS.

@@ -20,13 +20,18 @@ type TelemetryOptions struct {
 // NewTelemetryPolicyFactory creates a factory that can create telemetry policy objects
 // which add telemetry information to outgoing HTTP requests.
 func NewTelemetryPolicyFactory(o TelemetryOptions) pipeline.Factory {
-	return &telemetryPolicyFactory{serviceVersion: serviceLibVersion, options: o}
+	b := &bytes.Buffer{}
+	b.WriteString(o.Value)
+	if b.Len() > 0 {
+		b.WriteRune(' ')
+	}
+	fmt.Fprintf(b, "Azure-Storage/%s %s", serviceLibVersion, platformInfo)
+	return &telemetryPolicyFactory{telemetryValue: b.String()}
 }
 
 // telemetryPolicyFactory struct
 type telemetryPolicyFactory struct {
-	serviceVersion string
-	options        TelemetryOptions
+	telemetryValue string
 }
 
 // New creates a telemetryPolicy object.
@@ -41,14 +46,7 @@ type telemetryPolicy struct {
 }
 
 func (p *telemetryPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
-	request = request.Copy() // Don't mutate the incoming request object's headers
-	b := &bytes.Buffer{}
-	b.WriteString(p.factory.options.Value)
-	if b.Len() > 0 {
-		b.WriteRune(' ')
-	}
-	fmt.Fprintf(b, "Azure-Storage/%s %s", p.factory.serviceVersion, platformInfo)
-	request.Header.Set("User-Agent", b.String())
+	request.Header.Set("User-Agent", p.factory.telemetryValue)
 	return p.node.Do(ctx, request)
 }
 

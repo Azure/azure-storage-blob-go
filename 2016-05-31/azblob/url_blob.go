@@ -134,7 +134,7 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
-// GetMetadata returns the blob's metadata and properties.
+// GetPropertiesAndMetadata returns the blob's metadata and properties.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob-properties.
 func (b BlobURL) GetPropertiesAndMetadata(ctx context.Context, ac BlobAccessConditions) (*BlobsGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()

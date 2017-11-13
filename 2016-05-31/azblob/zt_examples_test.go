@@ -138,11 +138,12 @@ func ExampleNewPipeline() {
 
 		// Set LogOptions to control what & where all pipeline log events go
 		Log: pipeline.LogOptions{
-			LogMaxSeverity: pipeline.LogInfo, // Log all events from informational to more severe
 			Log: func(s pipeline.LogSeverity, m string) { // This func is called to log each event
 				// This method is not called for filtered-out severities.
 				logger.Output(2, m) // This example uses Go's standard logger
-			}},
+			},
+			MinimumSeverityToLog: func() pipeline.LogSeverity { return pipeline.LogInfo }, // Log all events from informational to more severe
+		},
 	}
 
 	// Create a request pipeline object configured with credentials and with pipeline options. Once created,
@@ -959,8 +960,8 @@ func ExampleStreamToBlockBlob() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Pass the Context, stream, stream size, block blob URL, and options to StreamToBlockBlob
-	putBlockList, err := StreamToBlockBlob(ctx, file, fileSize.Size(), blockBlobURL,
-		StreamToBlockBlobOptions{
+	putBlockList, err := UploadStreamToBlockBlob(ctx, file, fileSize.Size(), blockBlobURL,
+		UploadStreamToBlockBlobOptions{
 			// BlockSize is mandatory. It specifies the block size to use; the maximum size is BlockBlobMaxPutBlockBytes.
 			BlockSize: BlockBlobMaxPutBlockBytes,
 
@@ -989,17 +990,18 @@ func ExampleNewGetRetryStream() {
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
 	// NewGetRetryStream creates an intelligent retryable stream around a blob; it returns an io.ReadCloser.
-	rs := NewGetRetryStream(context.Background(), blobURL,
-		GetRetryStreamOptions{
-			// We set GetBlobResult so we can capture the blob's full content length on the very
-			// first internal call to GetBlob.
-			GetBlobResult: func(response *GetResponse, err error) {
-				if err == nil && contentLength == 0 {
-					// If 1st successful Get, record blob's full size for progress reporting
-					contentLength = response.ContentLength()
-				}
-			},
-		})
+	rs := NewDownloadStream(context.Background(),
+		// We pass more tha "blobUrl.GetBlob" here so we can capture the blob's full
+		// content length on the very first internal call to Read.
+		func(ctx context.Context, blobRange BlobRange, ac BlobAccessConditions, rangeGetContentMD5 bool) (*GetResponse, error) {
+			get, err := blobURL.GetBlob(ctx, blobRange, ac, rangeGetContentMD5)
+			if err == nil && contentLength == 0 {
+				// If 1st successful Get, record blob's full size for progress reporting
+				contentLength = get.ContentLength()
+			}
+			return get, err
+		},
+		DownloadStreamOptions{})
 
 	// NewResponseBodyStream wraps the GetRetryStream with progress reporting; it returns an io.ReadCloser.
 	stream := pipeline.NewResponseBodyProgress(rs,

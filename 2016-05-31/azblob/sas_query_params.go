@@ -59,7 +59,7 @@ func NewSASQueryParameters(values url.Values) SASQueryParameters {
 	for k, v := range values {
 		val := v[0]
 		isSASKey := true
-		switch k {
+		switch strings.ToLower(k) {
 		case "sv":
 			p.Version = val
 		case "ss":

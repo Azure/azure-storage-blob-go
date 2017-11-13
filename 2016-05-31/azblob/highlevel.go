@@ -3,7 +3,6 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
@@ -12,9 +11,9 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
-// StreamToBlockBlobOptions identifies options used by the StreamToBlockBlob function. Note that the
+// UploadStreamToBlockBlobOptions identifies options used by the UploadStreamToBlockBlob function. Note that the
 // BlockSize field is mandatory and must be set; other fields are optional.
-type StreamToBlockBlobOptions struct {
+type UploadStreamToBlockBlobOptions struct {
 	// BlockSize is mandatory. It specifies the block size to use; the maximum size is BlockBlobMaxPutBlockBytes.
 	BlockSize int64
 
@@ -26,18 +25,23 @@ type StreamToBlockBlobOptions struct {
 
 	// Metadata indicates the metadata to be associated with the blob when PutBlockList is called.
 	Metadata Metadata
-	// BlobAccessConditions???
+
+	// AccessConditions indicates the access conditions for the block blob.
+	AccessConditions BlobAccessConditions
 }
 
-// StreamToBlockBlob uploads a large stream of data in blocks to a block blob.
-func StreamToBlockBlob(ctx context.Context, stream io.ReaderAt, streamSize int64,
-	blockBlobURL BlockBlobURL, o StreamToBlockBlobOptions) (*BlockBlobsPutBlockListResponse, error) {
+// UploadStreamToBlockBlob uploads a stream of data in blocks to a block blob.
+func UploadStreamToBlockBlob(ctx context.Context, stream io.ReaderAt, streamSize int64,
+	blockBlobURL BlockBlobURL, o UploadStreamToBlockBlobOptions) (*BlockBlobsPutBlockListResponse, error) {
 
 	if o.BlockSize <= 0 || o.BlockSize > BlockBlobMaxPutBlockBytes {
 		panic(fmt.Sprintf("BlockSize option must be > 0 and <= %d", BlockBlobMaxPutBlockBytes))
 	}
 
 	numBlocks := ((streamSize - int64(1)) / o.BlockSize) + 1
+	if numBlocks > BlockBlobMaxBlocks {
+		panic(fmt.Sprintf("The streamSize is too big or the BlockSize is too small; the number of blocks must be <= %d", BlockBlobMaxBlocks))
+	}
 	blockIDList := make([]string, numBlocks) // Base 64 encoded block IDs
 	blockSize := o.BlockSize
 
@@ -54,50 +58,47 @@ func StreamToBlockBlob(ctx context.Context, stream io.ReaderAt, streamSize int64
 				func(bytesTransferred int64) { o.Progress(streamOffset + bytesTransferred) })
 		}
 
-		blockIDList[blockNum] = blockIDUint64ToBase64(uint64(streamOffset)) // The streamOffset is the block ID
-		_, err := blockBlobURL.PutBlock(ctx, blockIDList[blockNum], body, LeaseAccessConditions{})
+		// Block IDs are unique values to avoid issue if 2+ clients are uploading blocks
+		// at the same time causeing PutBlockList to get a mix of blocks from all the clients.
+		blockIDList[blockNum] = base64.StdEncoding.EncodeToString(newUUID().bytes())
+		_, err := blockBlobURL.PutBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return blockBlobURL.PutBlockList(ctx, blockIDList, o.Metadata, o.BlobHTTPHeaders, BlobAccessConditions{})
+	return blockBlobURL.PutBlockList(ctx, blockIDList, o.Metadata, o.BlobHTTPHeaders, o.AccessConditions)
 }
 
-// NOTE: The blockID must be <= 64 bytes and ALL blockIDs for the block must be the same length
-// These helper functions convert an int64 block ID to a base-64 string
-func blockIDUint64ToBase64(blockID uint64) string {
-	binaryBlockID := [64 / 8]byte{} // All block IDs are 8 bytes long
-	binary.LittleEndian.PutUint64(binaryBlockID[:], blockID)
-	return base64.StdEncoding.EncodeToString(binaryBlockID[:])
-}
-
-// GetRetryStreamOptions is used to configure a call to NewGetTryStream to download a large stream with intelligent retries.
-type GetRetryStreamOptions struct {
+// DownloadStreamOptions is used to configure a call to NewDownloadBlobToStream to download a large stream with intelligent retries.
+type DownloadStreamOptions struct {
 	// Range indicates the starting offset and count of bytes within the blob to download.
 	Range BlobRange
 
-	// Acc indicates the BlobAccessConditions to use when accessing the blob.
-	AC BlobAccessConditions
-
-	// GetBlobResult identifies a function to invoke immediately after GetRetryStream's Read method internally
-	// calls GetBlob. This function is invoked after every call to GetBlob. The callback can example GetBlob's
-	// response and error information.
-	GetBlobResult func(*GetResponse, error)
+	// AccessConditions indicates the BlobAccessConditions to use when accessing the blob.
+	AccessConditions BlobAccessConditions
 }
 
 type retryStream struct {
 	ctx      context.Context
-	blobURL  BlobURL
-	o        GetRetryStreamOptions
+	getBlob  func(ctx context.Context, blobRange BlobRange, ac BlobAccessConditions, rangeGetContentMD5 bool) (*GetResponse, error)
+	o        DownloadStreamOptions
 	response *http.Response
 }
 
-// NewGetRetryStream creates a stream over a blob allowing you download the blob's contents.
+// NewDownloadStream creates a stream over a blob allowing you download the blob's contents.
 // When network errors occur, the retry stream internally issues new HTTP GET requests for
-// the remaining range of the blob's contents.
-func NewGetRetryStream(ctx context.Context, blobURL BlobURL, o GetRetryStreamOptions) io.ReadCloser {
+// the remaining range of the blob's contents. The GetBlob argument identifies the function
+// to invoke when the GetRetryStream needs to make an HTTP GET request as Read methods are called.
+// The callback can wrap the response body (with progress reporting, for example) before returning.
+func NewDownloadStream(ctx context.Context,
+	getBlob func(ctx context.Context, blobRange BlobRange, ac BlobAccessConditions, rangeGetContentMD5 bool) (*GetResponse, error),
+	o DownloadStreamOptions) io.ReadCloser {
+
 	// BlobAccessConditions may already have an If-Match:etag header
-	return &retryStream{ctx: ctx, blobURL: blobURL, o: o, response: nil}
+	if getBlob == nil {
+		panic("getBlob must not be nil")
+	}
+	return &retryStream{ctx: ctx, getBlob: getBlob, o: o, response: nil}
 }
 
 func (s *retryStream) Read(p []byte) (n int, err error) {
@@ -111,6 +112,7 @@ func (s *retryStream) Read(p []byte) (n int, err error) {
 				}
 				return n, err // Return the return to the caller
 			}
+			s.Close()
 			s.response = nil // Something went wrong; our stream is no longer good
 			if nerr, ok := err.(net.Error); ok {
 				if !nerr.Timeout() && !nerr.Temporary() {
@@ -122,11 +124,7 @@ func (s *retryStream) Read(p []byte) (n int, err error) {
 		}
 
 		// We don't have a response stream to read from, try to get one
-		response, err := s.blobURL.GetBlob(s.ctx, s.o.Range, s.o.AC, false)
-		if s.o.GetBlobResult != nil {
-			// If caller desires notification of each GetBlob call, notify them
-			s.o.GetBlobResult(response, err)
-		}
+		response, err := s.getBlob(s.ctx, s.o.Range, s.o.AccessConditions, false)
 		if err != nil {
 			return 0, err
 		}
@@ -134,13 +132,15 @@ func (s *retryStream) Read(p []byte) (n int, err error) {
 		s.response = response.Response()
 
 		// Ensure that future requests are from the same version of the source
-		s.o.AC.IfMatch = response.ETag()
+		s.o.AccessConditions.IfMatch = response.ETag()
 
 		// Loop around and try to read from this stream
 	}
 }
 
 func (s *retryStream) Close() error {
-	//s.blobURL = BlobURL{} // This blobURL is no longer valid
-	return s.response.Body.Close()
+	if s.response != nil && s.response.Body != nil {
+		return s.response.Body.Close()
+	}
+	return nil
 }
