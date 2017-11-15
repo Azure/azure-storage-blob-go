@@ -13,7 +13,7 @@ This repository contains the open source Blob SDK for Go. Documentation and exam
 * If you don't already have it, install [the Go Programming runtime](https://golang.org/dl/)
 * Go get the SDK:
 
-        ```go get -u https://github.com/Azure/azure-storage-blob-go```
+```go get -u https://github.com/Azure/azure-storage-blob-go```
 		
 ## SDK Architecture
 
