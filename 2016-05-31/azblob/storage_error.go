@@ -68,7 +68,8 @@ func (e *storageError) Error() string {
 			fmt.Fprintf(b, "   %s: %+v\n", k, e.details[k])
 		}
 	}
-	pipeline.WriteResponseWithRequest(b, e.response)
+	req := pipeline.Request{Request: e.response.Request}.Copy() // Make a copy of the response's request
+	pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(req), e.response)
 	return e.ErrorNode.Error(b.String())
 }
 
