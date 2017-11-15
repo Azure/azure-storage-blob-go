@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-storage-blob-go/2016-05-31/azblob"
 )
 
-type retryTestScenario int
+type retryTestScenario int32
 
 const (
 	// Retry until success. Max reties hit. Operation time out prevents additional retries
@@ -36,16 +36,16 @@ func (s *aztestsSuite) TestRetryTestScenarioUntilMaxRetries(c *chk.C) {
 	testRetryTestScenario(c, retryTestScenarioRetryUntilMaxRetries)
 }
 
-func newRetryTestPolicyFactory(c *chk.C, scenario retryTestScenario, maxRetries int, cancel context.CancelFunc) *retryTestPolicyFactory {
+func newRetryTestPolicyFactory(c *chk.C, scenario retryTestScenario, maxRetries int32, cancel context.CancelFunc) *retryTestPolicyFactory {
 	return &retryTestPolicyFactory{c: c, scenario: scenario, maxRetries: maxRetries, cancel: cancel}
 }
 
 type retryTestPolicyFactory struct {
 	c          *chk.C
 	scenario   retryTestScenario
-	maxRetries int
+	maxRetries int32
 	cancel     context.CancelFunc
-	try        int
+	try        int32
 }
 
 func (f *retryTestPolicyFactory) New(node pipeline.Node) pipeline.Policy {
@@ -60,7 +60,6 @@ type retryTestPolicy struct {
 
 type retryError struct {
 	temporary, timeout bool
-	statusCode         int
 }
 
 func (e *retryError) Temporary() bool { return e.temporary }

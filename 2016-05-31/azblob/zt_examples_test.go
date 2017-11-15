@@ -79,6 +79,7 @@ func Example() {
 
 	downloadedData := &bytes.Buffer{}
 	downloadedData.ReadFrom(get.Body())
+	get.Body().Close() // The client must close the response body when finished with it
 	if data != downloadedData.String() {
 		log.Fatal("downloaded data doesn't match uploaded data")
 	}
@@ -431,6 +432,9 @@ func ExampleBlobAccessConditions() {
 				fmt.Print("Failure: " + serr.Response().Status + "\n")
 			}
 		} else {
+			if get, ok := response.(*GetResponse); ok {
+				get.Body().Close() // The client must close the response body when finished with it
+			}
 			fmt.Print("Success: " + response.Response().Status + "\n")
 		}
 	}
@@ -668,7 +672,7 @@ func ExampleBlockBlobURL() {
 	}
 	blobData := &bytes.Buffer{}
 	blobData.ReadFrom(get.Body())
-	get.Body().Close()
+	get.Body().Close() // The client must close the response body when finished with it
 	fmt.Println(blobData)
 }
 
@@ -703,7 +707,7 @@ func ExampleAppendBlobURL() {
 	}
 	b := bytes.Buffer{}
 	b.ReadFrom(get.Body())
-	get.Body().Close()
+	get.Body().Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 }
 
@@ -765,7 +769,7 @@ func ExamplePageBlobURL() {
 	}
 	blobData := &bytes.Buffer{}
 	blobData.ReadFrom(get.Body())
-	get.Body().Close()
+	get.Body().Close() // The client must close the response body when finished with it
 	fmt.Printf("%#v", blobData.Bytes())
 }
 
@@ -804,7 +808,7 @@ func Example_blobSnapshots() {
 	get, err := baseBlobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
 	b := bytes.Buffer{}
 	b.ReadFrom(get.Body())
-	get.Body().Close()
+	get.Body().Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 
 	// Show snapshot blob via original blob URI & snapshot time:
@@ -812,7 +816,7 @@ func Example_blobSnapshots() {
 	get, err = snapshotBlobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
 	b.Reset()
 	b.ReadFrom(get.Body())
-	get.Body().Close()
+	get.Body().Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 
 	// FYI: You can get the base blob URL from one of its snapshot by passing time.Time{} to WithSnapshot:
@@ -901,6 +905,7 @@ func Example_progressUploadDownload() {
 
 	downloadedData := &bytes.Buffer{}
 	downloadedData.ReadFrom(responseBody)
+	responseBody.Close() // The client must close the response body when finished with it
 	// The downloaded blob data is in downloadData's buffer
 }
 
@@ -1008,7 +1013,7 @@ func ExampleNewGetRetryStream() {
 		func(bytesTransferred int64) {
 			fmt.Printf("Downloaded %d of %d bytes.\n", bytesTransferred, contentLength)
 		})
-	defer stream.Close()
+	defer stream.Close() // The client must close the response body when finished with it
 
 	file, err := os.Create("BigFile.bin") // Create the file to hold the downloaded blob contents.
 	if err != nil {

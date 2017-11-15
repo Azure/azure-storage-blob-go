@@ -12,6 +12,9 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
+// RetryPolicy tells the pipeline what kind of retry policy to use. See the RetryPolicy* constants.
+type RetryPolicy int32
+
 const (
 	// RetryPolicyExponential tells the pipeline to use an exponential back-off retry policy
 	RetryPolicyExponential RetryPolicy = 0
@@ -19,9 +22,6 @@ const (
 	// RetryPolicyFixed tells the pipeline to use a fixed back-off retry policy
 	RetryPolicyFixed RetryPolicy = 1
 )
-
-// RetryPolicy tells the pipeline what kind of retry policy to use. See the RetryPolicy* constants.
-type RetryPolicy int
 
 // RetryOptions configures the retry policy's behavior.
 type RetryOptions struct {
@@ -31,7 +31,7 @@ type RetryOptions struct {
 
 	// MaxTries specifies the maximum number of attempts an operation will be tried before producing an error (0=default).
 	// A value of zero means that you accept our default policy. A value of 1 means 1 try and no retries.
-	MaxTries int
+	MaxTries int32
 
 	// TryTimeout indicates the maximum time allowed for any single try of an HTTP request.
 	// A value of zero means that you accept our default timeout. NOTE: When transferring large amounts
@@ -85,10 +85,10 @@ func (o RetryOptions) defaults() RetryOptions {
 	return o
 }
 
-func (o RetryOptions) calcDelay(try int) time.Duration { // try is >=1; never 0
-	pow := func(number int64, exponent int) int64 { // pow is nested helper function
+func (o RetryOptions) calcDelay(try int32) time.Duration { // try is >=1; never 0
+	pow := func(number int64, exponent int32) int64 { // pow is nested helper function
 		var result int64 = 1
-		for n := 0; n < exponent; n++ {
+		for n := int32(0); n < exponent; n++ {
 			result *= number
 		}
 		return result
@@ -139,7 +139,7 @@ var logf = func(format string, a ...interface{}) {}
 func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
 	// Before each try, we'll select either the primary or secondary URL.
 	secondaryHost := ""
-	primaryTry := 0 // This indicates how many tries we've attempted against the primary DC
+	primaryTry := int32(0) // This indicates how many tries we've attempted against the primary DC
 
 	// We only consider retring against a secondary if we have a read request (GET/HEAD) AND this policy has a Secondary URL it can use
 	considerSecondary := (request.Method == http.MethodGet || request.Method == http.MethodHead) && p.o.RetryReadsFromSecondaryHost != ""
@@ -154,7 +154,7 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 	//    For a primary wait ((2 ^ primaryTries - 1) * delay * random(0.8, 1.2)
 	//    If secondary gets a 404, don't fail, retry but future retries are only against the primary
 	//    When retrying against a secondary, ignore the retry count and wait (.1 second * random(0.8, 1.2))
-	for try := 1; try <= p.o.MaxTries; try++ {
+	for try := int32(1); try <= p.o.MaxTries; try++ {
 		logf("\n=====> Try=%d\n", try)
 
 		// Determine which endpoint to try. It's primary if there is no secondary or if it is an add # attempt.
@@ -184,9 +184,9 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 		}
 
 		// Set the server-side timeout query parameter "timeout=[seconds]"
-		timeout := int(p.o.TryTimeout.Seconds()) // Max seconds per try
-		if deadline, ok := ctx.Deadline(); ok {  // If user's ctx has a deadline, make the timeout the smaller of the two
-			t := int(deadline.Sub(time.Now()).Seconds()) // Duration from now until user's ctx reaches its deadline
+		timeout := int32(p.o.TryTimeout.Seconds()) // Max seconds per try
+		if deadline, ok := ctx.Deadline(); ok {    // If user's ctx has a deadline, make the timeout the smaller of the two
+			t := int32(deadline.Sub(time.Now()).Seconds()) // Duration from now until user's ctx reaches its deadline
 			logf("MaxTryTimeout=%d secs, TimeTilDeadline=%d sec\n", timeout, t)
 			if t < timeout {
 				timeout = t
@@ -197,7 +197,7 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 			logf("TryTimeout adjusted to=%d sec\n", timeout)
 		}
 		q := requestCopy.Request.URL.Query()
-		q.Set("timeout", strconv.Itoa(timeout))
+		q.Set("timeout", strconv.Itoa(int(timeout)))
 		requestCopy.Request.URL.RawQuery = q.Encode()
 		logf("Url=%s\n", requestCopy.Request.URL.String())
 
