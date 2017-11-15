@@ -48,11 +48,11 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 		}
 	}
 
-	// Convert the query parameters to a case-sensitive map & trim whitsapce
+	// Convert the query parameters to a case-sensitive map & trim whitespace
 	paramsMap := u.Query()
 
 	up.Snapshot = time.Time{} // Assume no snapshot
-	if snapshotStr, ok := paramsMap["snapshot"]; ok {
+	if snapshotStr, ok := caseInsensitiveValues(paramsMap).Get("snapshot"); ok {
 		up.Snapshot, _ = time.Parse(snapshotTimeFormat, snapshotStr[0])
 		// If we recognized the query parameter, remove it from the map
 		delete(paramsMap, "snapshot")
@@ -60,6 +60,17 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 	up.SAS = NewSASQueryParameters(paramsMap)
 	up.UnparsedParams = paramsMap.Encode()
 	return up
+}
+
+type caseInsensitiveValues url.Values // map[string][]string
+func (v caseInsensitiveValues) Get(key string) ([]string, bool) {
+	key = strings.ToLower(key)
+	for key, value := range v {
+		if strings.ToLower(key) == key {
+			return value, true
+		}
+	}
+	return []string{}, false
 }
 
 // URL returns a URL object whose fields are initialized from the BlobURLParts fields. The URL's RawQuery

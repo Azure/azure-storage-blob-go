@@ -34,7 +34,6 @@ type uniqueRequestIDPolicy struct {
 func (p *uniqueRequestIDPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 	id := request.Header.Get(xMsClientRequestID)
 	if id == "" { // Add a unique request ID if the caller didn't specify one already
-		request = request.Copy() // Don't mutate the incoming request object's headers
 		request.Header.Set(xMsClientRequestID, newUUID().String())
 	}
 	return p.node.Do(ctx, request)
@@ -107,4 +106,8 @@ func parseUUID(uuidStr string) uuid {
 		char(uuidStr[34:36]),
 	}
 	return uuidVal
+}
+
+func (u uuid) bytes() []byte {
+	return u[:]
 }
