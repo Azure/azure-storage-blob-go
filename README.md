@@ -1,6 +1,34 @@
+# Azure Storage Blob SDK for Go
+The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
-# Contributing
+This repository contains the open source Blob SDK for Go. Documentation and examples can be found [here](https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob).
 
+## Features
+* Blob Storage
+	* Create/List/Delete Containers
+	* Create/Read/List/Update/Delete Block Blobs
+	* Create/Read/List/Update/Delete Page Blobs
+	* Create/Read/List/Update/Delete Append Blobs
+
+## Getting Started
+* If you don't already have it, install [the Go distribution](https://golang.org/dl/)
+* Go get the SDK:
+
+```go get github.com/Azure/azure-storage-blob-go/2016-05-31/azblob```
+		
+## SDK Architecture
+
+* The Azure Storage SDK for Go provides low-level and high-level APIs.
+	* ServiceURL, ContainerURL and BlobURL objects provide the low-level API functionality and map one-to-one to the [Azure Storage Blob REST APIs](https://docs.microsoft.com/en-us/rest/api/storageservices/blob-service-rest-api)
+	* The high-level APIs provide convenience abstractions such as uploading a large stream to a block blob (using multiple PutBlock requests).
+
+## Code Samples
+* [Blob Storage Examples](https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob#pkg-examples)
+
+## License
+This project is licensed under MIT.
+
+## Contributing
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.microsoft.com.
