@@ -47,7 +47,7 @@ func UploadStreamToBlockBlob(ctx context.Context, stream io.ReaderAt, streamSize
 
 	for blockNum := int64(0); blockNum < numBlocks; blockNum++ {
 		if blockNum == numBlocks-1 { // Last block
-			blockSize = streamSize % o.BlockSize
+			blockSize = streamSize - (blockNum * o.BlockSize) // Remove size of all uploaded blocks from total
 		}
 
 		streamOffset := blockNum * o.BlockSize

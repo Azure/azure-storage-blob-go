@@ -52,9 +52,10 @@ func (ipr *IPRange) String() string {
 }
 
 // NewSASQueryParameters creates and initializes a SASQueryParameters object based on the
-// query parameter map passed in values. Upon return, all SAS-related query parameters are
-// removed from the map.
-func NewSASQueryParameters(values url.Values) SASQueryParameters {
+// query parameter map's passed-in values. If deleteSASParametersFromValues is true,
+// all SAS-related query parameters are removed from the passed-in map. If
+// deleteSASParametersFromValues is false, the map passed-in map is unaltered.
+func NewSASQueryParameters(values url.Values, deleteSASParametersFromValues bool) SASQueryParameters {
 	p := SASQueryParameters{}
 	for k, v := range values {
 		val := v[0]
@@ -91,7 +92,7 @@ func NewSASQueryParameters(values url.Values) SASQueryParameters {
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
-		if isSASKey {
+		if isSASKey && deleteSASParametersFromValues {
 			delete(values, k)
 		}
 	}
