@@ -57,7 +57,7 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 		// If we recognized the query parameter, remove it from the map
 		delete(paramsMap, "snapshot")
 	}
-	up.SAS = NewSASQueryParameters(paramsMap)
+	up.SAS = NewSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
 	return up
 }

@@ -34,21 +34,21 @@ func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
 		panic("c can't be nil")
 	}
 
-	// Closest to the wire goes first; closest to the method goes last
+	// Closest to API goes first; closest to the wire goes last
 	f := []pipeline.Factory{
-		NewRequestLogPolicyFactory(o.RequestLog),
-		pipeline.MethodFactoryMarker(), // indicates at what stage in the pipeline the method factory is invoked
+		NewTelemetryPolicyFactory(o.Telemetry),
+		NewUniqueRequestIDPolicyFactory(),
+		NewRetryPolicyFactory(o.Retry),
 	}
 	if _, ok := c.(*anonymousCredentialPolicyFactory); !ok {
 		// For AnonymousCredential, we optimize out the policy factory since it doesn't do anything
 		// NOTE: The credential's policy factory must appear close to the wire so it can sign any
 		// changes made by other factories (like UniqueRequestIDPolicyFactory)
-		f = append(f, c /*.NewPolicyFactory()*/)
+		f = append(f, c)
 	}
 	f = append(f,
-		NewRetryPolicyFactory(o.Retry),
-		NewUniqueRequestIDPolicyFactory(),
-		NewTelemetryPolicyFactory(o.Telemetry))
+		pipeline.MethodFactoryMarker(), // indicates at what stage in the pipeline the method factory is invoked
+		NewRequestLogPolicyFactory(o.RequestLog))
 
 	return pipeline.NewPipeline(f, pipeline.Options{HTTPSender: nil, Log: o.Log})
 }
