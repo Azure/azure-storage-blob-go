@@ -4,31 +4,25 @@ package azblob
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
-        "net/url"
-    ""
-        "net/url"
-    "net/http"
-        "net/url"
-    "context"
-        "net/url"
-    "fmt"
-        "net/url"
-    "time"
-        "net/url"
-    "encoding/xml"
-        "net/url"
-    "io/ioutil"
-        "net/url"
-    "bytes"
+	"bytes"
+	"context"
+	"encoding/xml"
+	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 // ContainerClient is the client for the Container methods of the Azblob service.
 type ContainerClient struct {
-    ManagementClient
+	ManagementClient
 }
+
 // NewContainerClient creates an instance of the ContainerClient client.
 func NewContainerClient(url url.URL, p pipeline.Pipeline) ContainerClient {
-    return ContainerClient{NewManagementClient(url, p)}
+	return ContainerClient{NewManagementClient(url, p)}
 }
 
 // Create creates a new container under the specified account. If the container with the same name already exists, the
@@ -45,25 +39,23 @@ func NewContainerClient(url url.URL, p pipeline.Pipeline) ContainerClient {
 // accessed publicly and the level of access requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) Create(ctx context.Context, timeout *int32, metadata map[string]string, access PublicAccessType, requestID *string) (*ContainerCreateResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}},
-    { targetValue: metadata,
-     constraints: []constraint{	{target: "metadata", name: null, rule: false ,
-    chain: []constraint{	{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
+		{targetValue: metadata,
+			constraints: []constraint{{target: "metadata", name: null, rule: false,
+				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.createPreparer(timeout, metadata, access, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.createResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerCreateResponse), err
 }
 
@@ -73,34 +65,34 @@ func (client ContainerClient) createPreparer(timeout *int32, metadata map[string
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    req.URL.RawQuery = params.Encode()
-    if metadata != nil {
-        for k, v := range metadata {
-            req.Header.Set("x-ms-meta-"+k, v)
-        }
-            }
-    if access != PublicAccessNone {
-        req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	req.URL.RawQuery = params.Encode()
+	if metadata != nil {
+		for k, v := range metadata {
+			req.Header.Set("x-ms-meta-"+k, v)
+		}
+	}
+	if access != PublicAccessNone {
+		req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // createResponder handles the response to the Create request.
 func (client ContainerClient) createResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusCreated)
+	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerCreateResponse{rawResponse: resp.Response()}, err
+	return &ContainerCreateResponse{rawResponse: resp.Response()}, err
 }
 
 // Delete operation marks the specified container for deletion. The container and any blobs contained within it are
@@ -116,21 +108,20 @@ func (client ContainerClient) createResponder(resp pipeline.Response) (pipeline.
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) Delete(ctx context.Context, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerDeleteResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.deletePreparer(timeout, leaseID, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.deleteResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerDeleteResponse), err
 }
 
@@ -140,41 +131,41 @@ func (client ContainerClient) deletePreparer(timeout *int32, leaseID *string, if
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // deleteResponder handles the response to the Delete request.
 func (client ContainerClient) deleteResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusAccepted)
+	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerDeleteResponse{rawResponse: resp.Response()}, err
+	return &ContainerDeleteResponse{rawResponse: resp.Response()}, err
 }
 
 // GetACL sends the get acl request.
@@ -185,21 +176,20 @@ func (client ContainerClient) deleteResponder(resp pipeline.Response) (pipeline.
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) GetACL(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*SignedIdentifiers, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.getACLPreparer(timeout, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getACLResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*SignedIdentifiers), err
 }
 
@@ -209,20 +199,20 @@ func (client ContainerClient) getACLPreparer(timeout *int32, leaseID *string, re
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    params.Set("comp", "acl")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	params.Set("comp", "acl")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -232,22 +222,22 @@ func (client ContainerClient) getACLResponder(resp pipeline.Response) (pipeline.
 	if resp == nil {
 		return nil, err
 	}
-    result:= &SignedIdentifiers{rawResponse: resp.Response()}
-    if err != nil {
-        return result, err
-    }
-    defer resp.Response().Body.Close()
-    b, err:= ioutil.ReadAll(resp.Response().Body)
-    if err != nil {
-        return result, NewResponseError(err, resp.Response(), "failed to read response body")
-    }
-    if len(b) > 0 {
-        err = xml.Unmarshal(b, result)
-        if err != nil {
-            return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
-        }
-    }
-    return result, nil
+	result := &SignedIdentifiers{rawResponse: resp.Response()}
+	if err != nil {
+		return result, err
+	}
+	defer resp.Response().Body.Close()
+	b, err := ioutil.ReadAll(resp.Response().Body)
+	if err != nil {
+		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+	}
+	if len(b) > 0 {
+		err = xml.Unmarshal(b, result)
+		if err != nil {
+			return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
+		}
+	}
+	return result, nil
 }
 
 // GetMetadata returns all user-defined metadata for the container
@@ -258,21 +248,20 @@ func (client ContainerClient) getACLResponder(resp pipeline.Response) (pipeline.
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) GetMetadata(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetMetadataResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.getMetadataPreparer(timeout, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getMetadataResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerGetMetadataResponse), err
 }
 
@@ -282,20 +271,20 @@ func (client ContainerClient) getMetadataPreparer(timeout *int32, leaseID *strin
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    params.Set("comp", "metadata")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	params.Set("comp", "metadata")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -305,7 +294,7 @@ func (client ContainerClient) getMetadataResponder(resp pipeline.Response) (pipe
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerGetMetadataResponse{rawResponse: resp.Response()}, err
+	return &ContainerGetMetadataResponse{rawResponse: resp.Response()}, err
 }
 
 // GetProperties returns all user-defined metadata and system properties for the specified container. The data returned
@@ -317,21 +306,20 @@ func (client ContainerClient) getMetadataResponder(resp pipeline.Response) (pipe
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) GetProperties(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetPropertiesResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.getPropertiesPreparer(timeout, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getPropertiesResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerGetPropertiesResponse), err
 }
 
@@ -341,19 +329,19 @@ func (client ContainerClient) getPropertiesPreparer(timeout *int32, leaseID *str
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -363,7 +351,7 @@ func (client ContainerClient) getPropertiesResponder(resp pipeline.Response) (pi
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerGetPropertiesResponse{rawResponse: resp.Response()}, err
+	return &ContainerGetPropertiesResponse{rawResponse: resp.Response()}, err
 }
 
 // Lease establishes and manages a lock on a container for delete operations. The lock duration can be 15 to 60
@@ -388,21 +376,20 @@ func (client ContainerClient) getPropertiesResponder(resp pipeline.Response) (pi
 // opaque value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is
 // enabled.
 func (client ContainerClient) Lease(ctx context.Context, action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*ContainerLeaseResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.leasePreparer(action, timeout, leaseID, breakPeriod, duration, proposedLeaseID, ifModifiedSince, ifUnmodifiedSince, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.leaseResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerLeaseResponse), err
 }
 
@@ -412,46 +399,46 @@ func (client ContainerClient) leasePreparer(action LeaseActionType, timeout *int
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("comp", "lease")
-    params.Set("restype", "container")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    req.Header.Set("x-ms-lease-action", fmt.Sprintf("%v", action))
-    if breakPeriod != nil {
-        req.Header.Set("x-ms-lease-break-period", fmt.Sprintf("%v", *breakPeriod))
-    }
-    if duration != nil {
-        req.Header.Set("x-ms-lease-duration", fmt.Sprintf("%v", *duration))
-    }
-    if proposedLeaseID != nil {
-        req.Header.Set("x-ms-proposed-lease-id", *proposedLeaseID)
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "lease")
+	params.Set("restype", "container")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	req.Header.Set("x-ms-lease-action", fmt.Sprintf("%v", action))
+	if breakPeriod != nil {
+		req.Header.Set("x-ms-lease-break-period", fmt.Sprintf("%v", *breakPeriod))
+	}
+	if duration != nil {
+		req.Header.Set("x-ms-lease-duration", fmt.Sprintf("%v", *duration))
+	}
+	if proposedLeaseID != nil {
+		req.Header.Set("x-ms-proposed-lease-id", *proposedLeaseID)
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // leaseResponder handles the response to the Lease request.
 func (client ContainerClient) leaseResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusCreated,http.StatusAccepted)
+	err := validateResponse(resp, http.StatusOK, http.StatusCreated, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerLeaseResponse{rawResponse: resp.Response()}, err
+	return &ContainerLeaseResponse{rawResponse: resp.Response()}, err
 }
 
 // ListBlobs the List Blobs operation returns a list of the blobs under the specified container
@@ -474,25 +461,23 @@ func (client ContainerClient) leaseResponder(resp pipeline.Response) (pipeline.R
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) ListBlobs(ctx context.Context, prefix *string, delimiter *string, marker *string, maxresults *int32, include ListBlobsIncludeType, timeout *int32, requestID *string) (*ListBlobsResponse, error) {
-    if err := validate([]validation{
-    { targetValue: maxresults,
-     constraints: []constraint{	{target: "maxresults", name: null, rule: false ,
-    chain: []constraint{	{target: "maxresults", name: inclusiveMinimum, rule: 1, chain: nil },
-    }}}},
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: maxresults,
+			constraints: []constraint{{target: "maxresults", name: null, rule: false,
+				chain: []constraint{{target: "maxresults", name: inclusiveMinimum, rule: 1, chain: nil}}}}},
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.listBlobsPreparer(prefix, delimiter, marker, maxresults, include, timeout, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.listBlobsResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ListBlobsResponse), err
 }
 
@@ -502,32 +487,32 @@ func (client ContainerClient) listBlobsPreparer(prefix *string, delimiter *strin
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if prefix != nil {
-        params.Set("prefix", *prefix)
-    }
-    if delimiter != nil {
-        params.Set("delimiter", *delimiter)
-    }
-    if marker != nil {
-        params.Set("marker", *marker)
-    }
-    if maxresults != nil {
-        params.Set("maxresults", fmt.Sprintf("%v", *maxresults))
-    }
-    if include != ListBlobsIncludeNone {
-        params.Set("include", fmt.Sprintf("%v", include))
-    }
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    params.Set("comp", "list")
-    req.URL.RawQuery = params.Encode()
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if prefix != nil {
+		params.Set("prefix", *prefix)
+	}
+	if delimiter != nil {
+		params.Set("delimiter", *delimiter)
+	}
+	if marker != nil {
+		params.Set("marker", *marker)
+	}
+	if maxresults != nil {
+		params.Set("maxresults", fmt.Sprintf("%v", *maxresults))
+	}
+	if include != ListBlobsIncludeNone {
+		params.Set("include", fmt.Sprintf("%v", include))
+	}
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	params.Set("comp", "list")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -537,22 +522,22 @@ func (client ContainerClient) listBlobsResponder(resp pipeline.Response) (pipeli
 	if resp == nil {
 		return nil, err
 	}
-    result:= &ListBlobsResponse{rawResponse: resp.Response()}
-    if err != nil {
-        return result, err
-    }
-    defer resp.Response().Body.Close()
-    b, err:= ioutil.ReadAll(resp.Response().Body)
-    if err != nil {
-        return result, NewResponseError(err, resp.Response(), "failed to read response body")
-    }
-    if len(b) > 0 {
-        err = xml.Unmarshal(b, result)
-        if err != nil {
-            return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
-        }
-    }
-    return result, nil
+	result := &ListBlobsResponse{rawResponse: resp.Response()}
+	if err != nil {
+		return result, err
+	}
+	defer resp.Response().Body.Close()
+	b, err := ioutil.ReadAll(resp.Response().Body)
+	if err != nil {
+		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+	}
+	if len(b) > 0 {
+		err = xml.Unmarshal(b, result)
+		if err != nil {
+			return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
+		}
+	}
+	return result, nil
 }
 
 // SetACL sends the set acl request.
@@ -569,21 +554,20 @@ func (client ContainerClient) listBlobsResponder(resp pipeline.Response) (pipeli
 // provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when
 // storage analytics logging is enabled.
 func (client ContainerClient) SetACL(ctx context.Context, containerACL []SignedIdentifier, timeout *int32, leaseID *string, access PublicAccessType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerSetACLResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.setACLPreparer(containerACL, timeout, leaseID, access, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.setACLResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerSetACLResponse), err
 }
 
@@ -593,44 +577,44 @@ func (client ContainerClient) setACLPreparer(containerACL []SignedIdentifier, ti
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    params.Set("comp", "acl")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if access != PublicAccessNone {
-        req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
-    b, err := xml.Marshal(SignedIdentifiers{Value: containerACL})
-    if err != nil {
-        return req, pipeline.NewError(err, "failed to marshal request body")
-    }
-    req.Header.Set("Content-Type", "application/xml")
-    err = req.SetBody(bytes.NewReader(b))
-    if err != nil {
-        return req, pipeline.NewError(err, "failed to set request body")
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	params.Set("comp", "acl")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if access != PublicAccessNone {
+		req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	b, err := xml.Marshal(SignedIdentifiers{Value: containerACL})
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to marshal request body")
+	}
+	req.Header.Set("Content-Type", "application/xml")
+	err = req.SetBody(bytes.NewReader(b))
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to set request body")
+	}
 	return req, nil
 }
 
@@ -640,7 +624,7 @@ func (client ContainerClient) setACLResponder(resp pipeline.Response) (pipeline.
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerSetACLResponse{rawResponse: resp.Response()}, err
+	return &ContainerSetACLResponse{rawResponse: resp.Response()}, err
 }
 
 // SetMetadata operation sets one or more user-defined name-value pairs for the specified container.
@@ -657,25 +641,23 @@ func (client ContainerClient) setACLResponder(resp pipeline.Response) (pipeline.
 // on a blob if it has been modified since the specified date/time. requestID is provides a client-generated, opaque
 // value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client ContainerClient) SetMetadata(ctx context.Context, timeout *int32, leaseID *string, metadata map[string]string, ifModifiedSince *time.Time, requestID *string) (*ContainerSetMetadataResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}},
-    { targetValue: metadata,
-     constraints: []constraint{	{target: "metadata", name: null, rule: false ,
-    chain: []constraint{	{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
+		{targetValue: metadata,
+			constraints: []constraint{{target: "metadata", name: null, rule: false,
+				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.setMetadataPreparer(timeout, leaseID, metadata, ifModifiedSince, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.setMetadataResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*ContainerSetMetadataResponse), err
 }
 
@@ -685,28 +667,28 @@ func (client ContainerClient) setMetadataPreparer(timeout *int32, leaseID *strin
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("restype", "container")
-    params.Set("comp", "metadata")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if metadata != nil {
-        for k, v := range metadata {
-            req.Header.Set("x-ms-meta-"+k, v)
-        }
-            }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("restype", "container")
+	params.Set("comp", "metadata")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if metadata != nil {
+		for k, v := range metadata {
+			req.Header.Set("x-ms-meta-"+k, v)
+		}
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -716,6 +698,5 @@ func (client ContainerClient) setMetadataResponder(resp pipeline.Response) (pipe
 	if resp == nil {
 		return nil, err
 	}
-    return &ContainerSetMetadataResponse{rawResponse: resp.Response()}, err
+	return &ContainerSetMetadataResponse{rawResponse: resp.Response()}, err
 }
-

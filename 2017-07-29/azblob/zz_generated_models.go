@@ -82,6 +82,20 @@ const (
 	AccessTierHot AccessTierType = "Hot"
 	// AccessTierNone represents an empty AccessTierType.
 	AccessTierNone AccessTierType = ""
+	// AccessTierP10 ...
+	AccessTierP10 AccessTierType = "P10"
+	// AccessTierP20 ...
+	AccessTierP20 AccessTierType = "P20"
+	// AccessTierP30 ...
+	AccessTierP30 AccessTierType = "P30"
+	// AccessTierP4 ...
+	AccessTierP4 AccessTierType = "P4"
+	// AccessTierP40 ...
+	AccessTierP40 AccessTierType = "P40"
+	// AccessTierP50 ...
+	AccessTierP50 AccessTierType = "P50"
+	// AccessTierP6 ...
+	AccessTierP6 AccessTierType = "P6"
 )
 
 // ArchiveStatusType enumerates the values for archive status.
@@ -330,11 +344,6 @@ func (ababr AppendBlobsAppendBlockResponse) BlobCommittedBlockCount() string {
 	return ababr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
 }
 
-// ContentMD5 returns the value for header Content-MD5.
-func (ababr AppendBlobsAppendBlockResponse) ContentMD5() string {
-	return ababr.rawResponse.Header.Get("Content-MD5")
-}
-
 // Date returns the value for header Date.
 func (ababr AppendBlobsAppendBlockResponse) Date() time.Time {
 	s := ababr.rawResponse.Header.Get("Date")
@@ -419,7 +428,8 @@ type BlobProperties struct {
 	CopyStatusDescription *string        `xml:"CopyStatusDescription"`
 	ServerEncrypted       *bool          `xml:"ServerEncrypted"`
 	IncrementalCopy       *bool          `xml:"IncrementalCopy"`
-	// AccessTier - Possible values include: 'Hot', 'Cool', 'Archive', 'None'
+	DestinationSnapshot   *time.Time     `xml:"DestinationSnapshot"`
+	// AccessTier - Possible values include: 'P4', 'P6', 'P10', 'P20', 'P30', 'P40', 'P50', 'Hot', 'Cool', 'Archive', 'None'
 	AccessTier         AccessTierType `xml:"AccessTier"`
 	AccessTierInferred *bool          `xml:"AccessTierInferred"`
 	// ArchiveStatus - Possible values include: 'RehydratePendingToHot', 'RehydratePendingToCool', 'None'
@@ -751,11 +761,6 @@ func (bgpr BlobsGetPropertiesResponse) ContentLength() int64 {
 	return i
 }
 
-// ContentMD5 returns the value for header Content-MD5.
-func (bgpr BlobsGetPropertiesResponse) ContentMD5() string {
-	return bgpr.rawResponse.Header.Get("Content-MD5")
-}
-
 // ContentType returns the value for header Content-Type.
 func (bgpr BlobsGetPropertiesResponse) ContentType() string {
 	return bgpr.rawResponse.Header.Get("Content-Type")
@@ -988,11 +993,6 @@ func (bpr BlobsPutResponse) HTTPStatusCode() int {
 // HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
 func (bpr BlobsPutResponse) HTTPStatus() string {
 	return bpr.rawResponse.Status
-}
-
-// ContentMD5 returns the value for header Content-MD5.
-func (bpr BlobsPutResponse) ContentMD5() string {
-	return bpr.rawResponse.Header.Get("Content-MD5")
 }
 
 // Date returns the value for header Date.
@@ -1300,11 +1300,6 @@ func (bbpblr BlockBlobsPutBlockListResponse) HTTPStatus() string {
 	return bbpblr.rawResponse.Status
 }
 
-// ContentMD5 returns the value for header Content-MD5.
-func (bbpblr BlockBlobsPutBlockListResponse) ContentMD5() string {
-	return bbpblr.rawResponse.Header.Get("Content-MD5")
-}
-
 // Date returns the value for header Date.
 func (bbpblr BlockBlobsPutBlockListResponse) Date() time.Time {
 	s := bbpblr.rawResponse.Header.Get("Date")
@@ -1369,11 +1364,6 @@ func (bbpbr BlockBlobsPutBlockResponse) HTTPStatusCode() int {
 // HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
 func (bbpbr BlockBlobsPutBlockResponse) HTTPStatus() string {
 	return bbpbr.rawResponse.Status
-}
-
-// ContentMD5 returns the value for header Content-MD5.
-func (bbpbr BlockBlobsPutBlockResponse) ContentMD5() string {
-	return bbpbr.rawResponse.Header.Get("Content-MD5")
 }
 
 // Date returns the value for header Date.
@@ -2102,11 +2092,6 @@ func (gr GetResponse) ContentLength() int64 {
 	return i
 }
 
-// ContentMD5 returns the value for header Content-MD5.
-func (gr GetResponse) ContentMD5() string {
-	return gr.rawResponse.Header.Get("Content-MD5")
-}
-
 // ContentRange returns the value for header Content-Range.
 func (gr GetResponse) ContentRange() string {
 	return gr.rawResponse.Header.Get("Content-Range")
@@ -2451,11 +2436,6 @@ func (pbppr PageBlobsPutPageResponse) BlobSequenceNumber() int32 {
 		panic(err)
 	}
 	return int32(i)
-}
-
-// ContentMD5 returns the value for header Content-MD5.
-func (pbppr PageBlobsPutPageResponse) ContentMD5() string {
-	return pbppr.rawResponse.Header.Get("Content-MD5")
 }
 
 // Date returns the value for header Date.

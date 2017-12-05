@@ -6,12 +6,14 @@ package azblob
 import (
 	"bytes"
 	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net"
 	"net/http"
-	""
 )
+
 // if you want to provide custom error handling set this variable to your constructor function
 var responseErrorFactory func(cause error, response *http.Response, description string) error
+
 // ResponseError identifies a responder-generated network or response parsing error.
 type ResponseError interface {
 	// Error exposes the Error(), Temporary() and Timeout() methods.
@@ -20,6 +22,7 @@ type ResponseError interface {
 	// Response returns the HTTP response. You may examine this but you should not modify it.
 	Response() *http.Response
 }
+
 // NewResponseError creates an error object that implements the error interface.
 func NewResponseError(cause error, response *http.Response, description string) error {
 	if responseErrorFactory != nil {
@@ -31,12 +34,14 @@ func NewResponseError(cause error, response *http.Response, description string) 
 		description: description,
 	}
 }
+
 // responseError is the internal struct that implements the public ResponseError interface.
 type responseError struct {
 	pipeline.ErrorNode // This is embedded so that responseError "inherits" Error, Temporary, Timeout, and Cause
 	response           *http.Response
 	description        string
 }
+
 // Error implements the error interface's Error method to return a string representation of the error.
 func (e *responseError) Error() string {
 	b := &bytes.Buffer{}
@@ -45,10 +50,12 @@ func (e *responseError) Error() string {
 	s := b.String()
 	return e.ErrorNode.Error(s)
 }
+
 // Response implements the ResponseError interface's method to return the HTTP response.
 func (e *responseError) Response() *http.Response {
 	return e.response
 }
+
 // RFC7807 PROBLEM ------------------------------------------------------------------------------------
 // RFC7807Problem ... This type can be publicly embedded in another type that wants to add additional members.
 /*type RFC7807Problem struct {

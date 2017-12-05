@@ -5,11 +5,12 @@ package azblob
 
 import (
 	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"reflect"
 	"regexp"
 	"strings"
-	""
 )
+
 // Constraint stores constraint name, target field name
 // Rule and chain validations.
 type constraint struct {
@@ -25,11 +26,13 @@ type constraint struct {
 	// Chain validations for struct type
 	chain []constraint
 }
+
 // Validation stores parameter-wise validation.
 type validation struct {
 	targetValue interface{}
 	constraints []constraint
 }
+
 // Constraint list
 const (
 	empty            = "Empty"
@@ -47,6 +50,7 @@ const (
 	exclusiveMinimum = "ExclusiveMinimum"
 	inclusiveMinimum = "InclusiveMinimum"
 )
+
 // Validate method validates constraints on parameter
 // passed in validation array.
 func validate(m []validation) error {

@@ -4,36 +4,35 @@ package azblob
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
-    "net/url"
-    ""
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	"net/url"
 )
 
 const (
-    // ServiceVersion specifies the version of the operations used in this package.
-    ServiceVersion = "2016-05-31"
+	// ServiceVersion specifies the version of the operations used in this package.
+	ServiceVersion = "2016-05-31"
 )
 
 // ManagementClient is the base client for Azblob.
 type ManagementClient struct {
-    url url.URL
-    p pipeline.Pipeline
+	url url.URL
+	p   pipeline.Pipeline
 }
 
 // NewManagementClient creates an instance of the ManagementClient client.
 func NewManagementClient(url url.URL, p pipeline.Pipeline) ManagementClient {
-    return ManagementClient{
-        url: url,
-        p: p,
-    }
+	return ManagementClient{
+		url: url,
+		p:   p,
+	}
 }
 
 // URL returns a copy of the URL for this client.
 func (mc ManagementClient) URL() url.URL {
-    return mc.url
+	return mc.url
 }
 
 // Pipeline returns the pipeline for this client.
 func (mc ManagementClient) Pipeline() pipeline.Pipeline {
-    return mc.p
+	return mc.p
 }
-

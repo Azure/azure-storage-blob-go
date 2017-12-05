@@ -4,31 +4,25 @@ package azblob
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
-        "net/url"
-    ""
-        "net/url"
-    "net/http"
-        "net/url"
-    "context"
-        "net/url"
-    "io"
-        "net/url"
-    "fmt"
-        "net/url"
-    "time"
-        "net/url"
-    "encoding/xml"
-        "net/url"
-    "io/ioutil"
+	"context"
+	"encoding/xml"
+	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 // PageBlobsClient is the client for the PageBlobs methods of the Azblob service.
 type PageBlobsClient struct {
-    ManagementClient
+	ManagementClient
 }
+
 // NewPageBlobsClient creates an instance of the PageBlobsClient client.
 func NewPageBlobsClient(url url.URL, p pipeline.Pipeline) PageBlobsClient {
-    return PageBlobsClient{NewManagementClient(url, p)}
+	return PageBlobsClient{NewManagementClient(url, p)}
 }
 
 // GetPageRanges the Get Page Ranges operation returns the list of valid page ranges for a page blob or snapshot of a
@@ -52,21 +46,20 @@ func NewPageBlobsClient(url url.URL, p pipeline.Pipeline) PageBlobsClient {
 // requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
 // logs when storage analytics logging is enabled.
 func (client PageBlobsClient) GetPageRanges(ctx context.Context, snapshot *time.Time, timeout *int32, prevsnapshot *time.Time, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageList, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.getPageRangesPreparer(snapshot, timeout, prevsnapshot, rangeParameter, leaseID, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getPageRangesResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*PageList), err
 }
 
@@ -76,40 +69,40 @@ func (client PageBlobsClient) getPageRangesPreparer(snapshot *time.Time, timeout
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if snapshot != nil {
-        params.Set("snapshot", (*snapshot).Format(rfc3339Format))
-    }
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-    if prevsnapshot != nil {
-        params.Set("prevsnapshot", (*prevsnapshot).Format(rfc3339Format))
-    }
-        params.Set("comp", "pagelist")
-    req.URL.RawQuery = params.Encode()
-    if rangeParameter != nil {
-        req.Header.Set("x-ms-range", *rangeParameter)
-    }
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if snapshot != nil {
+		params.Set("snapshot", (*snapshot).Format(rfc3339Format))
+	}
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	if prevsnapshot != nil {
+		params.Set("prevsnapshot", (*prevsnapshot).Format(rfc3339Format))
+	}
+	params.Set("comp", "pagelist")
+	req.URL.RawQuery = params.Encode()
+	if rangeParameter != nil {
+		req.Header.Set("x-ms-range", *rangeParameter)
+	}
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
@@ -119,22 +112,22 @@ func (client PageBlobsClient) getPageRangesResponder(resp pipeline.Response) (pi
 	if resp == nil {
 		return nil, err
 	}
-    result:= &PageList{rawResponse: resp.Response()}
-    if err != nil {
-        return result, err
-    }
-    defer resp.Response().Body.Close()
-    b, err:= ioutil.ReadAll(resp.Response().Body)
-    if err != nil {
-        return result, NewResponseError(err, resp.Response(), "failed to read response body")
-    }
-    if len(b) > 0 {
-        err = xml.Unmarshal(b, result)
-        if err != nil {
-            return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
-        }
-    }
-    return result, nil
+	result := &PageList{rawResponse: resp.Response()}
+	if err != nil {
+		return result, err
+	}
+	defer resp.Response().Body.Close()
+	b, err := ioutil.ReadAll(resp.Response().Body)
+	if err != nil {
+		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+	}
+	if len(b) > 0 {
+		err = xml.Unmarshal(b, result)
+		if err != nil {
+			return result, NewResponseError(err, resp.Response(), "failed to unmarshal response body")
+		}
+	}
+	return result, nil
 }
 
 // IncrementalCopy the Incremental Copy Blob operation copies a snapshot of the source page blob to a destination page
@@ -159,25 +152,23 @@ func (client PageBlobsClient) getPageRangesResponder(resp pipeline.Response) (pi
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
 func (client PageBlobsClient) IncrementalCopy(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsIncrementalCopyResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}},
-    { targetValue: metadata,
-     constraints: []constraint{	{target: "metadata", name: null, rule: false ,
-    chain: []constraint{	{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
+		{targetValue: metadata,
+			constraints: []constraint{{target: "metadata", name: null, rule: false,
+				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.incrementalCopyPreparer(copySource, timeout, metadata, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.incrementalCopyResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*PageBlobsIncrementalCopyResponse), err
 }
 
@@ -187,44 +178,44 @@ func (client PageBlobsClient) incrementalCopyPreparer(copySource string, timeout
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("comp", "incrementalcopy")
-    req.URL.RawQuery = params.Encode()
-    if metadata != nil {
-        for k, v := range metadata {
-            req.Header.Set("x-ms-meta-"+k, v)
-        }
-            }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-copy-source", copySource)
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "incrementalcopy")
+	req.URL.RawQuery = params.Encode()
+	if metadata != nil {
+		for k, v := range metadata {
+			req.Header.Set("x-ms-meta-"+k, v)
+		}
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-copy-source", copySource)
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // incrementalCopyResponder handles the response to the IncrementalCopy request.
 func (client PageBlobsClient) incrementalCopyResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusAccepted)
+	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
 	}
-    return &PageBlobsIncrementalCopyResponse{rawResponse: resp.Response()}, err
+	return &PageBlobsIncrementalCopyResponse{rawResponse: resp.Response()}, err
 }
 
 // PutPage the Put Page operation writes a range of pages to a page blob
@@ -249,21 +240,20 @@ func (client PageBlobsClient) incrementalCopyResponder(resp pipeline.Response) (
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
 func (client PageBlobsClient) PutPage(ctx context.Context, pageWrite PageWriteType, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int32, ifSequenceNumberLessThan *int32, ifSequenceNumberEqualTo *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsPutPageResponse, error) {
-    if err := validate([]validation{
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.putPagePreparer(pageWrite, body, timeout, rangeParameter, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.putPageResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*PageBlobsPutPageResponse), err
 }
 
@@ -273,53 +263,52 @@ func (client PageBlobsClient) putPagePreparer(pageWrite PageWriteType, body io.R
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("comp", "page")
-    req.URL.RawQuery = params.Encode()
-    if rangeParameter != nil {
-        req.Header.Set("x-ms-range", *rangeParameter)
-    }
-    req.Header.Set("x-ms-page-write", fmt.Sprintf("%v", pageWrite))
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if ifSequenceNumberLessThanOrEqualTo != nil {
-        req.Header.Set("x-ms-if-sequence-number-le", fmt.Sprintf("%v", *ifSequenceNumberLessThanOrEqualTo))
-    }
-    if ifSequenceNumberLessThan != nil {
-        req.Header.Set("x-ms-if-sequence-number-lt", fmt.Sprintf("%v", *ifSequenceNumberLessThan))
-    }
-    if ifSequenceNumberEqualTo != nil {
-        req.Header.Set("x-ms-if-sequence-number-eq", fmt.Sprintf("%v", *ifSequenceNumberEqualTo))
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "page")
+	req.URL.RawQuery = params.Encode()
+	if rangeParameter != nil {
+		req.Header.Set("x-ms-range", *rangeParameter)
+	}
+	req.Header.Set("x-ms-page-write", fmt.Sprintf("%v", pageWrite))
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if ifSequenceNumberLessThanOrEqualTo != nil {
+		req.Header.Set("x-ms-if-sequence-number-le", fmt.Sprintf("%v", *ifSequenceNumberLessThanOrEqualTo))
+	}
+	if ifSequenceNumberLessThan != nil {
+		req.Header.Set("x-ms-if-sequence-number-lt", fmt.Sprintf("%v", *ifSequenceNumberLessThan))
+	}
+	if ifSequenceNumberEqualTo != nil {
+		req.Header.Set("x-ms-if-sequence-number-eq", fmt.Sprintf("%v", *ifSequenceNumberEqualTo))
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // putPageResponder handles the response to the PutPage request.
 func (client PageBlobsClient) putPageResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusCreated)
+	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
 	}
-    return &PageBlobsPutPageResponse{rawResponse: resp.Response()}, err
+	return &PageBlobsPutPageResponse{rawResponse: resp.Response()}, err
 }
-

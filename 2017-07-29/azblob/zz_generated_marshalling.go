@@ -102,6 +102,7 @@ type blobProperties struct {
 	CopyStatusDescription *string           `xml:"CopyStatusDescription"`
 	ServerEncrypted       *bool             `xml:"ServerEncrypted"`
 	IncrementalCopy       *bool             `xml:"IncrementalCopy"`
+	DestinationSnapshot   *timeRFC1123      `xml:"DestinationSnapshot"`
 	AccessTier            AccessTierType    `xml:"AccessTier"`
 	AccessTierInferred    *bool             `xml:"AccessTierInferred"`
 	ArchiveStatus         ArchiveStatusType `xml:"ArchiveStatus"`

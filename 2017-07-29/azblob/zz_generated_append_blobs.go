@@ -4,27 +4,23 @@ package azblob
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
-        "net/url"
-    ""
-        "net/url"
-    "net/http"
-        "net/url"
-    "context"
-        "net/url"
-    "io"
-        "net/url"
-    "fmt"
-        "net/url"
-    "time"
+	"context"
+	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 // AppendBlobsClient is the client for the AppendBlobs methods of the Azblob service.
 type AppendBlobsClient struct {
-    ManagementClient
+	ManagementClient
 }
+
 // NewAppendBlobsClient creates an instance of the AppendBlobsClient client.
 func NewAppendBlobsClient(url url.URL, p pipeline.Pipeline) AppendBlobsClient {
-    return AppendBlobsClient{NewManagementClient(url, p)}
+	return AppendBlobsClient{NewManagementClient(url, p)}
 }
 
 // AppendBlock the Append Block operation commits a new block of data to the end of an existing append blob. The Append
@@ -48,23 +44,22 @@ func NewAppendBlobsClient(url url.URL, p pipeline.Pipeline) AppendBlobsClient {
 // matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
 // in the analytics logs when storage analytics logging is enabled.
 func (client AppendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
-    if err := validate([]validation{
-    { targetValue: body,
-     constraints: []constraint{	{target: "body", name: null, rule: true, chain: nil }}},
-    { targetValue: timeout,
-     constraints: []constraint{	{target: "timeout", name: null, rule: false ,
-    chain: []constraint{	{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil },
-    }}}}}); err != nil {
-        return nil, err
-    }
+	if err := validate([]validation{
+		{targetValue: body,
+			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
 	req, err := client.appendBlockPreparer(body, timeout, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.appendBlockResponder}, req)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	return resp.(*AppendBlobsAppendBlockResponse), err
 }
 
@@ -74,46 +69,45 @@ func (client AppendBlobsClient) appendBlockPreparer(body io.ReadSeeker, timeout 
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
-    params := req.URL.Query()
-    if timeout != nil {
-        params.Set("timeout", fmt.Sprintf("%v", *timeout))
-    }
-        params.Set("comp", "appendblock")
-    req.URL.RawQuery = params.Encode()
-    if leaseID != nil {
-        req.Header.Set("x-ms-lease-id", *leaseID)
-    }
-    if maxSize != nil {
-        req.Header.Set("x-ms-blob-condition-maxsize", fmt.Sprintf("%v", *maxSize))
-    }
-    if appendPosition != nil {
-        req.Header.Set("x-ms-blob-condition-appendpos", fmt.Sprintf("%v", *appendPosition))
-    }
-    if ifModifiedSince != nil {
-        req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifUnmodifiedSince != nil {
-        req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-    }
-    if ifMatches != nil {
-        req.Header.Set("If-Match", string(*ifMatches))
-    }
-    if ifNoneMatch != nil {
-        req.Header.Set("If-None-Match", string(*ifNoneMatch))
-    }
-    req.Header.Set("x-ms-version", ServiceVersion)
-    if requestID != nil {
-        req.Header.Set("x-ms-client-request-id", *requestID)
-    }
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "appendblock")
+	req.URL.RawQuery = params.Encode()
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if maxSize != nil {
+		req.Header.Set("x-ms-blob-condition-maxsize", fmt.Sprintf("%v", *maxSize))
+	}
+	if appendPosition != nil {
+		req.Header.Set("x-ms-blob-condition-appendpos", fmt.Sprintf("%v", *appendPosition))
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
 	return req, nil
 }
 
 // appendBlockResponder handles the response to the AppendBlock request.
 func (client AppendBlobsClient) appendBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
-	err := validateResponse(resp, http.StatusOK,http.StatusCreated)
+	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
 	}
-    return &AppendBlobsAppendBlockResponse{rawResponse: resp.Response()}, err
+	return &AppendBlobsAppendBlockResponse{rawResponse: resp.Response()}, err
 }
-

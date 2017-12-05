@@ -6,22 +6,27 @@ package azblob
 import (
 	"context"
 	"encoding/xml"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io/ioutil"
-	""
 )
+
 type responder func(resp pipeline.Response) (result pipeline.Response, err error)
+
 // ResponderPolicyFactory is a Factory capable of creating a responder pipeline.
 type responderPolicyFactory struct {
 	responder responder
 }
+
 // New creates a responder policy factory.
 func (arpf responderPolicyFactory) New(node pipeline.Node) pipeline.Policy {
 	return responderPolicy{node: node, responder: arpf.responder}
 }
+
 type responderPolicy struct {
 	node      pipeline.Node
 	responder responder
 }
+
 // Do sends the request to the service and validates/deserializes the HTTP response.
 func (arp responderPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 	resp, err := arp.node.Do(ctx, request)
@@ -30,6 +35,7 @@ func (arp responderPolicy) Do(ctx context.Context, request pipeline.Request) (pi
 	}
 	return arp.responder(resp)
 }
+
 // validateResponse checks an HTTP response's status code against a legal set of codes.
 // If the response code is not legal, then validateResponse reads all of the response's body
 // (containing error information) and returns a response error.
@@ -52,10 +58,10 @@ func validateResponse(resp pipeline.Response, successStatusCodes ...int) error {
 	}
 	// the service code, description and details will be populated during unmarshalling
 	responseError := NewResponseError(nil, resp.Response(), resp.Response().Status)
-    if len(b) > 0 {
-	    if err = xml.Unmarshal(b, &responseError); err != nil {
-            return NewResponseError(err, resp.Response(), "failed to unmarshal response body")
-	    }
-    }
+	if len(b) > 0 {
+		if err = xml.Unmarshal(b, &responseError); err != nil {
+			return NewResponseError(err, resp.Response(), "failed to unmarshal response body")
+		}
+	}
 	return responseError
 }
