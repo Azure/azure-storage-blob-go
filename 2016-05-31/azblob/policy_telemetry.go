@@ -35,19 +35,19 @@ type telemetryPolicyFactory struct {
 }
 
 // New creates a telemetryPolicy object.
-func (f *telemetryPolicyFactory) New(node pipeline.Node) pipeline.Policy {
-	return &telemetryPolicy{node: node, factory: f}
+func (f *telemetryPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return &telemetryPolicy{factory: f, next: next}
 }
 
 // telemetryPolicy ...
 type telemetryPolicy struct {
-	node    pipeline.Node
 	factory *telemetryPolicyFactory
+	next    pipeline.Policy
 }
 
 func (p *telemetryPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 	request.Header.Set("User-Agent", p.factory.telemetryValue)
-	return p.node.Do(ctx, request)
+	return p.next.Do(ctx, request)
 }
 
 // NOTE: the ONLY function that should read OR write to this variable is platformInfo
