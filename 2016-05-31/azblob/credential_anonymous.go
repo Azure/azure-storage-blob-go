@@ -24,8 +24,8 @@ type anonymousCredentialPolicyFactory struct {
 }
 
 // New creates a credential policy object.
-func (f *anonymousCredentialPolicyFactory) New(node pipeline.Node) pipeline.Policy {
-	return &anonymousCredentialPolicy{node: node}
+func (f *anonymousCredentialPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return &anonymousCredentialPolicy{next: next}
 }
 
 // credentialMarker is a package-internal method that exists just to satisfy the Credential interface.
@@ -33,11 +33,11 @@ func (*anonymousCredentialPolicyFactory) credentialMarker() {}
 
 // anonymousCredentialPolicy is the credential's policy object.
 type anonymousCredentialPolicy struct {
-	node pipeline.Node
+	next pipeline.Policy
 }
 
 // Do implements the credential's policy interface.
 func (p anonymousCredentialPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 	// For anonymous credentials, this is effectively a no-op
-	return p.node.Do(ctx, request)
+	return p.next.Do(ctx, request)
 }
