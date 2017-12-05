@@ -13,14 +13,14 @@ import (
 	"time"
 )
 
-// AppendBlobsClient is the client for the AppendBlobs methods of the Azblob service.
-type AppendBlobsClient struct {
-	ManagementClient
+// appendBlobsClient is the client for the AppendBlobs methods of the Azblob service.
+type appendBlobsClient struct {
+	managementClient
 }
 
-// NewAppendBlobsClient creates an instance of the AppendBlobsClient client.
-func NewAppendBlobsClient(url url.URL, p pipeline.Pipeline) AppendBlobsClient {
-	return AppendBlobsClient{NewManagementClient(url, p)}
+// newAppendBlobsClient creates an instance of the appendBlobsClient client.
+func newAppendBlobsClient(url url.URL, p pipeline.Pipeline) appendBlobsClient {
+	return appendBlobsClient{newManagementClient(url, p)}
 }
 
 // AppendBlock the Append Block operation commits a new block of data to the end of an existing append blob. The Append
@@ -43,7 +43,7 @@ func NewAppendBlobsClient(url url.URL, p pipeline.Pipeline) AppendBlobsClient {
 // operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
 // matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
 // in the analytics logs when storage analytics logging is enabled.
-func (client AppendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
+func (client appendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -64,7 +64,7 @@ func (client AppendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSee
 }
 
 // appendBlockPreparer prepares the AppendBlock request.
-func (client AppendBlobsClient) appendBlockPreparer(body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobsClient) appendBlockPreparer(body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -104,7 +104,7 @@ func (client AppendBlobsClient) appendBlockPreparer(body io.ReadSeeker, timeout 
 }
 
 // appendBlockResponder handles the response to the AppendBlock request.
-func (client AppendBlobsClient) appendBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client appendBlobsClient) appendBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err

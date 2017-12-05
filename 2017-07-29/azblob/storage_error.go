@@ -69,7 +69,7 @@ func (e *storageError) Error() string {
 		}
 	}
 	req := pipeline.Request{Request: e.response.Request}.Copy() // Make a copy of the response's request
-	pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(req), e.response)
+	pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(req), e.response, nil)
 	return e.ErrorNode.Error(b.String())
 }
 

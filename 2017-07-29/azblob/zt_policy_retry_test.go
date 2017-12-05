@@ -31,11 +31,9 @@ func (s *aztestsSuite) TestRetryTestScenarioUntilSuccess(c *chk.C) {
 func (s *aztestsSuite) TestRetryTestScenarioUntilOperationCancel(c *chk.C) {
 	testRetryTestScenario(c, retryTestScenarioRetryUntilOperationCancel)
 }
-
 func (s *aztestsSuite) TestRetryTestScenarioUntilMaxRetries(c *chk.C) {
 	testRetryTestScenario(c, retryTestScenarioRetryUntilMaxRetries)
 }
-
 func newRetryTestPolicyFactory(c *chk.C, scenario retryTestScenario, maxRetries int32, cancel context.CancelFunc) *retryTestPolicyFactory {
 	return &retryTestPolicyFactory{c: c, scenario: scenario, maxRetries: maxRetries, cancel: cancel}
 }
@@ -48,13 +46,13 @@ type retryTestPolicyFactory struct {
 	try        int32
 }
 
-func (f *retryTestPolicyFactory) New(node pipeline.Node) pipeline.Policy {
+func (f *retryTestPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
 	f.try = 0 // Reset this for each test
-	return &retryTestPolicy{node: node, factory: f}
+	return &retryTestPolicy{factory: f, next: next}
 }
 
 type retryTestPolicy struct {
-	node    pipeline.Node
+	next    pipeline.Policy
 	factory *retryTestPolicyFactory
 }
 
@@ -158,8 +156,8 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 	ctx, cancel := context.WithTimeout(ctx, 64 /*2^MaxTries(6)*/ *retryOptions.TryTimeout)
 	retrytestPolicyFactory := newRetryTestPolicyFactory(c, scenario, retryOptions.MaxTries, cancel)
 	factories := [...]pipeline.Factory{
-		retrytestPolicyFactory,
 		azblob.NewRetryPolicyFactory(retryOptions),
+		retrytestPolicyFactory,
 	}
 	p := pipeline.NewPipeline(factories[:], pipeline.Options{})
 	request, err := pipeline.NewRequest(http.MethodGet, *u, strings.NewReader("TestData"))
@@ -172,7 +170,7 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 	case retryTestScenarioRetryUntilMaxRetries:
 		c.Assert(err, chk.NotNil)                                               // Ensure we ended with an error
 		c.Assert(response, chk.IsNil)                                           // Ensure we ended without a valid response
-		c.Assert(retrytestPolicyFactory.try, chk.Equals, retryOptions.MaxTries) // Ensure the operation end with the exact right number of tries
+		c.Assert(retrytestPolicyFactory.try, chk.Equals, retryOptions.MaxTries) // Ensure the operation ends with the exact right number of tries
 	case retryTestScenarioRetryUntilOperationCancel:
 		c.Assert(err, chk.Equals, context.Canceled)                                     // Ensure we ended due to cancellation
 		c.Assert(response, chk.IsNil)                                                   // Ensure we ended without a valid response

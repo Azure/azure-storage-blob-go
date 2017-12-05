@@ -2044,11 +2044,6 @@ func (gr GetResponse) BlobCommittedBlockCount() string {
 	return gr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
 }
 
-// BlobContentMD5 returns the value for header x-ms-blob-content-md5.
-func (gr GetResponse) BlobContentMD5() string {
-	return gr.rawResponse.Header.Get("x-ms-blob-content-md5")
-}
-
 // BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
 func (gr GetResponse) BlobSequenceNumber() string {
 	return gr.rawResponse.Header.Get("x-ms-blob-sequence-number")

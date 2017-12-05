@@ -39,8 +39,8 @@ func (f SharedKeyCredential) AccountName() string {
 }
 
 // New creates a credential policy object.
-func (f *SharedKeyCredential) New(node pipeline.Node) pipeline.Policy {
-	return sharedKeyCredentialPolicy{node: node, factory: f}
+func (f *SharedKeyCredential) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return sharedKeyCredentialPolicy{factory: f, next: next, config: config}
 }
 
 // credentialMarker is a package-internal method that exists just to satisfy the Credential interface.
@@ -48,8 +48,9 @@ func (*SharedKeyCredential) credentialMarker() {}
 
 // sharedKeyCredentialPolicy is the credential's policy object.
 type sharedKeyCredentialPolicy struct {
-	node    pipeline.Node
 	factory *SharedKeyCredential
+	next    pipeline.Policy
+	config  *pipeline.Configuration
 }
 
 // Do implements the credential's policy interface.
@@ -63,10 +64,10 @@ func (p sharedKeyCredentialPolicy) Do(ctx context.Context, request pipeline.Requ
 	authHeader := strings.Join([]string{"SharedKey ", p.factory.accountName, ":", signature}, "")
 	request.Header[headerAuthorization] = []string{authHeader}
 
-	response, err := p.node.Do(ctx, request)
+	response, err := p.next.Do(ctx, request)
 	if err != nil && response != nil && response.Response() != nil && response.Response().StatusCode == http.StatusForbidden {
 		// Service failed to authenticate request, log it
-		p.node.Log(pipeline.LogError, "===== HTTP Forbidden status, String-to-Sign:\n"+stringToSign+"\n===============================\n")
+		p.config.Log(pipeline.LogError, "===== HTTP Forbidden status, String-to-Sign:\n"+stringToSign+"\n===============================\n")
 	}
 	return response, err
 }

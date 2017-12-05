@@ -13,14 +13,14 @@ import (
 	"time"
 )
 
-// BlobsClient is the client for the Blobs methods of the Azblob service.
-type BlobsClient struct {
-	ManagementClient
+// blobsClient is the client for the Blobs methods of the Azblob service.
+type blobsClient struct {
+	managementClient
 }
 
-// NewBlobsClient creates an instance of the BlobsClient client.
-func NewBlobsClient(url url.URL, p pipeline.Pipeline) BlobsClient {
-	return BlobsClient{NewManagementClient(url, p)}
+// newBlobsClient creates an instance of the blobsClient client.
+func newBlobsClient(url url.URL, p pipeline.Pipeline) blobsClient {
+	return blobsClient{newManagementClient(url, p)}
 }
 
 // AbortCopy the Abort Copy Blob operation aborts a pending Copy Blob operation, and leaves a destination blob with
@@ -33,7 +33,7 @@ func NewBlobsClient(url url.URL, p pipeline.Pipeline) BlobsClient {
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) AbortCopy(ctx context.Context, copyID string, copyActionAbortConstant string, timeout *int32, leaseID *string, requestID *string) (*BlobsAbortCopyResponse, error) {
+func (client blobsClient) AbortCopy(ctx context.Context, copyID string, copyActionAbortConstant string, timeout *int32, leaseID *string, requestID *string) (*BlobsAbortCopyResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -52,7 +52,7 @@ func (client BlobsClient) AbortCopy(ctx context.Context, copyID string, copyActi
 }
 
 // abortCopyPreparer prepares the AbortCopy request.
-func (client BlobsClient) abortCopyPreparer(copyID string, copyActionAbortConstant string, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) abortCopyPreparer(copyID string, copyActionAbortConstant string, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -76,7 +76,7 @@ func (client BlobsClient) abortCopyPreparer(copyID string, copyActionAbortConsta
 }
 
 // abortCopyResponder handles the response to the AbortCopy request.
-func (client BlobsClient) abortCopyResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) abortCopyResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusNoContent)
 	if resp == nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (client BlobsClient) abortCopyResponder(resp pipeline.Response) (pipeline.R
 // and matches this ID. sourceLeaseID is specify this header to perform the operation only if the lease ID given
 // matches the active lease ID of the source blob. requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) Copy(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (*BlobsCopyResponse, error) {
+func (client blobsClient) Copy(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (*BlobsCopyResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -130,7 +130,7 @@ func (client BlobsClient) Copy(ctx context.Context, copySource string, timeout *
 }
 
 // copyPreparer prepares the Copy request.
-func (client BlobsClient) copyPreparer(copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) copyPreparer(copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -184,7 +184,7 @@ func (client BlobsClient) copyPreparer(copySource string, timeout *int32, metada
 }
 
 // copyResponder handles the response to the Copy request.
-func (client BlobsClient) copyResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) copyResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -210,7 +210,7 @@ func (client BlobsClient) copyResponder(resp pipeline.Response) (pipeline.Respon
 // on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) Delete(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, deleteSnapshots DeleteSnapshotsOptionType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsDeleteResponse, error) {
+func (client blobsClient) Delete(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, deleteSnapshots DeleteSnapshotsOptionType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsDeleteResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -229,7 +229,7 @@ func (client BlobsClient) Delete(ctx context.Context, snapshot *time.Time, timeo
 }
 
 // deletePreparer prepares the Delete request.
-func (client BlobsClient) deletePreparer(snapshot *time.Time, timeout *int32, leaseID *string, deleteSnapshots DeleteSnapshotsOptionType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) deletePreparer(snapshot *time.Time, timeout *int32, leaseID *string, deleteSnapshots DeleteSnapshotsOptionType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("DELETE", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -268,7 +268,7 @@ func (client BlobsClient) deletePreparer(snapshot *time.Time, timeout *int32, le
 }
 
 // deleteResponder handles the response to the Delete request.
-func (client BlobsClient) deleteResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) deleteResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -293,7 +293,7 @@ func (client BlobsClient) deleteResponder(resp pipeline.Response) (pipeline.Resp
 // specify an ETag value to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to
 // operate only on blobs without a matching value. requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) Get(ctx context.Context, snapshot *time.Time, timeout *int32, rangeParameter *string, leaseID *string, rangeGetContentMD5 *bool, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*GetResponse, error) {
+func (client blobsClient) Get(ctx context.Context, snapshot *time.Time, timeout *int32, rangeParameter *string, leaseID *string, rangeGetContentMD5 *bool, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*GetResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -312,7 +312,7 @@ func (client BlobsClient) Get(ctx context.Context, snapshot *time.Time, timeout 
 }
 
 // getPreparer prepares the Get request.
-func (client BlobsClient) getPreparer(snapshot *time.Time, timeout *int32, rangeParameter *string, leaseID *string, rangeGetContentMD5 *bool, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) getPreparer(snapshot *time.Time, timeout *int32, rangeParameter *string, leaseID *string, rangeGetContentMD5 *bool, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -354,7 +354,7 @@ func (client BlobsClient) getPreparer(snapshot *time.Time, timeout *int32, range
 }
 
 // getResponder handles the response to the Get request.
-func (client BlobsClient) getResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) getResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusPartialContent)
 	if resp == nil {
 		return nil, err
@@ -376,7 +376,7 @@ func (client BlobsClient) getResponder(resp pipeline.Response) (pipeline.Respons
 // on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) GetMetadata(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsGetMetadataResponse, error) {
+func (client blobsClient) GetMetadata(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsGetMetadataResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -395,7 +395,7 @@ func (client BlobsClient) GetMetadata(ctx context.Context, snapshot *time.Time, 
 }
 
 // getMetadataPreparer prepares the GetMetadata request.
-func (client BlobsClient) getMetadataPreparer(snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) getMetadataPreparer(snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -432,7 +432,7 @@ func (client BlobsClient) getMetadataPreparer(snapshot *time.Time, timeout *int3
 }
 
 // getMetadataResponder handles the response to the GetMetadata request.
-func (client BlobsClient) getMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) getMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -455,7 +455,7 @@ func (client BlobsClient) getMetadataResponder(resp pipeline.Response) (pipeline
 // on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) GetProperties(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsGetPropertiesResponse, error) {
+func (client blobsClient) GetProperties(ctx context.Context, snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsGetPropertiesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -474,7 +474,7 @@ func (client BlobsClient) GetProperties(ctx context.Context, snapshot *time.Time
 }
 
 // getPropertiesPreparer prepares the GetProperties request.
-func (client BlobsClient) getPropertiesPreparer(snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) getPropertiesPreparer(snapshot *time.Time, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("HEAD", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -510,7 +510,7 @@ func (client BlobsClient) getPropertiesPreparer(snapshot *time.Time, timeout *in
 }
 
 // getPropertiesResponder handles the response to the GetProperties request.
-func (client BlobsClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -539,7 +539,7 @@ func (client BlobsClient) getPropertiesResponder(resp pipeline.Response) (pipeli
 // only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
 // matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
 // in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) Lease(ctx context.Context, action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsLeaseResponse, error) {
+func (client blobsClient) Lease(ctx context.Context, action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsLeaseResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -558,7 +558,7 @@ func (client BlobsClient) Lease(ctx context.Context, action LeaseActionType, tim
 }
 
 // leasePreparer prepares the Lease request.
-func (client BlobsClient) leasePreparer(action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) leasePreparer(action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -602,7 +602,7 @@ func (client BlobsClient) leasePreparer(action LeaseActionType, timeout *int32, 
 }
 
 // leaseResponder handles the response to the Lease request.
-func (client BlobsClient) leaseResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) leaseResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -642,7 +642,7 @@ func (client BlobsClient) leaseResponder(resp pipeline.Response) (pipeline.Respo
 // user-controlled value that you can use to track requests. The value of the sequence number must be between 0 and
 // 2^63 - 1. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) Put(ctx context.Context, blobType map[string]interface{}, body io.ReadSeeker, timeout *int32, cacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (*BlobsPutResponse, error) {
+func (client blobsClient) Put(ctx context.Context, blobType BlobType, body io.ReadSeeker, timeout *int32, cacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (*BlobsPutResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -664,7 +664,7 @@ func (client BlobsClient) Put(ctx context.Context, blobType map[string]interface
 }
 
 // putPreparer prepares the Put request.
-func (client BlobsClient) putPreparer(blobType map[string]interface{}, body io.ReadSeeker, timeout *int32, cacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) putPreparer(blobType BlobType, body io.ReadSeeker, timeout *int32, cacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -730,7 +730,7 @@ func (client BlobsClient) putPreparer(blobType map[string]interface{}, body io.R
 }
 
 // putResponder handles the response to the Put request.
-func (client BlobsClient) putResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) putResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
@@ -748,7 +748,7 @@ func (client BlobsClient) putResponder(resp pipeline.Response) (pipeline.Respons
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) SetBlobTier(ctx context.Context, tier map[string]interface{}, timeout *int32, requestID *string) (*BlobsSetBlobTierResponse, error) {
+func (client blobsClient) SetBlobTier(ctx context.Context, tier map[string]interface{}, timeout *int32, requestID *string) (*BlobsSetBlobTierResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -767,7 +767,7 @@ func (client BlobsClient) SetBlobTier(ctx context.Context, tier map[string]inter
 }
 
 // setBlobTierPreparer prepares the SetBlobTier request.
-func (client BlobsClient) setBlobTierPreparer(tier map[string]interface{}, timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) setBlobTierPreparer(tier map[string]interface{}, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -787,7 +787,7 @@ func (client BlobsClient) setBlobTierPreparer(tier map[string]interface{}, timeo
 }
 
 // setBlobTierResponder handles the response to the SetBlobTier request.
-func (client BlobsClient) setBlobTierResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) setBlobTierResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -812,7 +812,7 @@ func (client BlobsClient) setBlobTierResponder(resp pipeline.Response) (pipeline
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) SetMetadata(ctx context.Context, timeout *int32, metadata map[string]string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsSetMetadataResponse, error) {
+func (client blobsClient) SetMetadata(ctx context.Context, timeout *int32, metadata map[string]string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlobsSetMetadataResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -834,7 +834,7 @@ func (client BlobsClient) SetMetadata(ctx context.Context, timeout *int32, metad
 }
 
 // setMetadataPreparer prepares the SetMetadata request.
-func (client BlobsClient) setMetadataPreparer(timeout *int32, metadata map[string]string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) setMetadataPreparer(timeout *int32, metadata map[string]string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -873,7 +873,7 @@ func (client BlobsClient) setMetadataPreparer(timeout *int32, metadata map[strin
 }
 
 // setMetadataResponder handles the response to the SetMetadata request.
-func (client BlobsClient) setMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) setMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -905,7 +905,7 @@ func (client BlobsClient) setMetadataResponder(resp pipeline.Response) (pipeline
 // track requests. The value of the sequence number must be between 0 and 2^63 - 1. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client BlobsClient) SetProperties(ctx context.Context, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentMD5 *string, blobContentEncoding *string, blobContentLanguage *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentDisposition *string, blobContentLength *int64, sequenceNumberAction SequenceNumberActionType, blobSequenceNumber *int64, requestID *string) (*BlobsSetPropertiesResponse, error) {
+func (client blobsClient) SetProperties(ctx context.Context, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentMD5 *string, blobContentEncoding *string, blobContentLanguage *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentDisposition *string, blobContentLength *int64, sequenceNumberAction SequenceNumberActionType, blobSequenceNumber *int64, requestID *string) (*BlobsSetPropertiesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -924,7 +924,7 @@ func (client BlobsClient) SetProperties(ctx context.Context, timeout *int32, blo
 }
 
 // setPropertiesPreparer prepares the SetProperties request.
-func (client BlobsClient) setPropertiesPreparer(timeout *int32, blobCacheControl *string, blobContentType *string, blobContentMD5 *string, blobContentEncoding *string, blobContentLanguage *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentDisposition *string, blobContentLength *int64, sequenceNumberAction SequenceNumberActionType, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) setPropertiesPreparer(timeout *int32, blobCacheControl *string, blobContentType *string, blobContentMD5 *string, blobContentEncoding *string, blobContentLanguage *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentDisposition *string, blobContentLength *int64, sequenceNumberAction SequenceNumberActionType, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -985,7 +985,7 @@ func (client BlobsClient) setPropertiesPreparer(timeout *int32, blobCacheControl
 }
 
 // setPropertiesResponder handles the response to the SetProperties request.
-func (client BlobsClient) setPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) setPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -1009,7 +1009,7 @@ func (client BlobsClient) setPropertiesResponder(resp pipeline.Response) (pipeli
 // without a matching value. leaseID is if specified, the operation only succeeds if the container's lease is active
 // and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlobsClient) TakeSnapshot(ctx context.Context, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (*BlobsTakeSnapshotResponse, error) {
+func (client blobsClient) TakeSnapshot(ctx context.Context, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (*BlobsTakeSnapshotResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -1031,7 +1031,7 @@ func (client BlobsClient) TakeSnapshot(ctx context.Context, timeout *int32, meta
 }
 
 // takeSnapshotPreparer prepares the TakeSnapshot request.
-func (client BlobsClient) takeSnapshotPreparer(timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) takeSnapshotPreparer(timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -1070,7 +1070,7 @@ func (client BlobsClient) takeSnapshotPreparer(timeout *int32, metadata map[stri
 }
 
 // takeSnapshotResponder handles the response to the TakeSnapshot request.
-func (client BlobsClient) takeSnapshotResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blobsClient) takeSnapshotResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err

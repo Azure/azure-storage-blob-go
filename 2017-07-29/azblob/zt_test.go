@@ -296,7 +296,7 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsZero(c *chk.C) {
 
 	// Max Results = 0 means the value will be ignored, the header not set, and the server default used
 	resp, err := bsu.ListContainers(ctx,
-		azblob.Marker{}, *(&azblob.ListContainersOptions{Prefix: containerPrefix, MaxResults: 0}))
+		azblob.Marker{}, azblob.ListContainersOptions{Prefix: containerPrefix, MaxResults: 0})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Containers, chk.HasLen, 1)

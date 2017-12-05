@@ -139,11 +139,11 @@ func ExampleNewPipeline() {
 
 		// Set LogOptions to control what & where all pipeline log events go
 		Log: pipeline.LogOptions{
-			Log: func(s pipeline.LogSeverity, m string) { // This func is called to log each event
+			Log: func(s pipeline.LogLevel, m string) { // This func is called to log each event
 				// This method is not called for filtered-out severities.
 				logger.Output(2, m) // This example uses Go's standard logger
 			},
-			MinimumSeverityToLog: func() pipeline.LogSeverity { return pipeline.LogInfo }, // Log all events from informational to more severe
+			MinimumLevelToLog: func() pipeline.LogLevel { return pipeline.LogInfo }, // Log all events from informational to more severe
 		},
 	}
 
@@ -299,7 +299,7 @@ func ExampleAccountSASSignatureValues() {
 
 	// If you have a SAS query parameter string, you can parse it into its parts:
 	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values)
+	sasQueryParams = NewSASQueryParameters(values, true)
 	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
 
 	_ = serviceURL // Avoid compiler's "declared and not used" error
@@ -348,7 +348,7 @@ func ExampleBlobSASSignatureValues() {
 
 	// If you have a SAS query parameter string, you can parse it into its parts:
 	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values)
+	sasQueryParams = NewSASQueryParameters(values, true)
 	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
 
 	_ = blobURL // Avoid compiler's "declared and not used" error

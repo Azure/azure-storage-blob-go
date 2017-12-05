@@ -22,13 +22,13 @@ type uniqueRequestIDPolicyFactory struct {
 }
 
 // New creates a UniqueRequestIDPolicy object.
-func (f *uniqueRequestIDPolicyFactory) New(node pipeline.Node) pipeline.Policy {
-	return &uniqueRequestIDPolicy{node: node}
+func (f *uniqueRequestIDPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return &uniqueRequestIDPolicy{next: next}
 }
 
 // UniqueRequestIDPolicy ...
 type uniqueRequestIDPolicy struct {
-	node pipeline.Node
+	next pipeline.Policy
 }
 
 func (p *uniqueRequestIDPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
@@ -36,7 +36,7 @@ func (p *uniqueRequestIDPolicy) Do(ctx context.Context, request pipeline.Request
 	if id == "" { // Add a unique request ID if the caller didn't specify one already
 		request.Header.Set(xMsClientRequestID, newUUID().String())
 	}
-	return p.node.Do(ctx, request)
+	return p.next.Do(ctx, request)
 }
 
 // The UUID reserved variants.

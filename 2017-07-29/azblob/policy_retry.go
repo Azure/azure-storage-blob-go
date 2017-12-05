@@ -57,6 +57,18 @@ type RetryOptions struct {
 }
 
 func (o RetryOptions) defaults() RetryOptions {
+	if o.Policy != RetryPolicyExponential && o.Policy != RetryPolicyFixed {
+		panic(errors.New("RetryPolicy must be RetryPolicyExponential or RetryPolicyFixed"))
+	}
+	if o.MaxTries < 0 {
+		panic("MaxTries must be >= 0")
+	}
+	if o.TryTimeout < 0 || o.RetryDelay < 0 || o.MaxRetryDelay < 0 {
+		panic("TryTimeout, RetryDelay, and MaxRetryDelay must all be >= 0")
+	}
+	if o.RetryDelay > o.MaxRetryDelay {
+		panic("RetryDelay must be <= MaxRetryDelay")
+	}
 	if (o.RetryDelay == 0 && o.MaxRetryDelay != 0) || (o.RetryDelay != 0 && o.MaxRetryDelay == 0) {
 		panic(errors.New("Both RetryDelay and MaxRetryDelay must be 0 or neither can be 0"))
 	}
@@ -122,19 +134,20 @@ type retryPolicyFactory struct {
 	o RetryOptions
 }
 
-func (f *retryPolicyFactory) New(node pipeline.Node) pipeline.Policy {
-	return &retryPolicy{node: node, o: f.o}
+func (f *retryPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return &retryPolicy{o: f.o, next: next}
 }
 
 type retryPolicy struct {
-	node pipeline.Node
+	next pipeline.Policy
 	o    RetryOptions
 }
 
 // According to https://github.com/golang/go/wiki/CompilerOptimizations, the compiler will inline this method and hopefully optimize all calls to it away
 var logf = func(format string, a ...interface{}) {}
 
-//var logf = fmt.Printf // Use this version to see the retry method's code path (import "fmt")
+// Use this version to see the retry method's code path (import "fmt")
+//var logf = fmt.Printf
 
 func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
 	// Before each try, we'll select either the primary or secondary URL.
@@ -203,7 +216,7 @@ func (p *retryPolicy) Do(ctx context.Context, request pipeline.Request) (respons
 
 		// Set the time for this particular retry operation and then Do the operation.
 		tryCtx, tryCancel := context.WithTimeout(ctx, time.Second*time.Duration(timeout))
-		response, err = p.node.Do(tryCtx, requestCopy) // Make the request
+		response, err = p.next.Do(tryCtx, requestCopy) // Make the request
 		logf("Err=%v, response=%v\n", err, response)
 
 		action := "" // This MUST get changed within the switch code below

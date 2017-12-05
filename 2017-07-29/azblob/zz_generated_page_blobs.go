@@ -15,14 +15,14 @@ import (
 	"time"
 )
 
-// PageBlobsClient is the client for the PageBlobs methods of the Azblob service.
-type PageBlobsClient struct {
-	ManagementClient
+// pageBlobsClient is the client for the PageBlobs methods of the Azblob service.
+type pageBlobsClient struct {
+	managementClient
 }
 
-// NewPageBlobsClient creates an instance of the PageBlobsClient client.
-func NewPageBlobsClient(url url.URL, p pipeline.Pipeline) PageBlobsClient {
-	return PageBlobsClient{NewManagementClient(url, p)}
+// newPageBlobsClient creates an instance of the pageBlobsClient client.
+func newPageBlobsClient(url url.URL, p pipeline.Pipeline) pageBlobsClient {
+	return pageBlobsClient{newManagementClient(url, p)}
 }
 
 // GetPageRanges the Get Page Ranges operation returns the list of valid page ranges for a page blob or snapshot of a
@@ -45,7 +45,7 @@ func NewPageBlobsClient(url url.URL, p pipeline.Pipeline) PageBlobsClient {
 // with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value.
 // requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
 // logs when storage analytics logging is enabled.
-func (client PageBlobsClient) GetPageRanges(ctx context.Context, snapshot *time.Time, timeout *int32, prevsnapshot *time.Time, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageList, error) {
+func (client pageBlobsClient) GetPageRanges(ctx context.Context, snapshot *time.Time, timeout *int32, prevsnapshot *time.Time, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageList, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -64,7 +64,7 @@ func (client PageBlobsClient) GetPageRanges(ctx context.Context, snapshot *time.
 }
 
 // getPageRangesPreparer prepares the GetPageRanges request.
-func (client PageBlobsClient) getPageRangesPreparer(snapshot *time.Time, timeout *int32, prevsnapshot *time.Time, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobsClient) getPageRangesPreparer(snapshot *time.Time, timeout *int32, prevsnapshot *time.Time, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -107,7 +107,7 @@ func (client PageBlobsClient) getPageRangesPreparer(snapshot *time.Time, timeout
 }
 
 // getPageRangesResponder handles the response to the GetPageRanges request.
-func (client PageBlobsClient) getPageRangesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client pageBlobsClient) getPageRangesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (client PageBlobsClient) getPageRangesResponder(resp pipeline.Response) (pi
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client PageBlobsClient) IncrementalCopy(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsIncrementalCopyResponse, error) {
+func (client pageBlobsClient) IncrementalCopy(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsIncrementalCopyResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -173,7 +173,7 @@ func (client PageBlobsClient) IncrementalCopy(ctx context.Context, copySource st
 }
 
 // incrementalCopyPreparer prepares the IncrementalCopy request.
-func (client PageBlobsClient) incrementalCopyPreparer(copySource string, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobsClient) incrementalCopyPreparer(copySource string, timeout *int32, metadata map[string]string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -210,7 +210,7 @@ func (client PageBlobsClient) incrementalCopyPreparer(copySource string, timeout
 }
 
 // incrementalCopyResponder handles the response to the IncrementalCopy request.
-func (client PageBlobsClient) incrementalCopyResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client pageBlobsClient) incrementalCopyResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -239,7 +239,7 @@ func (client PageBlobsClient) incrementalCopyResponder(resp pipeline.Response) (
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client PageBlobsClient) PutPage(ctx context.Context, pageWrite PageWriteType, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int32, ifSequenceNumberLessThan *int32, ifSequenceNumberEqualTo *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsPutPageResponse, error) {
+func (client pageBlobsClient) PutPage(ctx context.Context, pageWrite PageWriteType, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int32, ifSequenceNumberLessThan *int32, ifSequenceNumberEqualTo *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsPutPageResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -258,7 +258,7 @@ func (client PageBlobsClient) PutPage(ctx context.Context, pageWrite PageWriteTy
 }
 
 // putPagePreparer prepares the PutPage request.
-func (client PageBlobsClient) putPagePreparer(pageWrite PageWriteType, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int32, ifSequenceNumberLessThan *int32, ifSequenceNumberEqualTo *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobsClient) putPagePreparer(pageWrite PageWriteType, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int32, ifSequenceNumberLessThan *int32, ifSequenceNumberEqualTo *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -305,7 +305,7 @@ func (client PageBlobsClient) putPagePreparer(pageWrite PageWriteType, body io.R
 }
 
 // putPageResponder handles the response to the PutPage request.
-func (client PageBlobsClient) putPageResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client pageBlobsClient) putPageResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err

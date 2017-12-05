@@ -15,14 +15,14 @@ import (
 	"time"
 )
 
-// ContainerClient is the client for the Container methods of the Azblob service.
-type ContainerClient struct {
-	ManagementClient
+// containerClient is the client for the Container methods of the Azblob service.
+type containerClient struct {
+	managementClient
 }
 
-// NewContainerClient creates an instance of the ContainerClient client.
-func NewContainerClient(url url.URL, p pipeline.Pipeline) ContainerClient {
-	return ContainerClient{NewManagementClient(url, p)}
+// newContainerClient creates an instance of the containerClient client.
+func newContainerClient(url url.URL, p pipeline.Pipeline) containerClient {
+	return containerClient{newManagementClient(url, p)}
 }
 
 // Create creates a new container under the specified account. If the container with the same name already exists, the
@@ -38,7 +38,7 @@ func NewContainerClient(url url.URL, p pipeline.Pipeline) ContainerClient {
 // Containers, Blobs, and Metadata for more information. access is specifies whether data in the container may be
 // accessed publicly and the level of access requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) Create(ctx context.Context, timeout *int32, metadata map[string]string, access PublicAccessType, requestID *string) (*ContainerCreateResponse, error) {
+func (client containerClient) Create(ctx context.Context, timeout *int32, metadata map[string]string, access PublicAccessType, requestID *string) (*ContainerCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -60,7 +60,7 @@ func (client ContainerClient) Create(ctx context.Context, timeout *int32, metada
 }
 
 // createPreparer prepares the Create request.
-func (client ContainerClient) createPreparer(timeout *int32, metadata map[string]string, access PublicAccessType, requestID *string) (pipeline.Request, error) {
+func (client containerClient) createPreparer(timeout *int32, metadata map[string]string, access PublicAccessType, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -87,7 +87,7 @@ func (client ContainerClient) createPreparer(timeout *int32, metadata map[string
 }
 
 // createResponder handles the response to the Create request.
-func (client ContainerClient) createResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) createResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (client ContainerClient) createResponder(resp pipeline.Response) (pipeline.
 // on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) Delete(ctx context.Context, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerDeleteResponse, error) {
+func (client containerClient) Delete(ctx context.Context, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerDeleteResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -126,7 +126,7 @@ func (client ContainerClient) Delete(ctx context.Context, timeout *int32, leaseI
 }
 
 // deletePreparer prepares the Delete request.
-func (client ContainerClient) deletePreparer(timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client containerClient) deletePreparer(timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("DELETE", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -160,7 +160,7 @@ func (client ContainerClient) deletePreparer(timeout *int32, leaseID *string, if
 }
 
 // deleteResponder handles the response to the Delete request.
-func (client ContainerClient) deleteResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) deleteResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -175,7 +175,7 @@ func (client ContainerClient) deleteResponder(resp pipeline.Response) (pipeline.
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) GetACL(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*SignedIdentifiers, error) {
+func (client containerClient) GetACL(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*SignedIdentifiers, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -194,7 +194,7 @@ func (client ContainerClient) GetACL(ctx context.Context, timeout *int32, leaseI
 }
 
 // getACLPreparer prepares the GetACL request.
-func (client ContainerClient) getACLPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client containerClient) getACLPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -217,7 +217,7 @@ func (client ContainerClient) getACLPreparer(timeout *int32, leaseID *string, re
 }
 
 // getACLResponder handles the response to the GetACL request.
-func (client ContainerClient) getACLResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) getACLResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -247,7 +247,7 @@ func (client ContainerClient) getACLResponder(resp pipeline.Response) (pipeline.
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) GetMetadata(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetMetadataResponse, error) {
+func (client containerClient) GetMetadata(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetMetadataResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -266,7 +266,7 @@ func (client ContainerClient) GetMetadata(ctx context.Context, timeout *int32, l
 }
 
 // getMetadataPreparer prepares the GetMetadata request.
-func (client ContainerClient) getMetadataPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client containerClient) getMetadataPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -289,7 +289,7 @@ func (client ContainerClient) getMetadataPreparer(timeout *int32, leaseID *strin
 }
 
 // getMetadataResponder handles the response to the GetMetadata request.
-func (client ContainerClient) getMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) getMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -305,7 +305,7 @@ func (client ContainerClient) getMetadataResponder(resp pipeline.Response) (pipe
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) GetProperties(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetPropertiesResponse, error) {
+func (client containerClient) GetProperties(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetPropertiesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -324,7 +324,7 @@ func (client ContainerClient) GetProperties(ctx context.Context, timeout *int32,
 }
 
 // getPropertiesPreparer prepares the GetProperties request.
-func (client ContainerClient) getPropertiesPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client containerClient) getPropertiesPreparer(timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -346,7 +346,7 @@ func (client ContainerClient) getPropertiesPreparer(timeout *int32, leaseID *str
 }
 
 // getPropertiesResponder handles the response to the GetProperties request.
-func (client ContainerClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -375,7 +375,7 @@ func (client ContainerClient) getPropertiesResponder(resp pipeline.Response) (pi
 // on a blob if it has not been modified since the specified date/time. requestID is provides a client-generated,
 // opaque value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is
 // enabled.
-func (client ContainerClient) Lease(ctx context.Context, action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*ContainerLeaseResponse, error) {
+func (client containerClient) Lease(ctx context.Context, action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*ContainerLeaseResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -394,7 +394,7 @@ func (client ContainerClient) Lease(ctx context.Context, action LeaseActionType,
 }
 
 // leasePreparer prepares the Lease request.
-func (client ContainerClient) leasePreparer(action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
+func (client containerClient) leasePreparer(action LeaseActionType, timeout *int32, leaseID *string, breakPeriod *int32, duration *int32, proposedLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -433,7 +433,7 @@ func (client ContainerClient) leasePreparer(action LeaseActionType, timeout *int
 }
 
 // leaseResponder handles the response to the Lease request.
-func (client ContainerClient) leaseResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) leaseResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated, http.StatusAccepted)
 	if resp == nil {
 		return nil, err
@@ -460,7 +460,7 @@ func (client ContainerClient) leaseResponder(resp pipeline.Response) (pipeline.R
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) ListBlobs(ctx context.Context, prefix *string, delimiter *string, marker *string, maxresults *int32, include ListBlobsIncludeType, timeout *int32, requestID *string) (*ListBlobsResponse, error) {
+func (client containerClient) ListBlobs(ctx context.Context, prefix *string, delimiter *string, marker *string, maxresults *int32, include ListBlobsIncludeType, timeout *int32, requestID *string) (*ListBlobsResponse, error) {
 	if err := validate([]validation{
 		{targetValue: maxresults,
 			constraints: []constraint{{target: "maxresults", name: null, rule: false,
@@ -482,7 +482,7 @@ func (client ContainerClient) ListBlobs(ctx context.Context, prefix *string, del
 }
 
 // listBlobsPreparer prepares the ListBlobs request.
-func (client ContainerClient) listBlobsPreparer(prefix *string, delimiter *string, marker *string, maxresults *int32, include ListBlobsIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client containerClient) listBlobsPreparer(prefix *string, delimiter *string, marker *string, maxresults *int32, include ListBlobsIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -517,7 +517,7 @@ func (client ContainerClient) listBlobsPreparer(prefix *string, delimiter *strin
 }
 
 // listBlobsResponder handles the response to the ListBlobs request.
-func (client ContainerClient) listBlobsResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) listBlobsResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -553,7 +553,7 @@ func (client ContainerClient) listBlobsResponder(resp pipeline.Response) (pipeli
 // matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is
 // provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when
 // storage analytics logging is enabled.
-func (client ContainerClient) SetACL(ctx context.Context, containerACL []SignedIdentifier, timeout *int32, leaseID *string, access PublicAccessType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerSetACLResponse, error) {
+func (client containerClient) SetACL(ctx context.Context, containerACL []SignedIdentifier, timeout *int32, leaseID *string, access PublicAccessType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*ContainerSetACLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -572,7 +572,7 @@ func (client ContainerClient) SetACL(ctx context.Context, containerACL []SignedI
 }
 
 // setACLPreparer prepares the SetACL request.
-func (client ContainerClient) setACLPreparer(containerACL []SignedIdentifier, timeout *int32, leaseID *string, access PublicAccessType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client containerClient) setACLPreparer(containerACL []SignedIdentifier, timeout *int32, leaseID *string, access PublicAccessType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -619,7 +619,7 @@ func (client ContainerClient) setACLPreparer(containerACL []SignedIdentifier, ti
 }
 
 // setACLResponder handles the response to the SetACL request.
-func (client ContainerClient) setACLResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) setACLResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -640,7 +640,7 @@ func (client ContainerClient) setACLResponder(resp pipeline.Response) (pipeline.
 // Containers, Blobs, and Metadata for more information. ifModifiedSince is specify this header value to operate only
 // on a blob if it has been modified since the specified date/time. requestID is provides a client-generated, opaque
 // value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ContainerClient) SetMetadata(ctx context.Context, timeout *int32, leaseID *string, metadata map[string]string, ifModifiedSince *time.Time, requestID *string) (*ContainerSetMetadataResponse, error) {
+func (client containerClient) SetMetadata(ctx context.Context, timeout *int32, leaseID *string, metadata map[string]string, ifModifiedSince *time.Time, requestID *string) (*ContainerSetMetadataResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -662,7 +662,7 @@ func (client ContainerClient) SetMetadata(ctx context.Context, timeout *int32, l
 }
 
 // setMetadataPreparer prepares the SetMetadata request.
-func (client ContainerClient) setMetadataPreparer(timeout *int32, leaseID *string, metadata map[string]string, ifModifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
+func (client containerClient) setMetadataPreparer(timeout *int32, leaseID *string, metadata map[string]string, ifModifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -693,7 +693,7 @@ func (client ContainerClient) setMetadataPreparer(timeout *int32, leaseID *strin
 }
 
 // setMetadataResponder handles the response to the SetMetadata request.
-func (client ContainerClient) setMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client containerClient) setMetadataResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err

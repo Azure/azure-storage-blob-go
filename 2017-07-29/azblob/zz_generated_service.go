@@ -14,14 +14,14 @@ import (
 	"net/url"
 )
 
-// ServiceClient is the client for the Service methods of the Azblob service.
-type ServiceClient struct {
-	ManagementClient
+// serviceClient is the client for the Service methods of the Azblob service.
+type serviceClient struct {
+	managementClient
 }
 
-// NewServiceClient creates an instance of the ServiceClient client.
-func NewServiceClient(url url.URL, p pipeline.Pipeline) ServiceClient {
-	return ServiceClient{NewManagementClient(url, p)}
+// newServiceClient creates an instance of the serviceClient client.
+func newServiceClient(url url.URL, p pipeline.Pipeline) serviceClient {
+	return serviceClient{newManagementClient(url, p)}
 }
 
 // GetProperties gets the properties of a storage account's Blob service, including properties for Storage Analytics
@@ -31,7 +31,7 @@ func NewServiceClient(url url.URL, p pipeline.Pipeline) ServiceClient {
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ServiceClient) GetProperties(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceProperties, error) {
+func (client serviceClient) GetProperties(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceProperties, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -50,7 +50,7 @@ func (client ServiceClient) GetProperties(ctx context.Context, timeout *int32, r
 }
 
 // getPropertiesPreparer prepares the GetProperties request.
-func (client ServiceClient) getPropertiesPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client serviceClient) getPropertiesPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -70,7 +70,7 @@ func (client ServiceClient) getPropertiesPreparer(timeout *int32, requestID *str
 }
 
 // getPropertiesResponder handles the response to the GetProperties request.
-func (client ServiceClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client serviceClient) getPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (client ServiceClient) getPropertiesResponder(resp pipeline.Response) (pipe
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ServiceClient) GetStats(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceStats, error) {
+func (client serviceClient) GetStats(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceStats, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -119,7 +119,7 @@ func (client ServiceClient) GetStats(ctx context.Context, timeout *int32, reques
 }
 
 // getStatsPreparer prepares the GetStats request.
-func (client ServiceClient) getStatsPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client serviceClient) getStatsPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -139,7 +139,7 @@ func (client ServiceClient) getStatsPreparer(timeout *int32, requestID *string) 
 }
 
 // getStatsResponder handles the response to the GetStats request.
-func (client ServiceClient) getStatsResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client serviceClient) getStatsResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -179,7 +179,7 @@ func (client ServiceClient) getStatsResponder(resp pipeline.Response) (pipeline.
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ServiceClient) ListContainers(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersResponse, error) {
+func (client serviceClient) ListContainers(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersResponse, error) {
 	if err := validate([]validation{
 		{targetValue: maxresults,
 			constraints: []constraint{{target: "maxresults", name: null, rule: false,
@@ -201,7 +201,7 @@ func (client ServiceClient) ListContainers(ctx context.Context, prefix *string, 
 }
 
 // listContainersPreparer prepares the ListContainers request.
-func (client ServiceClient) listContainersPreparer(prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client serviceClient) listContainersPreparer(prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -232,7 +232,7 @@ func (client ServiceClient) listContainersPreparer(prefix *string, marker *strin
 }
 
 // listContainersResponder handles the response to the ListContainers request.
-func (client ServiceClient) listContainersResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client serviceClient) listContainersResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -263,7 +263,7 @@ func (client ServiceClient) listContainersResponder(resp pipeline.Response) (pip
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client ServiceClient) SetProperties(ctx context.Context, storageServiceProperties StorageServiceProperties, timeout *int32, requestID *string) (*ServiceSetPropertiesResponse, error) {
+func (client serviceClient) SetProperties(ctx context.Context, storageServiceProperties StorageServiceProperties, timeout *int32, requestID *string) (*ServiceSetPropertiesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: storageServiceProperties,
 			constraints: []constraint{{target: "storageServiceProperties.Logging", name: null, rule: true,
@@ -315,7 +315,7 @@ func (client ServiceClient) SetProperties(ctx context.Context, storageServicePro
 }
 
 // setPropertiesPreparer prepares the SetProperties request.
-func (client ServiceClient) setPropertiesPreparer(storageServiceProperties StorageServiceProperties, timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client serviceClient) setPropertiesPreparer(storageServiceProperties StorageServiceProperties, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -344,7 +344,7 @@ func (client ServiceClient) setPropertiesPreparer(storageServiceProperties Stora
 }
 
 // setPropertiesResponder handles the response to the SetProperties request.
-func (client ServiceClient) setPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client serviceClient) setPropertiesResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
 	if resp == nil {
 		return nil, err

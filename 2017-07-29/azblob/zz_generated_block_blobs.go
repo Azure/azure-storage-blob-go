@@ -16,14 +16,14 @@ import (
 	"time"
 )
 
-// BlockBlobsClient is the client for the BlockBlobs methods of the Azblob service.
-type BlockBlobsClient struct {
-	ManagementClient
+// blockBlobsClient is the client for the BlockBlobs methods of the Azblob service.
+type blockBlobsClient struct {
+	managementClient
 }
 
-// NewBlockBlobsClient creates an instance of the BlockBlobsClient client.
-func NewBlockBlobsClient(url url.URL, p pipeline.Pipeline) BlockBlobsClient {
-	return BlockBlobsClient{NewManagementClient(url, p)}
+// newBlockBlobsClient creates an instance of the blockBlobsClient client.
+func newBlockBlobsClient(url url.URL, p pipeline.Pipeline) blockBlobsClient {
+	return blockBlobsClient{newManagementClient(url, p)}
 }
 
 // GetBlockList the Get Block List operation retrieves the list of blocks that have been uploaded as part of a block
@@ -38,7 +38,7 @@ func NewBlockBlobsClient(url url.URL, p pipeline.Pipeline) BlockBlobsClient {
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlockBlobsClient) GetBlockList(ctx context.Context, listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (*BlockList, error) {
+func (client blockBlobsClient) GetBlockList(ctx context.Context, listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (*BlockList, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -57,7 +57,7 @@ func (client BlockBlobsClient) GetBlockList(ctx context.Context, listType BlockL
 }
 
 // getBlockListPreparer prepares the GetBlockList request.
-func (client BlockBlobsClient) getBlockListPreparer(listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobsClient) getBlockListPreparer(listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -83,7 +83,7 @@ func (client BlockBlobsClient) getBlockListPreparer(listType BlockListType, snap
 }
 
 // getBlockListResponder handles the response to the GetBlockList request.
-func (client BlockBlobsClient) getBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blockBlobsClient) getBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (client BlockBlobsClient) getBlockListResponder(resp pipeline.Response) (pi
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client BlockBlobsClient) PutBlock(ctx context.Context, blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobsPutBlockResponse, error) {
+func (client blockBlobsClient) PutBlock(ctx context.Context, blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobsPutBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -138,7 +138,7 @@ func (client BlockBlobsClient) PutBlock(ctx context.Context, blockID string, bod
 }
 
 // putBlockPreparer prepares the PutBlock request.
-func (client BlockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -161,7 +161,7 @@ func (client BlockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeek
 }
 
 // putBlockResponder handles the response to the PutBlock request.
-func (client BlockBlobsClient) putBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blockBlobsClient) putBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
@@ -198,7 +198,7 @@ func (client BlockBlobsClient) putBlockResponder(resp pipeline.Response) (pipeli
 // ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client BlockBlobsClient) PutBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsPutBlockListResponse, error) {
+func (client blockBlobsClient) PutBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsPutBlockListResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -220,7 +220,7 @@ func (client BlockBlobsClient) PutBlockList(ctx context.Context, blocks BlockLoo
 }
 
 // putBlockListPreparer prepares the PutBlockList request.
-func (client BlockBlobsClient) putBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobsClient) putBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -286,7 +286,7 @@ func (client BlockBlobsClient) putBlockListPreparer(blocks BlockLookupList, time
 }
 
 // putBlockListResponder handles the response to the PutBlockList request.
-func (client BlockBlobsClient) putBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
+func (client blockBlobsClient) putBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err

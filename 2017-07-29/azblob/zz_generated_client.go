@@ -13,26 +13,26 @@ const (
 	ServiceVersion = "2016-05-31"
 )
 
-// ManagementClient is the base client for Azblob.
-type ManagementClient struct {
+// managementClient is the base client for Azblob.
+type managementClient struct {
 	url url.URL
 	p   pipeline.Pipeline
 }
 
-// NewManagementClient creates an instance of the ManagementClient client.
-func NewManagementClient(url url.URL, p pipeline.Pipeline) ManagementClient {
-	return ManagementClient{
+// newManagementClient creates an instance of the managementClient client.
+func newManagementClient(url url.URL, p pipeline.Pipeline) managementClient {
+	return managementClient{
 		url: url,
 		p:   p,
 	}
 }
 
 // URL returns a copy of the URL for this client.
-func (mc ManagementClient) URL() url.URL {
+func (mc managementClient) URL() url.URL {
 	return mc.url
 }
 
 // Pipeline returns the pipeline for this client.
-func (mc ManagementClient) Pipeline() pipeline.Pipeline {
+func (mc managementClient) Pipeline() pipeline.Pipeline {
 	return mc.p
 }

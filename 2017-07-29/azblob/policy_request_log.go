@@ -34,12 +34,13 @@ type requestLogPolicyFactory struct {
 	o RequestLogOptions
 }
 
-func (f *requestLogPolicyFactory) New(node pipeline.Node) pipeline.Policy {
-	return &requestLogPolicy{node: node, o: f.o}
+func (f *requestLogPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+	return &requestLogPolicy{o: f.o, next: next, config: config}
 }
 
 type requestLogPolicy struct {
-	node           pipeline.Node
+	next           pipeline.Policy
+	config         *pipeline.Configuration
 	o              RequestLogOptions
 	try            int32
 	operationStart time.Time
@@ -81,75 +82,68 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 	}
 
 	// Log the outgoing request as informational
-	if p.node.ShouldLog(pipeline.LogInfo) {
+	if p.config.ShouldLog(pipeline.LogInfo) {
 		b := &bytes.Buffer{}
 		fmt.Fprintf(b, "==> OUTGOING REQUEST (Try=%d)\n", p.try)
-		pipeline.WriteRequest(b, prepareRequestForLogging(request))
-		p.node.Log(pipeline.LogInfo, b.String())
+		pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), nil, nil)
+		p.config.Log(pipeline.LogInfo, b.String())
 	}
 
 	// Set the time for this particular retry operation and then Do the operation.
 	tryStart := time.Now()
-	response, err = p.node.Do(ctx, request) // Make the request
+	response, err = p.next.Do(ctx, request) // Make the request
 	tryEnd := time.Now()
 	tryDuration := tryEnd.Sub(tryStart)
 	opDuration := tryEnd.Sub(p.operationStart)
 
-	severity := pipeline.LogInfo // Assume success and default to informational logging
-	logMsg := func(b *bytes.Buffer) {
-		b.WriteString("SUCCESSFUL OPERATION\n")
-		pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), response.Response())
-	}
+	logLevel, forceLog := pipeline.LogInfo, false // Default logging information
 
-	forceLog := false
 	// If the response took too long, we'll upgrade to warning.
 	if p.o.LogWarningIfTryOverThreshold > 0 && tryDuration > p.o.LogWarningIfTryOverThreshold {
 		// Log a warning if the try duration exceeded the specified threshold
-		severity = pipeline.LogWarning
-		logMsg = func(b *bytes.Buffer) {
-			fmt.Fprintf(b, "SLOW OPERATION [tryDuration > %v]\n", p.o.LogWarningIfTryOverThreshold)
-			pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), response.Response())
-			forceLog = true // For CSS (Customer Support Services), we always log these to help diagnose latency issues
-		}
+		logLevel, forceLog = pipeline.LogWarning, true
 	}
 
 	if err == nil { // We got a response from the service
 		sc := response.Response().StatusCode
 		if ((sc >= 400 && sc <= 499) && sc != http.StatusNotFound && sc != http.StatusConflict && sc != http.StatusPreconditionFailed && sc != http.StatusRequestedRangeNotSatisfiable) || (sc >= 500 && sc <= 599) {
-			severity = pipeline.LogError // Promote to Error any 4xx (except those listed is an error) or any 5xx
-			logMsg = func(b *bytes.Buffer) {
-				// Write the error, the originating request and the stack
-				fmt.Fprintf(b, "OPERATION ERROR:\n")
-				pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), response.Response())
-				b.Write(stack()) // For errors, we append the stack trace (an expensive operation)
-				forceLog = true  // TODO: Do we really want this here?
-			}
+			logLevel, forceLog = pipeline.LogError, true // Promote to Error any 4xx (except those listed is an error) or any 5xx
 		} else {
-			// For other status codes, we leave the severity as is.
+			// For other status codes, we leave the level as is.
 		}
 	} else { // This error did not get an HTTP response from the service; upgrade the severity to Error
-		severity = pipeline.LogError
-		logMsg = func(b *bytes.Buffer) {
-			// Write the error, the originating request and the stack
-			fmt.Fprintf(b, "NETWORK ERROR:\n%v\n", err)
-			pipeline.WriteRequest(b, prepareRequestForLogging(request))
-			b.Write(stack()) // For errors, we append the stack trace (an expensive operation)
-			forceLog = true
-		}
+		logLevel, forceLog = pipeline.LogError, true
 	}
 
-	if shouldLog := p.node.ShouldLog(severity); forceLog || shouldLog {
+	if shouldLog := p.config.ShouldLog(logLevel); forceLog || shouldLog {
 		// We're going to log this; build the string to log
 		b := &bytes.Buffer{}
-		fmt.Fprintf(b, "==> REQUEST/RESPONSE (Try=%d, TryDuration=%v, OpDuration=%v) -- ", p.try, tryDuration, opDuration)
-		logMsg(b)
+		slow := ""
+		if p.o.LogWarningIfTryOverThreshold > 0 && tryDuration > p.o.LogWarningIfTryOverThreshold {
+			slow = fmt.Sprintf("[SLOW >%v]", p.o.LogWarningIfTryOverThreshold)
+		}
+		fmt.Fprintf(b, "==> REQUEST/RESPONSE (Try=%d/%v%s, OpTime=%v) -- ", p.try, tryDuration, slow, opDuration)
+		if err != nil { // This HTTP request did not get a response from the service
+			fmt.Fprintf(b, "REQUEST ERROR\n")
+		} else {
+			if logLevel == pipeline.LogError {
+				fmt.Fprintf(b, "RESPONSE STATUS CODE ERROR\n")
+			} else {
+				fmt.Fprintf(b, "RESPONSE SUCCESSFULLY RECEIVED\n")
+			}
+		}
+
+		pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), response.Response(), err)
+		if logLevel <= pipeline.LogError {
+			b.Write(stack()) // For errors (or lower levels), we append the stack trace (an expensive operation)
+		}
 		msg := b.String()
 
 		if forceLog {
-			pipeline.ForceLog(severity, msg)
+			pipeline.ForceLog(logLevel, msg)
 		}
 		if shouldLog {
-			p.node.Log(severity, msg)
+			p.config.Log(logLevel, msg)
 		}
 	}
 	return response, err
