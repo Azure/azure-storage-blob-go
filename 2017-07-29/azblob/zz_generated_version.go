@@ -5,7 +5,7 @@ package azblob
 
 // UserAgent returns the UserAgent string to use when sending http.Requests.
 func UserAgent() string {
-	return "Azure-SDK-For-Go/0.0.0 arm-azblob/2016-05-31"
+	return "Azure-SDK-For-Go/0.0.0 arm-azblob/2017-07-29"
 }
 
 // Version returns the semantic version (see http://semver.org) of the client.

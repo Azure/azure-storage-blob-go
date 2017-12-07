@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	"github.com/Azure/azure-storage-blob-go/2016-05-31/azblob"
+	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 

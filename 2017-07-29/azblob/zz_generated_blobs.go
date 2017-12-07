@@ -743,12 +743,12 @@ func (client blobsClient) putResponder(resp pipeline.Response) (pipeline.Respons
 // blob's tier determines the allowed size, IOPS, and bandwidth of the blob. A block blob's tier determines
 // Hot/Cool/Archive storage type. This operation does not update the blob's ETag.
 //
-// tier is indicates.the tier to be set on the blob. timeout is the timeout parameter is expressed in seconds. For more
+// tier is indicates the tier to be set on the blob. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blobsClient) SetBlobTier(ctx context.Context, tier map[string]interface{}, timeout *int32, requestID *string) (*BlobsSetBlobTierResponse, error) {
+func (client blobsClient) SetBlobTier(ctx context.Context, tier AccessTierType, timeout *int32, requestID *string) (*BlobsSetBlobTierResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -767,7 +767,7 @@ func (client blobsClient) SetBlobTier(ctx context.Context, tier map[string]inter
 }
 
 // setBlobTierPreparer prepares the SetBlobTier request.
-func (client blobsClient) setBlobTierPreparer(tier map[string]interface{}, timeout *int32, requestID *string) (pipeline.Request, error) {
+func (client blobsClient) setBlobTierPreparer(tier AccessTierType, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")

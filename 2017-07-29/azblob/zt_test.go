@@ -18,7 +18,7 @@ import (
 	chk "gopkg.in/check.v1"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/2016-05-31/azblob"
+	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 )
 
 /*func  finalizer(c azblob.ContainerURL) {
@@ -135,7 +135,7 @@ func getPageBlobURL(c *chk.C, container azblob.ContainerURL) (blob azblob.PageBl
 func createNewContainer(c *chk.C, bsu azblob.ServiceURL) (container azblob.ContainerURL, name string) {
 	container, name = getContainerURL(c, bsu)
 
-	cResp, err := container.Create(ctx, nil, azblob.PublicAccessBlob)
+	cResp, err := container.Create(ctx, nil, azblob.PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 	return container, name
@@ -148,7 +148,7 @@ func createNewContainerWithSuffix(c *chk.C, bsu azblob.ServiceURL, suffix string
 	name = generateName(containerPrefix + suffix)
 	container = bsu.NewContainerURL(name)
 
-	cResp, err := container.Create(ctx, nil, azblob.PublicAccessBlob)
+	cResp, err := container.Create(ctx, nil, azblob.PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 	return container, name
@@ -203,28 +203,34 @@ func deleteContainer(c *chk.C, container azblob.ContainerURL) {
 	c.Assert(resp.StatusCode(), chk.Equals, 202)
 }
 
-func getBSU() azblob.ServiceURL {
-	name := os.Getenv("ACCOUNT_NAME")
-	key := os.Getenv("ACCOUNT_KEY")
-	if name == "" || key == "" {
-		panic("ACCOUNT_NAME and ACCOUNT_KEY environment vars must be set before running tests")
+func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
+	accountNameEnvVar := accountType + "ACCOUNT_NAME"
+	accountKeyEnvVar := accountType + "ACCOUNT_KEY"
+	accountName, accountKey := os.Getenv(accountNameEnvVar), os.Getenv(accountKeyEnvVar)
+	if accountName == "" || accountKey == "" {
+		return azblob.ServiceURL{}, errors.New(accountNameEnvVar + " and/or " + accountKeyEnvVar + " environment variables not specified.")
 	}
-	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/", name))
+	credentials := azblob.NewSharedKeyCredential(accountName, accountKey)
+	pipeline := azblob.NewPipeline(credentials, azblob.PipelineOptions{})
+	blobPrimaryURL, _ := url.Parse("https://" + accountName + ".blob.core.windows.net/")
+	return azblob.NewServiceURL(*blobPrimaryURL, pipeline), nil
+}
 
-	credential := azblob.NewSharedKeyCredential(name, key)
-	pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
-	return azblob.NewServiceURL(*u, pipeline)
+func getBSU() azblob.ServiceURL {
+	bsu, _ := getGenericBSU("STAGE_") 
+	return bsu
 }
 
 func getAlternateBSU() (azblob.ServiceURL, error) {
-	secondaryAccountName, secondaryAccountKey:= os.Getenv("SECONDARY_ACCOUNT_NAME"), os.Getenv("SECONDARY_ACCOUNT_KEY")
-	if secondaryAccountName =="" || secondaryAccountKey == "" {
-		return azblob.ServiceURL{}, errors.New("SECONDARY_ACCOUNT_NAME and/or SECONDARY_ACCOUNT_KEY environment variables not specified.")
-	}
-	credentials := azblob.NewSharedKeyCredential(secondaryAccountName, secondaryAccountKey)
-	pipeline := azblob.NewPipeline(credentials, azblob.PipelineOptions{ /*Log: pipeline.NewLogWrapper(pipeline.LogInfo, log.New(os.Stderr, "", log.LstdFlags))*/ })
-	blobPrimaryURL, _ := url.Parse("https://" + secondaryAccountName + ".blob.core.windows.net/")
-	return azblob.NewServiceURL(*blobPrimaryURL, pipeline),nil
+	return getGenericBSU("SECONDARY_")
+}
+
+func getPremiumBSU() (azblob.ServiceURL, error) {
+	return getGenericBSU("PREMIUM_")
+}
+
+func getBlobStorageBSU() (azblob.ServiceURL, error) {
+	return getGenericBSU("BLOB_STORAGE_")
 }
 
 func validateStorageError(c *chk.C, err error, code azblob.ServiceCodeType) {
@@ -5489,4 +5495,44 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopyIfNoneMatchFalse(c *chk.C) {
 	_, err := copyBlobURL.StartIncrementalCopy(ctx, blobURL.URL(), snapshot,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: resp.ETag()}})
 	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func setAndCheckBlobTier(c *chk.C, blobURL azblob.BlobURL, tier azblob.AccessTierType) {
+	_, err := blobURL.SetBlobTier(ctx, tier)
+	c.Assert(err, chk.IsNil)
+
+	resp, err := blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.AccessTier(), chk.Equals, string(tier))
+}
+
+func (s *aztestsSuite) TestBlobSetTierAllTiers(c *chk.C) {
+	bsu, err := getBlobStorageBSU()
+	if err != nil {
+		c.Skip(err.Error())
+	}
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewBlockBlob(c, containerURL)
+
+	setAndCheckBlobTier(c, blobURL.BlobURL, azblob.AccessTierHot)
+	setAndCheckBlobTier(c, blobURL.BlobURL, azblob.AccessTierCool)
+	setAndCheckBlobTier(c, blobURL.BlobURL, azblob.AccessTierArchive)
+
+	bsu, err = getPremiumBSU()
+	if err != nil {
+		c.Skip(err.Error())
+	}
+
+	containerURL, _ = createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	pageBlobURL, _ := createNewPageBlob(c, containerURL)
+
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP4)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP6)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP10)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP20)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP30)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP40)
+	setAndCheckBlobTier(c, pageBlobURL.BlobURL, azblob.AccessTierP50)
 }

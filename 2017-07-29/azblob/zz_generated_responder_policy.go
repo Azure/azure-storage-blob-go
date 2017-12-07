@@ -6,9 +6,8 @@ package azblob
 import (
 	"context"
 	"encoding/xml"
-	"io/ioutil"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io/ioutil"
 )
 
 type responder func(resp pipeline.Response) (result pipeline.Response, err error)

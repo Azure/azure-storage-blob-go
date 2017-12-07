@@ -324,13 +324,13 @@ func (ababr AppendBlobsAppendBlockResponse) Response() *http.Response {
 	return ababr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (ababr AppendBlobsAppendBlockResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (ababr AppendBlobsAppendBlockResponse) StatusCode() int {
 	return ababr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (ababr AppendBlobsAppendBlockResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (ababr AppendBlobsAppendBlockResponse) Status() string {
 	return ababr.rawResponse.Status
 }
 
@@ -452,13 +452,13 @@ func (bacr BlobsAbortCopyResponse) Response() *http.Response {
 	return bacr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bacr BlobsAbortCopyResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bacr BlobsAbortCopyResponse) StatusCode() int {
 	return bacr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bacr BlobsAbortCopyResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bacr BlobsAbortCopyResponse) Status() string {
 	return bacr.rawResponse.Status
 }
 
@@ -495,13 +495,13 @@ func (bcr BlobsCopyResponse) Response() *http.Response {
 	return bcr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bcr BlobsCopyResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bcr BlobsCopyResponse) StatusCode() int {
 	return bcr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bcr BlobsCopyResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bcr BlobsCopyResponse) Status() string {
 	return bcr.rawResponse.Status
 }
 
@@ -566,13 +566,13 @@ func (bdr BlobsDeleteResponse) Response() *http.Response {
 	return bdr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bdr BlobsDeleteResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bdr BlobsDeleteResponse) StatusCode() int {
 	return bdr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bdr BlobsDeleteResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bdr BlobsDeleteResponse) Status() string {
 	return bdr.rawResponse.Status
 }
 
@@ -609,13 +609,13 @@ func (bgmr BlobsGetMetadataResponse) Response() *http.Response {
 	return bgmr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bgmr BlobsGetMetadataResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bgmr BlobsGetMetadataResponse) StatusCode() int {
 	return bgmr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bgmr BlobsGetMetadataResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bgmr BlobsGetMetadataResponse) Status() string {
 	return bgmr.rawResponse.Status
 }
 
@@ -683,13 +683,13 @@ func (bgpr BlobsGetPropertiesResponse) Response() *http.Response {
 	return bgpr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bgpr BlobsGetPropertiesResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bgpr BlobsGetPropertiesResponse) StatusCode() int {
 	return bgpr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bgpr BlobsGetPropertiesResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bgpr BlobsGetPropertiesResponse) Status() string {
 	return bgpr.rawResponse.Status
 }
 
@@ -906,13 +906,13 @@ func (blr BlobsLeaseResponse) Response() *http.Response {
 	return blr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (blr BlobsLeaseResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (blr BlobsLeaseResponse) StatusCode() int {
 	return blr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (blr BlobsLeaseResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (blr BlobsLeaseResponse) Status() string {
 	return blr.rawResponse.Status
 }
 
@@ -985,13 +985,13 @@ func (bpr BlobsPutResponse) Response() *http.Response {
 	return bpr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bpr BlobsPutResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bpr BlobsPutResponse) StatusCode() int {
 	return bpr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bpr BlobsPutResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bpr BlobsPutResponse) Status() string {
 	return bpr.rawResponse.Status
 }
 
@@ -1051,13 +1051,13 @@ func (bsbtr BlobsSetBlobTierResponse) Response() *http.Response {
 	return bsbtr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bsbtr BlobsSetBlobTierResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bsbtr BlobsSetBlobTierResponse) StatusCode() int {
 	return bsbtr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bsbtr BlobsSetBlobTierResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bsbtr BlobsSetBlobTierResponse) Status() string {
 	return bsbtr.rawResponse.Status
 }
 
@@ -1076,13 +1076,13 @@ func (bsmr BlobsSetMetadataResponse) Response() *http.Response {
 	return bsmr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bsmr BlobsSetMetadataResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bsmr BlobsSetMetadataResponse) StatusCode() int {
 	return bsmr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bsmr BlobsSetMetadataResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bsmr BlobsSetMetadataResponse) Status() string {
 	return bsmr.rawResponse.Status
 }
 
@@ -1142,13 +1142,13 @@ func (bspr BlobsSetPropertiesResponse) Response() *http.Response {
 	return bspr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bspr BlobsSetPropertiesResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bspr BlobsSetPropertiesResponse) StatusCode() int {
 	return bspr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bspr BlobsSetPropertiesResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bspr BlobsSetPropertiesResponse) Status() string {
 	return bspr.rawResponse.Status
 }
 
@@ -1208,13 +1208,13 @@ func (btsr BlobsTakeSnapshotResponse) Response() *http.Response {
 	return btsr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (btsr BlobsTakeSnapshotResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (btsr BlobsTakeSnapshotResponse) StatusCode() int {
 	return btsr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (btsr BlobsTakeSnapshotResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (btsr BlobsTakeSnapshotResponse) Status() string {
 	return btsr.rawResponse.Status
 }
 
@@ -1290,13 +1290,13 @@ func (bbpblr BlockBlobsPutBlockListResponse) Response() *http.Response {
 	return bbpblr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bbpblr BlockBlobsPutBlockListResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bbpblr BlockBlobsPutBlockListResponse) StatusCode() int {
 	return bbpblr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bbpblr BlockBlobsPutBlockListResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bbpblr BlockBlobsPutBlockListResponse) Status() string {
 	return bbpblr.rawResponse.Status
 }
 
@@ -1356,13 +1356,13 @@ func (bbpbr BlockBlobsPutBlockResponse) Response() *http.Response {
 	return bbpbr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bbpbr BlockBlobsPutBlockResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bbpbr BlockBlobsPutBlockResponse) StatusCode() int {
 	return bbpbr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bbpbr BlockBlobsPutBlockResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bbpbr BlockBlobsPutBlockResponse) Status() string {
 	return bbpbr.rawResponse.Status
 }
 
@@ -1406,13 +1406,13 @@ func (bl BlockList) Response() *http.Response {
 	return bl.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (bl BlockList) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bl BlockList) StatusCode() int {
 	return bl.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (bl BlockList) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bl BlockList) Status() string {
 	return bl.rawResponse.Status
 }
 
@@ -1507,13 +1507,13 @@ func (ccr ContainerCreateResponse) Response() *http.Response {
 	return ccr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (ccr ContainerCreateResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (ccr ContainerCreateResponse) StatusCode() int {
 	return ccr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (ccr ContainerCreateResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (ccr ContainerCreateResponse) Status() string {
 	return ccr.rawResponse.Status
 }
 
@@ -1568,13 +1568,13 @@ func (cdr ContainerDeleteResponse) Response() *http.Response {
 	return cdr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (cdr ContainerDeleteResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cdr ContainerDeleteResponse) StatusCode() int {
 	return cdr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (cdr ContainerDeleteResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cdr ContainerDeleteResponse) Status() string {
 	return cdr.rawResponse.Status
 }
 
@@ -1611,13 +1611,13 @@ func (cgmr ContainerGetMetadataResponse) Response() *http.Response {
 	return cgmr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (cgmr ContainerGetMetadataResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cgmr ContainerGetMetadataResponse) StatusCode() int {
 	return cgmr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (cgmr ContainerGetMetadataResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cgmr ContainerGetMetadataResponse) Status() string {
 	return cgmr.rawResponse.Status
 }
 
@@ -1685,13 +1685,13 @@ func (cgpr ContainerGetPropertiesResponse) Response() *http.Response {
 	return cgpr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (cgpr ContainerGetPropertiesResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (cgpr ContainerGetPropertiesResponse) StatusCode() int {
 	return cgpr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (cgpr ContainerGetPropertiesResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (cgpr ContainerGetPropertiesResponse) Status() string {
 	return cgpr.rawResponse.Status
 }
 
@@ -1779,13 +1779,13 @@ func (clr ContainerLeaseResponse) Response() *http.Response {
 	return clr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (clr ContainerLeaseResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (clr ContainerLeaseResponse) StatusCode() int {
 	return clr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (clr ContainerLeaseResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (clr ContainerLeaseResponse) Status() string {
 	return clr.rawResponse.Status
 }
 
@@ -1872,13 +1872,13 @@ func (csar ContainerSetACLResponse) Response() *http.Response {
 	return csar.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (csar ContainerSetACLResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (csar ContainerSetACLResponse) StatusCode() int {
 	return csar.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (csar ContainerSetACLResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (csar ContainerSetACLResponse) Status() string {
 	return csar.rawResponse.Status
 }
 
@@ -1933,13 +1933,13 @@ func (csmr ContainerSetMetadataResponse) Response() *http.Response {
 	return csmr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (csmr ContainerSetMetadataResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (csmr ContainerSetMetadataResponse) StatusCode() int {
 	return csmr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (csmr ContainerSetMetadataResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (csmr ContainerSetMetadataResponse) Status() string {
 	return csmr.rawResponse.Status
 }
 
@@ -2019,13 +2019,13 @@ func (gr GetResponse) Response() *http.Response {
 	return gr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (gr GetResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (gr GetResponse) StatusCode() int {
 	return gr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (gr GetResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (gr GetResponse) Status() string {
 	return gr.rawResponse.Status
 }
 
@@ -2229,13 +2229,13 @@ func (lbr ListBlobsResponse) Response() *http.Response {
 	return lbr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (lbr ListBlobsResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (lbr ListBlobsResponse) StatusCode() int {
 	return lbr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (lbr ListBlobsResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (lbr ListBlobsResponse) Status() string {
 	return lbr.rawResponse.Status
 }
 
@@ -2285,13 +2285,13 @@ func (lcr ListContainersResponse) Response() *http.Response {
 	return lcr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (lcr ListContainersResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (lcr ListContainersResponse) StatusCode() int {
 	return lcr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (lcr ListContainersResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (lcr ListContainersResponse) Status() string {
 	return lcr.rawResponse.Status
 }
 
@@ -2339,13 +2339,13 @@ func (pbicr PageBlobsIncrementalCopyResponse) Response() *http.Response {
 	return pbicr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (pbicr PageBlobsIncrementalCopyResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbicr PageBlobsIncrementalCopyResponse) StatusCode() int {
 	return pbicr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (pbicr PageBlobsIncrementalCopyResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbicr PageBlobsIncrementalCopyResponse) Status() string {
 	return pbicr.rawResponse.Status
 }
 
@@ -2410,13 +2410,13 @@ func (pbppr PageBlobsPutPageResponse) Response() *http.Response {
 	return pbppr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (pbppr PageBlobsPutPageResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pbppr PageBlobsPutPageResponse) StatusCode() int {
 	return pbppr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (pbppr PageBlobsPutPageResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pbppr PageBlobsPutPageResponse) Status() string {
 	return pbppr.rawResponse.Status
 }
 
@@ -2491,13 +2491,13 @@ func (pl PageList) Response() *http.Response {
 	return pl.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (pl PageList) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (pl PageList) StatusCode() int {
 	return pl.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (pl PageList) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (pl PageList) Status() string {
 	return pl.rawResponse.Status
 }
 
@@ -2579,13 +2579,13 @@ func (sspr ServiceSetPropertiesResponse) Response() *http.Response {
 	return sspr.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (sspr ServiceSetPropertiesResponse) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (sspr ServiceSetPropertiesResponse) StatusCode() int {
 	return sspr.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (sspr ServiceSetPropertiesResponse) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (sspr ServiceSetPropertiesResponse) Status() string {
 	return sspr.rawResponse.Status
 }
 
@@ -2618,13 +2618,13 @@ func (si SignedIdentifiers) Response() *http.Response {
 	return si.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (si SignedIdentifiers) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (si SignedIdentifiers) StatusCode() int {
 	return si.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (si SignedIdentifiers) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (si SignedIdentifiers) Status() string {
 	return si.rawResponse.Status
 }
 
@@ -2694,13 +2694,13 @@ func (ssp StorageServiceProperties) Response() *http.Response {
 	return ssp.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (ssp StorageServiceProperties) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (ssp StorageServiceProperties) StatusCode() int {
 	return ssp.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (ssp StorageServiceProperties) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (ssp StorageServiceProperties) Status() string {
 	return ssp.rawResponse.Status
 }
 
@@ -2726,13 +2726,13 @@ func (sss StorageServiceStats) Response() *http.Response {
 	return sss.rawResponse
 }
 
-// HTTPStatusCode returns the HTTP status code of the response, e.g. 200.
-func (sss StorageServiceStats) HTTPStatusCode() int {
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (sss StorageServiceStats) StatusCode() int {
 	return sss.rawResponse.StatusCode
 }
 
-// HTTPStatus returns the HTTP status message of the response, e.g. "200 OK".
-func (sss StorageServiceStats) HTTPStatus() string {
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (sss StorageServiceStats) Status() string {
 	return sss.rawResponse.Status
 }
 
