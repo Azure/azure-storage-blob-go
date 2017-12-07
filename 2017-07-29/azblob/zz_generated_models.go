@@ -708,9 +708,9 @@ func (bgpr BlobsGetPropertiesResponse) AccessTierInferred() string {
 	return bgpr.rawResponse.Header.Get("x-ms-access-tier-inferred")
 }
 
-// ArchiveStatus returns the value for header x-ms-archive-stats.
+// ArchiveStatus returns the value for header x-ms-archive-status.
 func (bgpr BlobsGetPropertiesResponse) ArchiveStatus() string {
-	return bgpr.rawResponse.Header.Get("x-ms-archive-stats")
+	return bgpr.rawResponse.Header.Get("x-ms-archive-status")
 }
 
 // BlobCommittedBlockCount returns the value for header x-ms-blob-committed-block-count.
