@@ -217,7 +217,7 @@ func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
 }
 
 func getBSU() azblob.ServiceURL {
-	bsu, _ := getGenericBSU("STAGE_") 
+	bsu, _ := getGenericBSU("") 
 	return bsu
 }
 
@@ -5363,6 +5363,7 @@ func waitForIncrementalCopy(c *chk.C, copyBlobURL azblob.PageBlobURL, blobCopyRe
 func setupStartIncrementalCopyTest(c *chk.C) (containerURL azblob.ContainerURL, blobURL azblob.PageBlobURL, copyBlobURL azblob.PageBlobURL, snapshot time.Time) {
 	bsu := getBSU()
 	containerURL, _ = createNewContainer(c, bsu)
+	containerURL.SetPermissions(ctx, azblob.PublicAccessBlob, nil, azblob.ContainerAccessConditions{})
 	blobURL, _ = createNewPageBlob(c, containerURL)
 	resp, _ := blobURL.CreateSnapshot(ctx, nil, azblob.BlobAccessConditions{})
 	copyBlobURL, _ = getPageBlobURL(c, containerURL)

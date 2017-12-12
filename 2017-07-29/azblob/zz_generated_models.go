@@ -823,7 +823,7 @@ func (bgpr BlobsGetPropertiesResponse) DestinationSnapshot() time.Time {
 	if s == "" {
 		return time.Time{}
 	}
-	t, err := time.Parse(time.RFC1123, s)
+	t, err := time.Parse(rfc3339Format, s)
 	if err != nil {
 		panic(err)
 	}

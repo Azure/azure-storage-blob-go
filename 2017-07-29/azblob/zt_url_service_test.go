@@ -72,7 +72,7 @@ func (s *StorageAccountSuite) TestListContainers(c *chk.C) {
 	c.Assert(resp.Containers[0].Properties.LeaseStatus, chk.Equals, azblob.LeaseStatusUnlocked)
 	c.Assert(resp.Containers[0].Properties.LeaseState, chk.Equals, azblob.LeaseStateAvailable)
 	c.Assert(string(resp.Containers[0].Properties.LeaseDuration), chk.Equals, "")
-	c.Assert(string(resp.Containers[0].Properties.PublicAccess), chk.Equals, "blob")
+	c.Assert(string(resp.Containers[0].Properties.PublicAccess), chk.Equals, string(azblob.PublicAccessNone))
 	c.Assert(resp.Containers[0].Metadata, chk.DeepEquals, md)
 }
 
