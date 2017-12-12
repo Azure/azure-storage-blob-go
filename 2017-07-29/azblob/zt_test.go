@@ -204,8 +204,8 @@ func deleteContainer(c *chk.C, container azblob.ContainerURL) {
 }
 
 func getBSU() azblob.ServiceURL {
-	name := os.Getenv("STAGE_ACCOUNT_NAME")
-	key := os.Getenv("STAGE_ACCOUNT_KEY")
+	name := os.Getenv("ACCOUNT_NAME")
+	key := os.Getenv("ACCOUNT_KEY")
 	if name == "" || key == "" {
 		panic("ACCOUNT_NAME and ACCOUNT_KEY environment vars must be set before running tests")
 	}
