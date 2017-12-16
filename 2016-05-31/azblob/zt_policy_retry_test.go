@@ -46,7 +46,7 @@ type retryTestPolicyFactory struct {
 	try        int32
 }
 
-func (f *retryTestPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *retryTestPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	f.try = 0 // Reset this for each test
 	return &retryTestPolicy{factory: f, next: next}
 }
