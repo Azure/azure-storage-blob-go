@@ -35,7 +35,7 @@ type telemetryPolicyFactory struct {
 }
 
 // New creates a telemetryPolicy object.
-func (f *telemetryPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *telemetryPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return &telemetryPolicy{factory: f, next: next}
 }
 

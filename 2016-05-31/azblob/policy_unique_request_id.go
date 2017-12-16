@@ -22,7 +22,7 @@ type uniqueRequestIDPolicyFactory struct {
 }
 
 // New creates a UniqueRequestIDPolicy object.
-func (f *uniqueRequestIDPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *uniqueRequestIDPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return &uniqueRequestIDPolicy{next: next}
 }
 

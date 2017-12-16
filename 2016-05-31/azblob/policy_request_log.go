@@ -34,13 +34,13 @@ type requestLogPolicyFactory struct {
 	o RequestLogOptions
 }
 
-func (f *requestLogPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
-	return &requestLogPolicy{o: f.o, next: next, config: config}
+func (f *requestLogPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
+	return &requestLogPolicy{o: f.o, next: next, po: po}
 }
 
 type requestLogPolicy struct {
 	next           pipeline.Policy
-	config         *pipeline.Configuration
+	po             *pipeline.PolicyOptions
 	o              RequestLogOptions
 	try            int32
 	operationStart time.Time
@@ -82,11 +82,11 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 	}
 
 	// Log the outgoing request as informational
-	if p.config.ShouldLog(pipeline.LogInfo) {
+	if p.po.ShouldLog(pipeline.LogInfo) {
 		b := &bytes.Buffer{}
 		fmt.Fprintf(b, "==> OUTGOING REQUEST (Try=%d)\n", p.try)
 		pipeline.WriteRequestWithResponse(b, prepareRequestForLogging(request), nil, nil)
-		p.config.Log(pipeline.LogInfo, b.String())
+		p.po.Log(pipeline.LogInfo, b.String())
 	}
 
 	// Set the time for this particular retry operation and then Do the operation.
@@ -115,7 +115,7 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 		logLevel, forceLog = pipeline.LogError, true
 	}
 
-	if shouldLog := p.config.ShouldLog(logLevel); forceLog || shouldLog {
+	if shouldLog := p.po.ShouldLog(logLevel); forceLog || shouldLog {
 		// We're going to log this; build the string to log
 		b := &bytes.Buffer{}
 		slow := ""
@@ -143,7 +143,7 @@ func (p *requestLogPolicy) Do(ctx context.Context, request pipeline.Request) (re
 			pipeline.ForceLog(logLevel, msg)
 		}
 		if shouldLog {
-			p.config.Log(logLevel, msg)
+			p.po.Log(logLevel, msg)
 		}
 	}
 	return response, err

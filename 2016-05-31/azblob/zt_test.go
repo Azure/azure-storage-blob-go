@@ -642,15 +642,21 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	containerURL, _ := createNewContainer(c, bsu)
 
 	defer deleteContainer(c, containerURL)
-
+	defer func() { // The library should panic if it sees If(None)Match ETAG access condition
+		recover()
+	}()
 	invalidEtag := azblob.ETag("invalid")
-	_, err := containerURL.SetMetadata(ctx, basicMetadata,
-		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
+	containerURL.SetMetadata(ctx, basicMetadata,
+		 azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
+
+	c.Fail()	// If the method panics (as expected), then we shouldn't get here
+/*
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.GetPropertiesAndMetadata(ctx, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
+	*/
 }
 
 func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {

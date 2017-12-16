@@ -134,7 +134,7 @@ type retryPolicyFactory struct {
 	o RetryOptions
 }
 
-func (f *retryPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *retryPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return &retryPolicy{o: f.o, next: next}
 }
 
