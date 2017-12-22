@@ -447,7 +447,7 @@ func ExampleBlobAccessConditions() {
 	showResult(blobURL.GetBlob(ctx, BlobRange{},
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfModifiedSince: put.LastModified()}}, false))
 
-	// Download blob content if the blob hasn't been modified in teh last 24 hours (fails):
+	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
 	showResult(blobURL.GetBlob(ctx, BlobRange{},
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
@@ -944,7 +944,7 @@ func ExampleBlobURL_startCopy() {
 }
 
 // This example shows how to copy a large stream in blocks (chunks) to a block blob.
-func ExampleStreamToBlockBlob() {
+func ExampleUploadStreamToBlockBlob() {
 	file, err := os.Open("BigFile.bin") // Open the big file whose stream we want to upload in blocks
 	if err != nil {
 		log.Fatal(err)
@@ -984,7 +984,7 @@ func ExampleStreamToBlockBlob() {
 // This example shows how to download a large stream with intelligent retries. Specifically, if
 // the connection fails while reading, continuing to read from this stream initiates a new
 // GetBlob call passing a range that starts from the last byte successfully read before the failure.
-func ExampleNewGetRetryStream() {
+func ExampleNewDownloadStream() {
 	// From the Azure portal, get your Storage account blob service URL endpoint.
 	accountName, accountKey := accountInfo()
 

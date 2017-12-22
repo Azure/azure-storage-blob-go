@@ -15,6 +15,9 @@ import (
 	"github.com/Azure/azure-storage-blob-go/2016-05-31/azblob"
 )
 
+// For testing docs, see: https://labix.org/gocheck
+// To test a specific test: go test -check.f MyTestSuite
+
 type retryTestScenario int32
 
 const (
@@ -100,7 +103,7 @@ func (p *retryTestPolicy) Do(ctx context.Context, request pipeline.Request) (res
 		c.Assert(pos, chk.Equals, int64(0)) // Ensure body seeked back to position 0
 	}
 
-	// Add a query param & header; these not be here on teh next try
+	// Add a query param & header; these not be here on the next try
 	values["TestQueryParam"] = []string{"TestQueryParamValue"}
 	req.Header.Set("TestHeader", "TestValue") // Add a header this not exist with each try
 	b := []byte{0}
