@@ -119,11 +119,7 @@ func (bp *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 		panic("size mismatch between BlobProperties and blobProperties")
 	}
 	bp2 := (*blobProperties)(unsafe.Pointer(bp))
-	err := d.DecodeElement(bp2, &start)
-	if err != nil {
-		bp = (*BlobProperties)(unsafe.Pointer(bp2))
-	}
-	return err
+	return d.DecodeElement(bp2, &start)
 }
 
 // internal type used for marshalling
@@ -149,11 +145,7 @@ func (b *Blob) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 		panic("size mismatch between Blob and blob")
 	}
 	b2 := (*blob)(unsafe.Pointer(b))
-	err := d.DecodeElement(b2, &start)
-	if err != nil {
-		b = (*Blob)(unsafe.Pointer(b2))
-	}
-	return err
+	return d.DecodeElement(b2, &start)
 }
 
 // internal type used for marshalling
@@ -181,11 +173,7 @@ func (cp *ContainerProperties) UnmarshalXML(d *xml.Decoder, start xml.StartEleme
 		panic("size mismatch between ContainerProperties and containerProperties")
 	}
 	cp2 := (*containerProperties)(unsafe.Pointer(cp))
-	err := d.DecodeElement(cp2, &start)
-	if err != nil {
-		cp = (*ContainerProperties)(unsafe.Pointer(cp2))
-	}
-	return err
+	return d.DecodeElement(cp2, &start)
 }
 
 // internal type used for marshalling
@@ -209,9 +197,5 @@ func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 		panic("size mismatch between GeoReplication and geoReplication")
 	}
 	gr2 := (*geoReplication)(unsafe.Pointer(gr))
-	err := d.DecodeElement(gr2, &start)
-	if err != nil {
-		gr = (*GeoReplication)(unsafe.Pointer(gr2))
-	}
-	return err
+	return d.DecodeElement(gr2, &start)
 }
