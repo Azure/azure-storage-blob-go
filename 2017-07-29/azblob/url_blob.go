@@ -223,8 +223,8 @@ func leasePeriodPointer(period int32) (p *int32) {
 	return nil
 }
 
-// Undelete undeletes the blob.
-// For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-blob.
+// Undelete restores the contents and metadata of a soft-deleted blob and any associated soft-deleted snapshots.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/undelete-blob.
 func (b BlobURL) Undelete(ctx context.Context) (*BlobsUndeleteResponse, error) {
 	return b.blobClient.Undelete(ctx, nil, nil)
 }
