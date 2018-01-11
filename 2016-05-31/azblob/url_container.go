@@ -88,6 +88,10 @@ func (c ContainerURL) Create(ctx context.Context, metadata Metadata, publicAcces
 // Delete marks the specified container for deletion. The container and any blobs contained within it are later deleted during garbage collection.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-container.
 func (c ContainerURL) Delete(ctx context.Context, ac ContainerAccessConditions) (*ContainerDeleteResponse, error) {
+	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+		panic("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
+	}
+
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	return c.client.Delete(ctx, nil, nil, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
@@ -103,6 +107,9 @@ func (c ContainerURL) GetPropertiesAndMetadata(ctx context.Context, ac LeaseAcce
 // SetMetadata sets the container's metadata.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-container-metadata.
 func (c ContainerURL) SetMetadata(ctx context.Context, metadata Metadata, ac ContainerAccessConditions) (*ContainerSetMetadataResponse, error) {
+	if !ac.IfUnmodifiedSince.IsZero() || ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+		panic("the IfUnmodifiedSince, IfMatch, and IfNoneMatch must have their default values because they are ignored by the blob service")
+	}
 	ifModifiedSince, _, _, _ := ac.HTTPAccessConditions.pointers()
 	return c.client.SetMetadata(ctx, nil, ac.LeaseAccessConditions.pointers(), metadata, ifModifiedSince, nil)
 }
@@ -158,6 +165,9 @@ func (p *AccessPolicyPermission) Parse(s string) {
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-container-acl.
 func (c ContainerURL) SetPermissions(ctx context.Context, accessType PublicAccessType, permissions []SignedIdentifier,
 	ac ContainerAccessConditions) (*ContainerSetACLResponse, error) {
+	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+		panic("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
+	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	return c.client.SetACL(ctx, permissions, nil, nil, accessType, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
