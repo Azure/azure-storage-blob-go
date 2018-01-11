@@ -2,7 +2,6 @@ package azblob
 
 import (
 	"context"
-	"errors"
 	"math/rand"
 	"net"
 	"net/http"
@@ -58,7 +57,7 @@ type RetryOptions struct {
 
 func (o RetryOptions) defaults() RetryOptions {
 	if o.Policy != RetryPolicyExponential && o.Policy != RetryPolicyFixed {
-		panic(errors.New("RetryPolicy must be RetryPolicyExponential or RetryPolicyFixed"))
+		panic("RetryPolicy must be RetryPolicyExponential or RetryPolicyFixed")
 	}
 	if o.MaxTries < 0 {
 		panic("MaxTries must be >= 0")
@@ -70,7 +69,7 @@ func (o RetryOptions) defaults() RetryOptions {
 		panic("RetryDelay must be <= MaxRetryDelay")
 	}
 	if (o.RetryDelay == 0 && o.MaxRetryDelay != 0) || (o.RetryDelay != 0 && o.MaxRetryDelay == 0) {
-		panic(errors.New("Both RetryDelay and MaxRetryDelay must be 0 or neither can be 0"))
+		panic("Both RetryDelay and MaxRetryDelay must be 0 or neither can be 0")
 	}
 
 	IfDefault := func(current *time.Duration, desired time.Duration) {
@@ -131,14 +130,10 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 	return pipeline.FactoryFunc(func(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.PolicyFunc {
 		return func(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
 			// Before each try, we'll select either the primary or secondary URL.
-			secondaryHost := ""
 			primaryTry := int32(0) // This indicates how many tries we've attempted against the primary DC
 
-			// We only consider retring against a secondary if we have a read request (GET/HEAD) AND this policy has a Secondary URL it can use
+			// We only consider retrying against a secondary if we have a read request (GET/HEAD) AND this policy has a Secondary URL it can use
 			considerSecondary := (request.Method == http.MethodGet || request.Method == http.MethodHead) && o.RetryReadsFromSecondaryHost != ""
-			if considerSecondary {
-				secondaryHost = o.RetryReadsFromSecondaryHost
-			}
 
 			// Exponential retry algorithm: ((2 ^ attempt) - 1) * delay * random(0.8, 1.2)
 			// When to retry: connection failure or an HTTP status code of 500 or greater, except 501 and 505
@@ -173,7 +168,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 					}
 				}
 				if !tryingPrimary {
-					requestCopy.Request.URL.Host = secondaryHost
+					requestCopy.Request.URL.Host = o.RetryReadsFromSecondaryHost
 				}
 
 				// Set the server-side timeout query parameter "timeout=[seconds]"
@@ -190,7 +185,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 					logf("TryTimeout adjusted to=%d sec\n", timeout)
 				}
 				q := requestCopy.Request.URL.Query()
-				q.Set("timeout", strconv.Itoa(int(timeout)))
+				q.Set("timeout", strconv.Itoa(int(timeout+1))) // Add 1 to "round up"
 				requestCopy.Request.URL.RawQuery = q.Encode()
 				logf("Url=%s\n", requestCopy.Request.URL.String())
 

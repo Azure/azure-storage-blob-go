@@ -945,7 +945,7 @@ func ExampleBlobURL_startCopy() {
 
 // This example shows how to copy a large stream in blocks (chunks) to a block blob.
 func ExampleUploadStreamToBlockBlob() {
-	file, err := os.Open("BigFile.bin") // Open the big file whose stream we want to upload in blocks
+	file, err := os.Open("BigFile.bin") // Open the file we want to upload
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -965,12 +965,9 @@ func ExampleUploadStreamToBlockBlob() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Pass the Context, stream, stream size, block blob URL, and options to StreamToBlockBlob
-	putBlockList, err := UploadStreamToBlockBlob(ctx, file, fileSize.Size(), blockBlobURL,
-		UploadStreamToBlockBlobOptions{
-			// BlockSize is mandatory. It specifies the block size to use; the maximum size is BlockBlobMaxPutBlockBytes.
-			BlockSize: BlockBlobMaxPutBlockBytes,
-
-			// If Progress is non-nil, this function is called periodically as bytes are written in PutBlock calls.
+	response, err := UploadFileToBlockBlob(ctx, file, blockBlobURL,
+		UploadToBlockBlobOptions{
+			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
 				fmt.Printf("Uploaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
 			},
@@ -978,7 +975,7 @@ func ExampleUploadStreamToBlockBlob() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = putBlockList // Avoid compiler's "declared and not used" error
+	_ = response // Avoid compiler's "declared and not used" error
 }
 
 // This example shows how to download a large stream with intelligent retries. Specifically, if

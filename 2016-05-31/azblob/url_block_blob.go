@@ -10,6 +10,9 @@ import (
 )
 
 const (
+	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to PutBlob.
+	BlockBlobMaxPutBlobBytes = 256 * 1024 * 1024 // 256MB
+
 	// BlockBlobMaxPutBlockBytes indicates the maximum number of bytes that can be sent in a call to PutBlock.
 	BlockBlobMaxPutBlockBytes = 100 * 1024 * 1024 // 100MB
 

@@ -8,14 +8,38 @@ import (
 	"net"
 	"net/http"
 
+	"bytes"
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"os"
+	"sync"
+	"time"
 )
 
-// UploadStreamToBlockBlobOptions identifies options used by the UploadStreamToBlockBlob function. Note that the
-// BlockSize field is mandatory and must be set; other fields are optional.
-type UploadStreamToBlockBlobOptions struct {
-	// BlockSize is mandatory. It specifies the block size to use; the maximum size is BlockBlobMaxPutBlockBytes.
-	BlockSize int64
+// CommonResponseHeaders returns the headers common to all blob REST API responses.
+type CommonResponse interface {
+	// ETag returns the value for header ETag.
+	ETag() ETag
+
+	// LastModified returns the value for header Last-Modified.
+	LastModified() time.Time
+
+	// RequestID returns the value for header x-ms-request-id.
+	RequestID() string
+
+	// Date returns the value for header Date.
+	Date() time.Time
+
+	// Version returns the value for header x-ms-version.
+	Version() string
+
+	// Response returns the raw HTTP response object.
+	Response() *http.Response
+}
+
+// UploadToBlockBlobOptions identifies options used by the UploadBufferToBlockBlob and UploadFileToBlockBlob functions.
+type UploadToBlockBlobOptions struct {
+	// BlockSize specifies the block size to use; the default (and maximum size) is BlockBlobMaxPutBlockBytes.
+	BlockSize uint64
 
 	// Progress is a function that is invoked periodically as bytes are send in a PutBlock call to the BlockBlobURL.
 	Progress pipeline.ProgressReceiver
@@ -28,45 +52,129 @@ type UploadStreamToBlockBlobOptions struct {
 
 	// AccessConditions indicates the access conditions for the block blob.
 	AccessConditions BlobAccessConditions
+
+	// Parallelism indicates the maximum number of blocks to upload in parallel (0=default)
+	Parallelism uint16
 }
 
-// UploadStreamToBlockBlob uploads a stream of data in blocks to a block blob.
-func UploadStreamToBlockBlob(ctx context.Context, stream io.ReaderAt, streamSize int64,
-	blockBlobURL BlockBlobURL, o UploadStreamToBlockBlobOptions) (*BlockBlobsPutBlockListResponse, error) {
+// UploadBufferToBlockBlob uploads a buffer in blocks to a block blob.
+func UploadBufferToBlockBlob(ctx context.Context, b []byte,
+	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions) (CommonResponse, error) {
 
-	if o.BlockSize <= 0 || o.BlockSize > BlockBlobMaxPutBlockBytes {
+	if o.BlockSize < 0 || o.BlockSize > BlockBlobMaxPutBlockBytes {
 		panic(fmt.Sprintf("BlockSize option must be > 0 and <= %d", BlockBlobMaxPutBlockBytes))
 	}
+	if o.BlockSize == 0 {
+		o.BlockSize = BlockBlobMaxPutBlockBytes // Default if unspecified
+	}
+	size := uint64(len(b))
 
-	numBlocks := ((streamSize - int64(1)) / o.BlockSize) + 1
+	if size <= BlockBlobMaxPutBlobBytes {
+		// If the size can fit in 1 Put Blob call, do it this way
+		var body io.ReadSeeker = bytes.NewReader(b)
+		if o.Progress != nil {
+			body = pipeline.NewRequestBodyProgress(body, o.Progress)
+		}
+		return blockBlobURL.PutBlob(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
+	}
+
+	parallelism := o.Parallelism
+	if parallelism == 0 {
+		parallelism = 5 // default parallelism
+	}
+
+	var numBlocks uint16 = uint16(((size - 1) / o.BlockSize) + 1)
 	if numBlocks > BlockBlobMaxBlocks {
 		panic(fmt.Sprintf("The streamSize is too big or the BlockSize is too small; the number of blocks must be <= %d", BlockBlobMaxBlocks))
 	}
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	blockIDList := make([]string, numBlocks) // Base 64 encoded block IDs
 	blockSize := o.BlockSize
 
-	for blockNum := int64(0); blockNum < numBlocks; blockNum++ {
-		if blockNum == numBlocks-1 { // Last block
-			blockSize = streamSize - (blockNum * o.BlockSize) // Remove size of all uploaded blocks from total
-		}
+	putBlockChannel := make(chan func() (*BlockBlobsPutBlockResponse, error), parallelism) // Create the channel that release 'parallelism' goroutines concurrently
+	putBlockResponseChannel := make(chan error, numBlocks)                                 // Holds each Put Block's response
 
-		streamOffset := blockNum * o.BlockSize
-		// Prepare to read the proper block/section of the file
-		var body io.ReadSeeker = io.NewSectionReader(stream, streamOffset, blockSize)
+	// Create the goroutines that process each Put Block (in parallel)
+	for g := uint16(0); g < parallelism; g++ {
+		go func() {
+			for f := range putBlockChannel {
+				_, err := f()
+				putBlockResponseChannel <- err
+			}
+		}()
+	}
+
+	blobProgress := int64(0)
+	var blockProgress []int64
+	var progressLock *sync.Mutex
+	if o.Progress != nil {
+		// Optimization: allocate only if progress reporting requested
+		blockProgress = make([]int64, numBlocks) // Potentially 50,000 * 8 = 400,000 bytes!
+		progressLock = &sync.Mutex{}
+	}
+
+	// Add each put block to the channel
+	for blockNum := uint16(0); blockNum < numBlocks; blockNum++ {
+		if blockNum == numBlocks-1 { // Last block
+			blockSize = size - (uint64(blockNum) * o.BlockSize) // Remove size of all uploaded blocks from total
+		}
+		offset := uint64(blockNum) * o.BlockSize
+
+		// Prepare to read the proper block/section of the buffer
+		var body io.ReadSeeker = bytes.NewReader(b[offset : offset+blockSize])
+		capturedBlockNum := blockNum
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body,
-				func(bytesTransferred int64) { o.Progress(streamOffset + bytesTransferred) })
+				func(bytesTransferred int64) {
+					diff := bytesTransferred - blockProgress[capturedBlockNum]
+					blockProgress[capturedBlockNum] = bytesTransferred
+					progressLock.Lock()
+					blobProgress += diff
+					o.Progress(blobProgress)
+					progressLock.Unlock()
+				})
 		}
 
 		// Block IDs are unique values to avoid issue if 2+ clients are uploading blocks
-		// at the same time causeing PutBlockList to get a mix of blocks from all the clients.
+		// at the same time causing PutBlockList to get a mix of blocks from all the clients.
 		blockIDList[blockNum] = base64.StdEncoding.EncodeToString(newUUID().bytes())
-		_, err := blockBlobURL.PutBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions)
+		putBlockChannel <- func() (*BlockBlobsPutBlockResponse, error) {
+			return blockBlobURL.PutBlock(ctx, blockIDList[capturedBlockNum], body, o.AccessConditions.LeaseAccessConditions)
+		}
+	}
+	close(putBlockChannel)
+
+	// Wait for the put blocks to complete
+	for blockNum := uint16(0); blockNum < numBlocks; blockNum++ {
+		responseError := <-putBlockResponseChannel
+		if responseError != nil {
+			cancel()                  // As soon as any Put Block fails, cancel all remaining Put Block calls
+			return nil, responseError // No need to process anymore responses
+		}
+	}
+	// All put blocks were successful, call Put Block List to finalize the blob
+	return blockBlobURL.PutBlockList(ctx, blockIDList, o.Metadata, o.BlobHTTPHeaders, o.AccessConditions)
+}
+
+// UploadFileToBlockBlob uploads a file in blocks to a block blob.
+func UploadFileToBlockBlob(ctx context.Context, file *os.File,
+	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions) (CommonResponse, error) {
+
+	stat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+	m := mmf{} // Default to an empty slice; used for 0-size file
+	if stat.Size() != 0 {
+		m, err = newMMF(file, false, 0, int(stat.Size()))
 		if err != nil {
 			return nil, err
 		}
+		defer m.unmap()
 	}
-	return blockBlobURL.PutBlockList(ctx, blockIDList, o.Metadata, o.BlobHTTPHeaders, o.AccessConditions)
+	return UploadBufferToBlockBlob(ctx, m, blockBlobURL, o)
 }
 
 // DownloadStreamOptions is used to configure a call to NewDownloadBlobToStream to download a large stream with intelligent retries.
