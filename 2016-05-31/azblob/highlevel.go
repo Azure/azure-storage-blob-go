@@ -107,13 +107,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 	}
 
 	blobProgress := int64(0)
-	var blockProgress []int64
-	var progressLock *sync.Mutex
-	if o.Progress != nil {
-		// Optimization: allocate only if progress reporting requested
-		blockProgress = make([]int64, numBlocks) // Potentially 50,000 * 8 = 400,000 bytes!
-		progressLock = &sync.Mutex{}
-	}
+	progressLock := &sync.Mutex{}
 
 	// Add each put block to the channel
 	for blockNum := uint16(0); blockNum < numBlocks; blockNum++ {
@@ -126,10 +120,11 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		var body io.ReadSeeker = bytes.NewReader(b[offset : offset+blockSize])
 		capturedBlockNum := blockNum
 		if o.Progress != nil {
+			blockProgress := int64(0)
 			body = pipeline.NewRequestBodyProgress(body,
 				func(bytesTransferred int64) {
-					diff := bytesTransferred - blockProgress[capturedBlockNum]
-					blockProgress[capturedBlockNum] = bytesTransferred
+					diff := bytesTransferred - blockProgress
+					blockProgress = bytesTransferred
 					progressLock.Lock()
 					blobProgress += diff
 					o.Progress(blobProgress)
