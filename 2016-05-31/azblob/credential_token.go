@@ -24,25 +24,16 @@ func (f *TokenCredential) Token() string { return f.token.Load().(string) }
 // SetToken changes the current token value
 func (f *TokenCredential) SetToken(token string) { f.token.Store(token) }
 
-// New creates a credential policy object.
-func (f *TokenCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
-	return &tokenCredentialPolicy{factory: f, next: next}
-}
-
 // credentialMarker is a package-internal method that exists just to satisfy the Credential interface.
 func (*TokenCredential) credentialMarker() {}
 
-// tokenCredentialPolicy is the credential's policy object.
-type tokenCredentialPolicy struct {
-	factory *TokenCredential
-	next    pipeline.Policy
-}
-
-// Do implements the credential's policy interface.
-func (p tokenCredentialPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
-	if request.URL.Scheme != "https" {
-		panic("Token credentials require a URL using the https protocol scheme.")
-	}
-	request.Header[headerAuthorization] = []string{"Bearer " + p.factory.Token()}
-	return p.next.Do(ctx, request)
+// New creates a credential policy object.
+func (f *TokenCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
+	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
+		if request.URL.Scheme != "https" {
+			panic("Token credentials require a URL using the https protocol scheme.")
+		}
+		request.Header[headerAuthorization] = []string{"Bearer " + f.Token()}
+		return next.Do(ctx, request)
+	})
 }

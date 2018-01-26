@@ -247,7 +247,7 @@ func (o *ListBlobsOptions) pointers() (prefix *string, delimiter *string, includ
 	return
 }
 
-// BlobListingDetails indicates what additional information teh service should return with each blob.
+// BlobListingDetails indicates what additional information the service should return with each blob.
 type BlobListingDetails struct {
 	Copy, Metadata, Snapshots, UncommittedBlobs bool
 }

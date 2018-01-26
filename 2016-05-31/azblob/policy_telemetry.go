@@ -26,42 +26,26 @@ func NewTelemetryPolicyFactory(o TelemetryOptions) pipeline.Factory {
 		b.WriteRune(' ')
 	}
 	fmt.Fprintf(b, "Azure-Storage/%s %s", serviceLibVersion, platformInfo)
-	return &telemetryPolicyFactory{telemetryValue: b.String()}
+	telemetryValue := b.String()
+
+	return pipeline.FactoryFunc(func(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.PolicyFunc {
+		return func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
+			request.Header.Set("User-Agent", telemetryValue)
+			return next.Do(ctx, request)
+		}
+	})
 }
 
-// telemetryPolicyFactory struct
-type telemetryPolicyFactory struct {
-	telemetryValue string
-}
-
-// New creates a telemetryPolicy object.
-func (f *telemetryPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
-	return &telemetryPolicy{factory: f, next: next}
-}
-
-// telemetryPolicy ...
-type telemetryPolicy struct {
-	factory *telemetryPolicyFactory
-	next    pipeline.Policy
-}
-
-func (p *telemetryPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
-	request.Header.Set("User-Agent", p.factory.telemetryValue)
-	return p.next.Do(ctx, request)
-}
-
-// NOTE: the ONLY function that should read OR write to this variable is platformInfo
-var platformInfo = initPlatformInfo()
-
-func initPlatformInfo() string {
+// NOTE: the ONLY function that should write to this variable is this func
+var platformInfo = func() string {
 	// Azure-Storage/version (runtime; os type and version)”
 	// Azure-Storage/1.4.0 (NODE-VERSION v4.5.0; Windows_NT 10.0.14393)'
-	operatingSystem := runtime.GOOS
+	operatingSystem := runtime.GOOS // Default OS string
 	switch operatingSystem {
 	case "windows":
-		operatingSystem = os.Getenv("OS")
-	case "linux": // ...
-	case "freebsd": // ...
+		operatingSystem = os.Getenv("OS") // Get more specific OS information
+	case "linux": // accept default OS info
+	case "freebsd": //  accept default OS info
 	}
 	return fmt.Sprintf("(%s; %s)", runtime.Version(), operatingSystem)
-}
+}()

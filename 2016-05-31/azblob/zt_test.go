@@ -217,14 +217,14 @@ func getBSU() azblob.ServiceURL {
 }
 
 func getAlternateBSU() (azblob.ServiceURL, error) {
-	secondaryAccountName, secondaryAccountKey:= os.Getenv("SECONDARY_ACCOUNT_NAME"), os.Getenv("SECONDARY_ACCOUNT_KEY")
-	if secondaryAccountName =="" || secondaryAccountKey == "" {
+	secondaryAccountName, secondaryAccountKey := os.Getenv("SECONDARY_ACCOUNT_NAME"), os.Getenv("SECONDARY_ACCOUNT_KEY")
+	if secondaryAccountName == "" || secondaryAccountKey == "" {
 		return azblob.ServiceURL{}, errors.New("SECONDARY_ACCOUNT_NAME and/or SECONDARY_ACCOUNT_KEY environment variables not specified.")
 	}
 	credentials := azblob.NewSharedKeyCredential(secondaryAccountName, secondaryAccountKey)
 	pipeline := azblob.NewPipeline(credentials, azblob.PipelineOptions{ /*Log: pipeline.NewLogWrapper(pipeline.LogInfo, log.New(os.Stderr, "", log.LstdFlags))*/ })
 	blobPrimaryURL, _ := url.Parse("https://" + secondaryAccountName + ".blob.core.windows.net/")
-	return azblob.NewServiceURL(*blobPrimaryURL, pipeline),nil
+	return azblob.NewServiceURL(*blobPrimaryURL, pipeline), nil
 }
 
 func validateStorageError(c *chk.C, err error, code azblob.ServiceCodeType) {
@@ -647,15 +647,15 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	}()
 	invalidEtag := azblob.ETag("invalid")
 	containerURL.SetMetadata(ctx, basicMetadata,
-		 azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
+		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
 
-	c.Fail()	// If the method panics (as expected), then we shouldn't get here
-/*
-	c.Assert(err, chk.IsNil)
+	c.Fail() // If the method panics (as expected), then we shouldn't get here
+	/*
+		c.Assert(err, chk.IsNil)
 
-	resp, err := containerURL.GetPropertiesAndMetadata(ctx, azblob.LeaseAccessConditions{})
-	c.Assert(err, chk.IsNil)
-	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
+		resp, err := containerURL.GetPropertiesAndMetadata(ctx, azblob.LeaseAccessConditions{})
+		c.Assert(err, chk.IsNil)
+		c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 	*/
 }
 
@@ -1432,7 +1432,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestEmpty(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	// Read the blob data to verify the copy
-	data, err := ioutil.ReadAll(resp.Response().Body)
+	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(resp.ContentLength(), chk.Equals, int64(len(blockBlobDefaultData)))
 	c.Assert(string(data), chk.Equals, blockBlobDefaultData)
 	resp.Body().Close()
@@ -1538,7 +1538,7 @@ func (s *aztestsSuite) TestBlobStartCopySourcePrivate(c *chk.C) {
 	defer deleteContainer(c, copyContainerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, copyContainerURL)
 
-	if  bsu.String() == bsu2.String() {
+	if bsu.String() == bsu2.String() {
 		c.Skip("Test not valid because primary and secondary accounts are the same")
 	}
 	_, err = copyBlobURL.StartCopy(ctx, blobURL.URL(), nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
@@ -1565,8 +1565,8 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	sasURL.RawQuery = queryParams.Encode()
 
 	// Create a new container for the destination
-	bsu2 ,err:= getAlternateBSU()
-	if err!=nil {
+	bsu2, err := getAlternateBSU()
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -1604,8 +1604,8 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	queryParams := serviceSASValues.NewSASQueryParameters(credentials)
 
 	// Create destination container
-	bsu2,err := getAlternateBSU()
-	if err!=nil {
+	bsu2, err := getAlternateBSU()
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -1943,7 +1943,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 
 	// Must copy across accounts so it takes time to copy
 	bsu2, err := getAlternateBSU()
-	if err!=nil {
+	if err != nil {
 		c.Skip(err.Error())
 		return
 	}
@@ -2619,7 +2619,7 @@ func (s *aztestsSuite) TestBlobPutBlobNonEmptyBody(c *chk.C) {
 
 	resp, err := blobURL.GetBlob(ctx, azblob.BlobRange{}, azblob.BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
-	data, err := ioutil.ReadAll(resp.Response().Body)
+	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(string(data), chk.Equals, blockBlobDefaultData)
 }
 
@@ -2679,7 +2679,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataInvalid(c *chk.C) {
 func validatePutBlob(c *chk.C, blobURL azblob.BlockBlobURL) {
 	resp, err := blobURL.GetBlob(ctx, azblob.BlobRange{}, azblob.BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
-	data, err := ioutil.ReadAll(resp.Response().Body)
+	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(data, chk.HasLen, 0)
 }
 
@@ -2937,7 +2937,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesBasic(c *chk.C) {
 	_, err := blobURL.SetProperties(ctx, basicHeaders, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
+	resp, _ := blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
 	h := resp.NewHTTPHeaders()
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
@@ -3475,7 +3475,7 @@ func (s *aztestsSuite) TestBlobPutBlockListHTTPHeaders(c *chk.C) {
 	_, err := blobURL.PutBlockList(ctx, []string{id}, nil, basicHeaders, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
+	resp, _ := blobURL.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
 	h := resp.NewHTTPHeaders()
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
@@ -3613,7 +3613,7 @@ func (s *aztestsSuite) TestBlobPutBlockListValidateData(c *chk.C) {
 
 	resp, err := blobURL.GetBlob(ctx, azblob.BlobRange{}, azblob.BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
-	data, err := ioutil.ReadAll(resp.Response().Body)
+	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(string(data), chk.Equals, blockBlobDefaultData)
 }
 
