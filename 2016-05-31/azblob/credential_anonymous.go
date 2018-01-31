@@ -12,19 +12,32 @@ type Credential interface {
 	credentialMarker()
 }
 
+type credentialFunc pipeline.FactoryFunc
+
+func (f credentialFunc) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
+	return f(next, po)
+}
+
+// credentialMarker is a package-internal method that exists just to satisfy the Credential interface.
+func (credentialFunc) credentialMarker() {}
+
+//////////////////////////////
+
 // NewAnonymousCredential creates an anonymous credential for use with HTTP(S)
 // requests that read blobs from public containers or for use with Shared Access
 // Signatures (SAS).
 func NewAnonymousCredential() Credential {
-	return &anonymousCredentialPolicyFactory{}
+	return anonymousCredentialFactory
 }
+
+var anonymousCredentialFactory Credential = &anonymousCredentialPolicyFactory{} // Singleton
 
 // anonymousCredentialPolicyFactory is the credential's policy factory.
 type anonymousCredentialPolicyFactory struct {
 }
 
 // New creates a credential policy object.
-func (f *anonymousCredentialPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *anonymousCredentialPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return &anonymousCredentialPolicy{next: next}
 }
 
