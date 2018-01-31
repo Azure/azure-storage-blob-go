@@ -6,11 +6,11 @@ package azblob
 import (
 	"context"
 	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"net/http"
 	"net/url"
 	"time"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // appendBlobsClient is the client for the AppendBlobs methods of the Azblob service.

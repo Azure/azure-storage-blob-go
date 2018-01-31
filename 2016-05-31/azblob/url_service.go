@@ -40,6 +40,7 @@ func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
 		NewUniqueRequestIDPolicyFactory(),
 		NewRetryPolicyFactory(o.Retry),
 	}
+
 	if _, ok := c.(*anonymousCredentialPolicyFactory); !ok {
 		// For AnonymousCredential, we optimize out the policy factory since it doesn't do anything
 		// NOTE: The credential's policy factory must appear close to the wire so it can sign any
