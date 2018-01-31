@@ -168,7 +168,7 @@ func ExampleNewPipeline() {
 	// In this example, I reconfigure the retry policies, create a new pipeline, and then create a new
 	// ContainerURL object that has the same URL as its parent.
 	po.Retry = RetryOptions{
-		Policy:        RetryPolicyFixed, // Use exponential backoff as opposed to linear
+		Policy:        RetryPolicyFixed, // Use linear backoff
 		MaxTries:      4,                // Try at most 3 times to perform the operation (set to 1 to disable retries)
 		TryTimeout:    time.Minute * 1,  // Maximum time allowed for any single try
 		RetryDelay:    time.Second * 5,  // Backoff amount for each retry (exponential or linear)
@@ -276,8 +276,8 @@ func ExampleAccountSASSignatureValues() {
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
 	sasQueryParams := AccountSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,               // Users MUST use HTTPS (not HTTP)
-		ExpiryTime:    time.Now().Add(48 * time.Hour), // 48-hours before expiration
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		Permissions:   AccountSASPermissions{Read: true, List: true}.String(),
 		Services:      AccountSASServices{Blob: true}.String(),
 		ResourceTypes: AccountSASResourceTypes{Container: true, Object: true}.String(),
@@ -319,8 +319,8 @@ func ExampleBlobSASSignatureValues() {
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
 	sasQueryParams := BlobSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,               // Users MUST use HTTPS (not HTTP)
-		ExpiryTime:    time.Now().Add(48 * time.Hour), // 48-hours before expiration
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: containerName,
 		BlobName:      blobName,
 
