@@ -765,21 +765,25 @@ func (s *aztestsSuite) TestContainerDeleteIfUnModifiedSinceFalse(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk.C) {
-	// This test defines that the library will not stop you from adding conditional headers
+	// This test defines that the library will panic if the user specifies conditional headers
 	// that will be ignored by the service
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
 	defer deleteContainer(c, containerURL)
 
-	invalidEtag := azblob.ETag("invalid")
-	_, err := containerURL.SetMetadata(ctx, basicMetadata,
-		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
-	c.Assert(err, chk.IsNil)
+	// SeteMetadata will panic with invalid accessConditions. This will allow the test to clean
+	// up and pass if it does.
+	defer func() {
+		recover()
+	}()
 
-	resp, err := containerURL.GetPropertiesAndMetadata(ctx, azblob.LeaseAccessConditions{})
-	c.Assert(err, chk.IsNil)
-	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
+	invalidEtag := azblob.ETag("invalid")
+	containerURL.SetMetadata(ctx, basicMetadata,
+		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: invalidEtag}})
+	
+	// We will only reach this if the api call fails to panic.
+	c.Fail()
 }
 
 func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {
