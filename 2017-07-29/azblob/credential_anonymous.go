@@ -24,7 +24,7 @@ type anonymousCredentialPolicyFactory struct {
 }
 
 // New creates a credential policy object.
-func (f *anonymousCredentialPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *anonymousCredentialPolicyFactory) New(next pipeline.Policy, config *pipeline.PolicyOptions) pipeline.Policy {
 	return &anonymousCredentialPolicy{next: next}
 }
 

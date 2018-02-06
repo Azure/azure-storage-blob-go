@@ -6,8 +6,9 @@ package azblob
 import (
 	"context"
 	"encoding/xml"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io/ioutil"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 type responder func(resp pipeline.Response) (result pipeline.Response, err error)
@@ -18,7 +19,7 @@ type responderPolicyFactory struct {
 }
 
 // New creates a responder policy factory.
-func (arpf responderPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (arpf responderPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return responderPolicy{next: next, responder: arpf.responder}
 }
 
