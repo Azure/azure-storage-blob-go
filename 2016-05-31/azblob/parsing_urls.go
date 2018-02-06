@@ -63,11 +63,11 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 }
 
 type caseInsensitiveValues url.Values // map[string][]string
-func (v caseInsensitiveValues) Get(key string) ([]string, bool) {
+func (values caseInsensitiveValues) Get(key string) ([]string, bool) {
 	key = strings.ToLower(key)
-	for key, value := range v {
-		if strings.ToLower(key) == key {
-			return value, true
+	for k, v := range values {
+		if strings.ToLower(k) == key {
+			return v, true
 		}
 	}
 	return []string{}, false

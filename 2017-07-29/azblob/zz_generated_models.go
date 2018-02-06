@@ -70,6 +70,46 @@ func (m *Marker) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return err
 }
 
+// AccessTierType enumerates the values for access tier.
+type AccessTierType string
+
+const (
+	// AccessTierArchive ...
+	AccessTierArchive AccessTierType = "Archive"
+	// AccessTierCool ...
+	AccessTierCool AccessTierType = "Cool"
+	// AccessTierHot ...
+	AccessTierHot AccessTierType = "Hot"
+	// AccessTierNone represents an empty AccessTierType.
+	AccessTierNone AccessTierType = ""
+	// AccessTierP10 ...
+	AccessTierP10 AccessTierType = "P10"
+	// AccessTierP20 ...
+	AccessTierP20 AccessTierType = "P20"
+	// AccessTierP30 ...
+	AccessTierP30 AccessTierType = "P30"
+	// AccessTierP4 ...
+	AccessTierP4 AccessTierType = "P4"
+	// AccessTierP40 ...
+	AccessTierP40 AccessTierType = "P40"
+	// AccessTierP50 ...
+	AccessTierP50 AccessTierType = "P50"
+	// AccessTierP6 ...
+	AccessTierP6 AccessTierType = "P6"
+)
+
+// ArchiveStatusType enumerates the values for archive status.
+type ArchiveStatusType string
+
+const (
+	// ArchiveStatusNone represents an empty ArchiveStatusType.
+	ArchiveStatusNone ArchiveStatusType = ""
+	// ArchiveStatusRehydratePendingToCool ...
+	ArchiveStatusRehydratePendingToCool ArchiveStatusType = "rehydrate-pending-to-cool"
+	// ArchiveStatusRehydratePendingToHot ...
+	ArchiveStatusRehydratePendingToHot ArchiveStatusType = "rehydrate-pending-to-hot"
+)
+
 // BlobType enumerates the values for blob type.
 type BlobType string
 
@@ -384,14 +424,19 @@ type BlobProperties struct {
 	LeaseDuration LeaseDurationType `xml:"LeaseDuration"`
 	CopyID        *string           `xml:"CopyId"`
 	// CopyStatus - Possible values include: 'Pending', 'Success', 'Aborted', 'Failed', 'None'
-	CopyStatus             CopyStatusType `xml:"CopyStatus"`
-	CopySource             *string        `xml:"CopySource"`
-	CopyProgress           *string        `xml:"CopyProgress"`
-	CopyCompletionTime     *time.Time     `xml:"CopyCompletionTime"`
-	CopyStatusDescription  *string        `xml:"CopyStatusDescription"`
-	ServerEncrypted        *bool          `xml:"ServerEncrypted"`
-	IncrementalCopy        *bool          `xml:"IncrementalCopy"`
-	DestinationSnapshot    *time.Time     `xml:"DestinationSnapshot"`
+	CopyStatus            CopyStatusType `xml:"CopyStatus"`
+	CopySource            *string        `xml:"CopySource"`
+	CopyProgress          *string        `xml:"CopyProgress"`
+	CopyCompletionTime    *time.Time     `xml:"CopyCompletionTime"`
+	CopyStatusDescription *string        `xml:"CopyStatusDescription"`
+	ServerEncrypted       *bool          `xml:"ServerEncrypted"`
+	IncrementalCopy       *bool          `xml:"IncrementalCopy"`
+	DestinationSnapshot   *time.Time     `xml:"DestinationSnapshot"`
+	// AccessTier - Possible values include: 'P4', 'P6', 'P10', 'P20', 'P30', 'P40', 'P50', 'Hot', 'Cool', 'Archive', 'None'
+	AccessTier         AccessTierType `xml:"AccessTier"`
+	AccessTierInferred *bool          `xml:"AccessTierInferred"`
+	// ArchiveStatus - Possible values include: 'RehydratePendingToHot', 'RehydratePendingToCool', 'None'
+	ArchiveStatus ArchiveStatusType `xml:"ArchiveStatus"`
 	DeletedTime            *time.Time     `xml:"DeletedTime"`
 	RemainingRetentionDays *int32         `xml:"RemainingRetentionDays"`
 }
@@ -658,6 +703,21 @@ func (bgpr BlobsGetPropertiesResponse) AcceptRanges() string {
 	return bgpr.rawResponse.Header.Get("Accept-Ranges")
 }
 
+// AccessTier returns the value for header x-ms-access-tier.
+func (bgpr BlobsGetPropertiesResponse) AccessTier() string {
+	return bgpr.rawResponse.Header.Get("x-ms-access-tier")
+}
+
+// AccessTierInferred returns the value for header x-ms-access-tier-inferred.
+func (bgpr BlobsGetPropertiesResponse) AccessTierInferred() string {
+	return bgpr.rawResponse.Header.Get("x-ms-access-tier-inferred")
+}
+
+// ArchiveStatus returns the value for header x-ms-archive-status.
+func (bgpr BlobsGetPropertiesResponse) ArchiveStatus() string {
+	return bgpr.rawResponse.Header.Get("x-ms-archive-status")
+}
+
 // BlobCommittedBlockCount returns the value for header x-ms-blob-committed-block-count.
 func (bgpr BlobsGetPropertiesResponse) BlobCommittedBlockCount() string {
 	return bgpr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
@@ -762,13 +822,13 @@ func (bgpr BlobsGetPropertiesResponse) Date() time.Time {
 	return t
 }
 
-// DestinationSnapshot returns the value for header x-ms-destination-snapshot.
+// DestinationSnapshot returns the value for header x-ms-copy-destination-snapshot.
 func (bgpr BlobsGetPropertiesResponse) DestinationSnapshot() time.Time {
-	s := bgpr.rawResponse.Header.Get("x-ms-destination-snapshot")
+	s := bgpr.rawResponse.Header.Get("x-ms-copy-destination-snapshot")
 	if s == "" {
 		return time.Time{}
 	}
-	t, err := time.Parse(time.RFC1123, s)
+	t, err := time.Parse(rfc3339Format, s)
 	if err != nil {
 		panic(err)
 	}
@@ -984,6 +1044,31 @@ func (bpr BlobsPutResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (bpr BlobsPutResponse) Version() string {
 	return bpr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobsSetBlobTierResponse ...
+type BlobsSetBlobTierResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bsbtr BlobsSetBlobTierResponse) Response() *http.Response {
+	return bsbtr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bsbtr BlobsSetBlobTierResponse) StatusCode() int {
+	return bsbtr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bsbtr BlobsSetBlobTierResponse) Status() string {
+	return bsbtr.rawResponse.Status
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bsbtr BlobsSetBlobTierResponse) RequestID() string {
+	return bsbtr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // BlobsSetMetadataResponse ...

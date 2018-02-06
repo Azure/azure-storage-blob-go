@@ -25,7 +25,7 @@ func (f *TokenCredential) Token() string { return f.token.Load().(string) }
 func (f *TokenCredential) SetToken(token string) { f.token.Store(token) }
 
 // New creates a credential policy object.
-func (f *TokenCredential) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *TokenCredential) New(next pipeline.Policy, config *pipeline.PolicyOptions) pipeline.Policy {
 	return &tokenCredentialPolicy{factory: f, next: next}
 }
 

@@ -746,6 +746,63 @@ func (client blobsClient) putResponder(resp pipeline.Response) (pipeline.Respons
 	return &BlobsPutResponse{rawResponse: resp.Response()}, err
 }
 
+// SetBlobTier the Set BlobTier operation sets the tier on a blob. The operation is allowed on a page blob in a premium
+// storage account and on a block blob in a blob storage account (locally redundant storage only). A premium page
+// blob's tier determines the allowed size, IOPS, and bandwidth of the blob. A block blob's tier determines
+// Hot/Cool/Archive storage type. This operation does not update the blob's ETag.
+//
+// tier is indicates the tier to be set on the blob. timeout is the timeout parameter is expressed in seconds. For more
+// information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
+// character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blobsClient) SetBlobTier(ctx context.Context, tier AccessTierType, timeout *int32, requestID *string) (*BlobsSetBlobTierResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.setBlobTierPreparer(tier, timeout, requestID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.setBlobTierResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobsSetBlobTierResponse), err
+}
+
+// setBlobTierPreparer prepares the SetBlobTier request.
+func (client blobsClient) setBlobTierPreparer(tier AccessTierType, timeout *int32, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "tier")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-access-tier", fmt.Sprintf("%v", tier))
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	return req, nil
+}
+
+// setBlobTierResponder handles the response to the SetBlobTier request.
+func (client blobsClient) setBlobTierResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK, http.StatusAccepted)
+	if resp == nil {
+		return nil, err
+	}
+	return &BlobsSetBlobTierResponse{rawResponse: resp.Response()}, err
+}
+
 // SetMetadata the Set Blob Metadata operation sets user-defined metadata for the specified blob as one or more
 // name-value pairs
 //

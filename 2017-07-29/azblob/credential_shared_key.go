@@ -39,7 +39,7 @@ func (f SharedKeyCredential) AccountName() string {
 }
 
 // New creates a credential policy object.
-func (f *SharedKeyCredential) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (f *SharedKeyCredential) New(next pipeline.Policy, config *pipeline.PolicyOptions) pipeline.Policy {
 	return sharedKeyCredentialPolicy{factory: f, next: next, config: config}
 }
 
@@ -50,7 +50,7 @@ func (*SharedKeyCredential) credentialMarker() {}
 type sharedKeyCredentialPolicy struct {
 	factory *SharedKeyCredential
 	next    pipeline.Policy
-	config  *pipeline.Configuration
+	config  *pipeline.PolicyOptions
 }
 
 // Do implements the credential's policy interface.

@@ -10,6 +10,9 @@ import (
 )
 
 const (
+	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to PutBlob.
+	BlockBlobMaxPutBlobBytes = 256 * 1024 * 1024 // 256MB
+
 	// BlockBlobMaxPutBlockBytes indicates the maximum number of bytes that can be sent in a call to PutBlock.
 	BlockBlobMaxPutBlockBytes = 100 * 1024 * 1024 // 100MB
 
@@ -65,7 +68,7 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(), nil)
 }
 
-// PutBlock uploads the specified block to the block blob's "staging area" to be later commited by a call to PutBlockList.
+// PutBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to PutBlockList.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
 func (bb BlockBlobURL) PutBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobsPutBlockResponse, error) {
 	return bb.bbClient.PutBlock(ctx, base64BlockID, body, nil, ac.pointers(), nil)

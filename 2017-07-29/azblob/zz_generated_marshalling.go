@@ -80,29 +80,32 @@ func (ap *AccessPolicy) UnmarshalXML(d *xml.Decoder, start xml.StartElement) err
 
 // internal type used for marshalling
 type blobProperties struct {
-	LastModified           timeRFC1123       `xml:"Last-Modified"`
-	Etag                   ETag              `xml:"Etag"`
-	ContentLength          *int64            `xml:"Content-Length"`
-	ContentType            *string           `xml:"Content-Type"`
-	ContentEncoding        *string           `xml:"Content-Encoding"`
-	ContentLanguage        *string           `xml:"Content-Language"`
-	ContentMD5             *string           `xml:"Content-MD5"`
-	ContentDisposition     *string           `xml:"Content-Disposition"`
-	CacheControl           *string           `xml:"Cache-Control"`
-	BlobSequenceNumber     *int32            `xml:"x-ms-blob-sequence-number"`
-	BlobType               BlobType          `xml:"BlobType"`
-	LeaseStatus            LeaseStatusType   `xml:"LeaseStatus"`
-	LeaseState             LeaseStateType    `xml:"LeaseState"`
-	LeaseDuration          LeaseDurationType `xml:"LeaseDuration"`
-	CopyID                 *string           `xml:"CopyId"`
-	CopyStatus             CopyStatusType    `xml:"CopyStatus"`
-	CopySource             *string           `xml:"CopySource"`
-	CopyProgress           *string           `xml:"CopyProgress"`
-	CopyCompletionTime     *timeRFC1123      `xml:"CopyCompletionTime"`
-	CopyStatusDescription  *string           `xml:"CopyStatusDescription"`
-	ServerEncrypted        *bool             `xml:"ServerEncrypted"`
-	IncrementalCopy        *bool             `xml:"IncrementalCopy"`
-	DestinationSnapshot    *timeRFC1123      `xml:"DestinationSnapshot"`
+	LastModified          timeRFC1123       `xml:"Last-Modified"`
+	Etag                  ETag              `xml:"Etag"`
+	ContentLength         *int64            `xml:"Content-Length"`
+	ContentType           *string           `xml:"Content-Type"`
+	ContentEncoding       *string           `xml:"Content-Encoding"`
+	ContentLanguage       *string           `xml:"Content-Language"`
+	ContentMD5            *string           `xml:"Content-MD5"`
+	ContentDisposition    *string           `xml:"Content-Disposition"`
+	CacheControl          *string           `xml:"Cache-Control"`
+	BlobSequenceNumber    *int32            `xml:"x-ms-blob-sequence-number"`
+	BlobType              BlobType          `xml:"BlobType"`
+	LeaseStatus           LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState            LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration         LeaseDurationType `xml:"LeaseDuration"`
+	CopyID                *string           `xml:"CopyId"`
+	CopyStatus            CopyStatusType    `xml:"CopyStatus"`
+	CopySource            *string           `xml:"CopySource"`
+	CopyProgress          *string           `xml:"CopyProgress"`
+	CopyCompletionTime    *timeRFC1123      `xml:"CopyCompletionTime"`
+	CopyStatusDescription *string           `xml:"CopyStatusDescription"`
+	ServerEncrypted       *bool             `xml:"ServerEncrypted"`
+	IncrementalCopy       *bool             `xml:"IncrementalCopy"`
+	DestinationSnapshot   *timeRFC3339      `xml:"DestinationSnapshot"`
+	AccessTier            AccessTierType    `xml:"AccessTier"`
+	AccessTierInferred    *bool             `xml:"AccessTierInferred"`
+	ArchiveStatus         ArchiveStatusType `xml:"ArchiveStatus"`
 	DeletedTime            *timeRFC1123      `xml:"DeletedTime"`
 	RemainingRetentionDays *int32            `xml:"RemainingRetentionDays"`
 }

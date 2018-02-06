@@ -447,7 +447,7 @@ func ExampleBlobAccessConditions() {
 	showResult(blobURL.GetBlob(ctx, BlobRange{},
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfModifiedSince: put.LastModified()}}, false))
 
-	// Download blob content if the blob hasn't been modified in teh last 24 hours (fails):
+	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
 	showResult(blobURL.GetBlob(ctx, BlobRange{},
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
@@ -944,8 +944,8 @@ func ExampleBlobURL_startCopy() {
 }
 
 // This example shows how to copy a large stream in blocks (chunks) to a block blob.
-func ExampleStreamToBlockBlob() {
-	file, err := os.Open("BigFile.bin") // Open the big file whose stream we want to upload in blocks
+func ExampleUploadStreamToBlockBlob() {
+	file, err := os.Open("BigFile.bin") // Open the file we want to upload
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -965,12 +965,9 @@ func ExampleStreamToBlockBlob() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Pass the Context, stream, stream size, block blob URL, and options to StreamToBlockBlob
-	putBlockList, err := UploadStreamToBlockBlob(ctx, file, fileSize.Size(), blockBlobURL,
-		UploadStreamToBlockBlobOptions{
-			// BlockSize is mandatory. It specifies the block size to use; the maximum size is BlockBlobMaxPutBlockBytes.
-			BlockSize: BlockBlobMaxPutBlockBytes,
-
-			// If Progress is non-nil, this function is called periodically as bytes are written in PutBlock calls.
+	response, err := UploadFileToBlockBlob(ctx, file, blockBlobURL,
+		UploadToBlockBlobOptions{
+			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
 				fmt.Printf("Uploaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
 			},
@@ -978,13 +975,13 @@ func ExampleStreamToBlockBlob() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	_ = putBlockList // Avoid compiler's "declared and not used" error
+	_ = response // Avoid compiler's "declared and not used" error
 }
 
 // This example shows how to download a large stream with intelligent retries. Specifically, if
 // the connection fails while reading, continuing to read from this stream initiates a new
 // GetBlob call passing a range that starts from the last byte successfully read before the failure.
-func ExampleNewGetRetryStream() {
+func ExampleNewDownloadStream() {
 	// From the Azure portal, get your Storage account blob service URL endpoint.
 	accountName, accountKey := accountInfo()
 

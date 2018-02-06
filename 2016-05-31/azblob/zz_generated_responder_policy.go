@@ -19,7 +19,7 @@ type responderPolicyFactory struct {
 }
 
 // New creates a responder policy factory.
-func (arpf responderPolicyFactory) New(next pipeline.Policy, config *pipeline.Configuration) pipeline.Policy {
+func (arpf responderPolicyFactory) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return responderPolicy{next: next, responder: arpf.responder}
 }
 
