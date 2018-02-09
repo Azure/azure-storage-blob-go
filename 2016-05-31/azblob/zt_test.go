@@ -5393,7 +5393,7 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopySnapshotNotExist(c *chk.C) {
 	blobURL, _ := createNewPageBlob(c, containerURL)
 	copyBlobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := copyBlobURL.StartIncrementalCopy(ctx, blobURL.URL(), time.Now().UTC(), azblob.BlobAccessConditions{})
+	_, err := copyBlobURL.StartIncrementalCopy(ctx, blobURL.URL(), time.Now(), azblob.BlobAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
 }
 
