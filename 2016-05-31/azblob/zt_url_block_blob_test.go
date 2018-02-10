@@ -43,7 +43,7 @@ func (b *BlockBlobURLSuite) TestPutGetBlocks(c *chk.C) {
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 1)
 
-	listResp, err := blob.PutBlockList(context.Background(), []string{blockID}, nil, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	listResp, err := blob.PutBlockList(context.Background(), []string{blockID}, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.LastModified().IsZero(), chk.Equals, false)

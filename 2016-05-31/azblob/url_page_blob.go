@@ -50,7 +50,7 @@ func (pb PageBlobURL) WithSnapshot(snapshot time.Time) PageBlobURL {
 
 // Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, metadata Metadata, h BlobHTTPHeaders, ac BlobAccessConditions) (*BlobsPutResponse, error) {
+func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlobsPutResponse, error) {
 	if sequenceNumber < 0 {
 		panic("sequenceNumber must be greater than or equal to 0")
 	}
@@ -62,6 +62,7 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 }
 
 // PutPages writes 1 or more pages to the page blob. The start and end offsets must be a multiple of 512.
+// Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
 func (pb PageBlobURL) PutPages(ctx context.Context, pr PageRange, body io.ReadSeeker, ac BlobAccessConditions) (*PageBlobsPutPageResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
@@ -99,13 +100,13 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, br BlobRange, prevS
 
 // Resize resizes the page blob to the specified size (which must be a multiple of 512).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-blob-properties.
-func (pb PageBlobURL) Resize(ctx context.Context, length int64, ac BlobAccessConditions) (*BlobsSetPropertiesResponse, error) {
-	if length%PageBlobPageBytes != 0 {
-		panic("Length must be a multiple of PageBlobPageBytes (512)")
+func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessConditions) (*BlobsSetPropertiesResponse, error) {
+	if size%PageBlobPageBytes != 0 {
+		panic("Size must be a multiple of PageBlobPageBytes (512)")
 	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	return pb.blobClient.SetProperties(ctx, nil, nil, nil, nil, nil, nil, ac.LeaseAccessConditions.pointers(),
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil, &length, SequenceNumberActionNone, nil, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil, &size, SequenceNumberActionNone, nil, nil)
 }
 
 // SetSequenceNumber sets the page blob's sequence number.

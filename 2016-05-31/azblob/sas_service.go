@@ -2,21 +2,22 @@ package azblob
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"time"
 )
 
 // BlobSASSignatureValues is used to generate a Shared Access Signature (SAS) for an Azure Storage container or blob.
 type BlobSASSignatureValues struct {
-	Version            string    `param:"sv"`  // If not specified, this defaults to SASVersion
-	Protocol           string    `param:"spr"` // See the SASProtocol* constants
-	StartTime          time.Time `param:"st"`  // Not specified if IsZero
-	ExpiryTime         time.Time `param:"se"`  // Not specified if IsZero
-	Permissions        string    `param:"sp"`
-	IPRange            IPRange   `param:"sip"`
+	Version            string      `param:"sv"`  // If not specified, this defaults to SASVersion
+	Protocol           SASProtocol `param:"spr"` // See the SASProtocol* constants
+	StartTime          time.Time   `param:"st"`  // Not specified if IsZero
+	ExpiryTime         time.Time   `param:"se"`  // Not specified if IsZero
+	Permissions        string      `param:"sp"`  // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
+	IPRange            IPRange     `param:"sip"`
+	Identifier         string      `param:"si"`
 	ContainerName      string
 	BlobName           string // Use "" to create a Container SAS
-	Identifier         string `param:"si"`
 	CacheControl       string // rscc
 	ContentDisposition string // rscd
 	ContentEncoding    string // rsce
@@ -32,8 +33,21 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 	}
 
 	resource := "c"
-	if v.BlobName != "" {
+	if v.BlobName == "" {
+		// Make sure the permission characters are in the correct order
+		perms := &ContainerSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			panic(err)
+		}
+		v.Permissions = perms.String()
+	} else {
 		resource = "b"
+		// Make sure the permission characters are in the correct order
+		perms := &BlobSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			panic(err)
+		}
+		v.Permissions = perms.String()
 	}
 	if v.Version == "" {
 		v.Version = SASVersion
@@ -48,7 +62,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		getCanonicalName(sharedKeyCredential.AccountName(), v.ContainerName, v.BlobName),
 		v.Identifier,
 		v.IPRange.String(),
-		v.Protocol,
+		string(v.Protocol),
 		v.Version,
 		v.CacheControl,       // rscc
 		v.ContentDisposition, // rscd
@@ -60,19 +74,19 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 
 	p := SASQueryParameters{
 		// Common SAS parameters
-		Version:     v.Version,
-		Protocol:    v.Protocol,
-		StartTime:   v.StartTime,
-		ExpiryTime:  v.ExpiryTime,
-		Permissions: v.Permissions,
-		IPRange:     v.IPRange,
+		version:     v.Version,
+		protocol:    v.Protocol,
+		startTime:   v.StartTime,
+		expiryTime:  v.ExpiryTime,
+		permissions: v.Permissions,
+		ipRange:     v.IPRange,
 
 		// Container/Blob-specific SAS parameters
-		Resource:   resource,
-		Identifier: v.Identifier,
+		resource:   resource,
+		identifier: v.Identifier,
 
 		// Calculated SAS signature
-		Signature: signature,
+		signature: signature,
 	}
 	return p
 }
@@ -120,13 +134,27 @@ func (p ContainerSASPermissions) String() string {
 }
 
 // Parse initializes the ContainerSASPermissions's fields from a string.
-func (p *ContainerSASPermissions) Parse(s string) {
-	p.Read = strings.ContainsRune(s, 'r')
-	p.Add = strings.ContainsRune(s, 'a')
-	p.Create = strings.ContainsRune(s, 'c')
-	p.Write = strings.ContainsRune(s, 'w')
-	p.Delete = strings.ContainsRune(s, 'd')
-	p.List = strings.ContainsRune(s, 'l')
+func (p *ContainerSASPermissions) Parse(s string) error {
+	*p = ContainerSASPermissions{} // Clear the flags
+	for _, r := range s {
+		switch r {
+		case 'r':
+			p.Read = true
+		case 'a':
+			p.Add = true
+		case 'c':
+			p.Create = true
+		case 'w':
+			p.Write = true
+		case 'd':
+			p.Delete = true
+		case 'l':
+			p.List = true
+		default:
+			return fmt.Errorf("Invalid permission: '%v'", r)
+		}
+	}
+	return nil
 }
 
 // The BlobSASPermissions type simplifies creating the permissions string for an Azure Storage blob SAS.
@@ -156,10 +184,23 @@ func (p BlobSASPermissions) String() string {
 }
 
 // Parse initializes the BlobSASPermissions's fields from a string.
-func (p *BlobSASPermissions) Parse(s string) {
-	p.Read = strings.ContainsRune(s, 'r')
-	p.Add = strings.ContainsRune(s, 'a')
-	p.Create = strings.ContainsRune(s, 'c')
-	p.Write = strings.ContainsRune(s, 'w')
-	p.Delete = strings.ContainsRune(s, 'd')
+func (p *BlobSASPermissions) Parse(s string) error {
+	*p = BlobSASPermissions{} // Clear the flags
+	for _, r := range s {
+		switch r {
+		case 'r':
+			p.Read = true
+		case 'a':
+			p.Add = true
+		case 'c':
+			p.Create = true
+		case 'w':
+			p.Write = true
+		case 'd':
+			p.Delete = true
+		default:
+			return fmt.Errorf("Invalid permission: '%v'", r)
+		}
+	}
+	return nil
 }

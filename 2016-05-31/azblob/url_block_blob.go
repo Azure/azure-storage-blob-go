@@ -52,7 +52,8 @@ func (bb BlockBlobURL) WithSnapshot(snapshot time.Time) BlockBlobURL {
 // PutBlob creates a new block blob, or updates the content of an existing block blob.
 // Updating an existing block blob overwrites any existing metadata on the blob. Partial updates are not
 // supported with PutBlob; the content of the existing blob is overwritten with the new content. To
-// perform a partial update of a block blob's, use PutBlock and PutBlockList.
+// perform a partial update of a block blob's, use PutBlock and PutBlockList. Note that the http client
+// closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (bb BlockBlobURL) PutBlob(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlobsPutResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
@@ -69,6 +70,7 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 }
 
 // PutBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to PutBlockList.
+// Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
 func (bb BlockBlobURL) PutBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobsPutBlockResponse, error) {
 	return bb.bbClient.PutBlock(ctx, base64BlockID, body, nil, ac.pointers(), nil)
@@ -80,8 +82,8 @@ func (bb BlockBlobURL) PutBlock(ctx context.Context, base64BlockID string, body 
 // by uploading only those blocks that have changed, then committing the new and existing
 // blocks together. Any blocks not specified in the block list and permanently deleted.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
-func (bb BlockBlobURL) PutBlockList(ctx context.Context, base64BlockIDs []string, metadata Metadata,
-	h BlobHTTPHeaders, ac BlobAccessConditions) (*BlockBlobsPutBlockListResponse, error) {
+func (bb BlockBlobURL) PutBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
+	metadata Metadata, ac BlobAccessConditions) (*BlockBlobsPutBlockListResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	return bb.bbClient.PutBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.contentMD5Pointer(),

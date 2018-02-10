@@ -9,6 +9,14 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
+const (
+	// AppendBlobMaxAppendBlockBytes indicates the maximum number of bytes that can be sent in a call to AppendBlock.
+	AppendBlobMaxAppendBlockBytes = 4 * 1024 * 1024 // 4MB
+
+	// AppendBlobMaxBlocks indicates the maximum number of blocks allowed in an append blob.
+	AppendBlobMaxBlocks = 50000
+)
+
 // AppendBlobURL defines a set of operations applicable to append blobs.
 type AppendBlobURL struct {
 	BlobURL
@@ -37,7 +45,7 @@ func (ab AppendBlobURL) WithSnapshot(snapshot time.Time) AppendBlobURL {
 
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (ab AppendBlobURL) Create(ctx context.Context, metadata Metadata, h BlobHTTPHeaders, ac BlobAccessConditions) (*BlobsPutResponse, error) {
+func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlobsPutResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.HTTPAccessConditions.pointers()
 	return ab.blobClient.Put(ctx, BlobAppendBlob, nil, nil, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.contentMD5Pointer(), &h.CacheControl,
@@ -48,6 +56,7 @@ func (ab AppendBlobURL) Create(ctx context.Context, metadata Metadata, h BlobHTT
 }
 
 // AppendBlock commits a new block of data to the end of the existing append blob.
+// Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
 func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac BlobAccessConditions) (*AppendBlobsAppendBlockResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()

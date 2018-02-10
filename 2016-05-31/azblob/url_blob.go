@@ -196,12 +196,12 @@ func (b BlobURL) ReleaseLease(ctx context.Context, leaseID string, ac HTTPAccess
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
-// BreakLease breaks the blob's previously-acquired lease (if it exists). Pass the LeaseBreakDefault (-1) constant to break
-// a fixed-duration lease when it expires or an infinite lease immediately.
+// BreakLease breaks the blob's previously-acquired lease (if it exists). Pass the LeaseBreakDefault (-1)
+// constant to break a fixed-duration lease when it expires or an infinite lease immediately.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-blob.
-func (b BlobURL) BreakLease(ctx context.Context, leaseID string, breakPeriodInSeconds int32, ac HTTPAccessConditions) (*BlobsLeaseResponse, error) {
+func (b BlobURL) BreakLease(ctx context.Context, breakPeriodInSeconds int32, ac HTTPAccessConditions) (*BlobsLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
-	return b.blobClient.Lease(ctx, LeaseActionBreak, nil, &leaseID, leasePeriodPointer(breakPeriodInSeconds), nil, nil,
+	return b.blobClient.Lease(ctx, LeaseActionBreak, nil, nil, leasePeriodPointer(breakPeriodInSeconds), nil, nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 

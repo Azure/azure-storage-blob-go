@@ -2,45 +2,22 @@ package azblob
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"time"
 )
 
-// SASVersion indicates the SAS version.
-const SASVersion = "2015-04-05"
-
-const (
-	// SASProtocolHTTPS can be specified for a SAS protocol
-	SASProtocolHTTPS = "https"
-
-	// SASProtocolHTTPSandHTTP can be specified for a SAS protocol
-	SASProtocolHTTPSandHTTP = "https,http"
-)
-
-// FormatTimesForSASSigning converts a time.Time to a snapshotTimeFormat string suitable for a
-// SASField's StartTime or ExpiryTime fields. Returns "" if value.IsZero().
-func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) {
-	ss := ""
-	if !startTime.IsZero() {
-		ss = startTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
-	}
-	se := ""
-	if !expiryTime.IsZero() {
-		se = expiryTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
-	}
-	return ss, se
-}
-
 // AccountSASSignatureValues is used to generate a Shared Access Signature (SAS) for an Azure Storage account.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/constructing-an-account-sas
 type AccountSASSignatureValues struct {
-	Version       string    `param:"sv"`  // If not specified, this defaults to azstorage.SASVersion
-	Protocol      string    `param:"spr"` // See the SASProtocol* constants
-	StartTime     time.Time `param:"st"`  // Not specified if IsZero
-	ExpiryTime    time.Time `param:"se"`  // Not specified if IsZero
-	Permissions   string    `param:"sp"`
-	IPRange       IPRange   `param:"sip"`
-	Services      string    `param:"ss"`
-	ResourceTypes string    `param:"srt"`
+	Version       string      `param:"sv"`  // If not specified, this defaults to SASVersion
+	Protocol      SASProtocol `param:"spr"` // See the SASProtocol* constants
+	StartTime     time.Time   `param:"st"`  // Not specified if IsZero
+	ExpiryTime    time.Time   `param:"se"`  // Not specified if IsZero
+	Permissions   string      `param:"sp"`  // Create by initializing a AccountSASPermissions and then call String()
+	IPRange       IPRange     `param:"sip"`
+	Services      string      `param:"ss"`  // Create by initializing AccountSASServices and then call String()
+	ResourceTypes string      `param:"srt"` // Create by initializing AccountSASResourceTypes and then call String()
 }
 
 // NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
@@ -53,6 +30,12 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 	if v.Version == "" {
 		v.Version = SASVersion
 	}
+	perms := &AccountSASPermissions{}
+	if err := perms.Parse(v.Permissions); err != nil {
+		panic(err)
+	}
+	v.Permissions = perms.String()
+
 	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
 
 	stringToSign := strings.Join([]string{
@@ -63,7 +46,7 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 		startTime,
 		expiryTime,
 		v.IPRange.String(),
-		v.Protocol,
+		string(v.Protocol),
 		v.Version,
 		""}, // That right, the account SAS requires a terminating extra newline
 		"\n")
@@ -71,19 +54,19 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 	signature := sharedKeyCredential.ComputeHMACSHA256(stringToSign)
 	p := SASQueryParameters{
 		// Common SAS parameters
-		Version:     v.Version,
-		Protocol:    v.Protocol,
-		StartTime:   v.StartTime,
-		ExpiryTime:  v.ExpiryTime,
-		Permissions: v.Permissions,
-		IPRange:     v.IPRange,
+		version:     v.Version,
+		protocol:    v.Protocol,
+		startTime:   v.StartTime,
+		expiryTime:  v.ExpiryTime,
+		permissions: v.Permissions,
+		ipRange:     v.IPRange,
 
 		// Account-specific SAS parameters
-		Services:      v.Services,
-		ResourceTypes: v.ResourceTypes,
+		services:      v.Services,
+		resourceTypes: v.ResourceTypes,
 
 		// Calculated SAS signature
-		Signature: signature,
+		signature: signature,
 	}
 	return p
 }
@@ -125,6 +108,34 @@ func (p AccountSASPermissions) String() string {
 	return buffer.String()
 }
 
+// Parse initializes the AccountSASPermissions's fields from a string.
+func (p *AccountSASPermissions) Parse(s string) error {
+	*p = AccountSASPermissions{} // Clear out the flags
+	for _, r := range s {
+		switch r {
+		case 'r':
+			p.Read = true
+		case 'w':
+			p.Write = true
+		case 'd':
+			p.Delete = true
+		case 'l':
+			p.List = true
+		case 'a':
+			p.Add = true
+		case 'c':
+			p.Create = true
+		case 'u':
+			p.Update = true
+		case 'p':
+			p.Process = true
+		default:
+			return fmt.Errorf("Invalid permission character: '%v'", r)
+		}
+	}
+	return nil
+}
+
 // The AccountSASServices type simplifies creating the services string for an Azure Storage Account SAS.
 // Initialize an instance of this type and then call its String method to set AccountSASSignatureValues's Services field.
 type AccountSASServices struct {
@@ -147,6 +158,24 @@ func (s AccountSASServices) String() string {
 	return buffer.String()
 }
 
+// Parse initializes the AccountSASServices' fields from a string.
+func (a *AccountSASServices) Parse(s string) error {
+	*a = AccountSASServices{} // Clear out the flags
+	for _, r := range s {
+		switch r {
+		case 'b':
+			a.Blob = true
+		case 'q':
+			a.Queue = true
+		case 'f':
+			a.File = true
+		default:
+			return fmt.Errorf("Invalid service character: '%v'", r)
+		}
+	}
+	return nil
+}
+
 // The AccountSASResourceTypes type simplifies creating the resource types string for an Azure Storage Account SAS.
 // Initialize an instance of this type and then call its String method to set AccountSASSignatureValues's ResourceTypes field.
 type AccountSASResourceTypes struct {
@@ -167,4 +196,22 @@ func (rt AccountSASResourceTypes) String() string {
 		buffer.WriteRune('o')
 	}
 	return buffer.String()
+}
+
+// Parse initializes the AccountSASResourceType's fields from a string.
+func (rt *AccountSASResourceTypes) Parse(s string) error {
+	*rt = AccountSASResourceTypes{} // Clear out the flags
+	for _, r := range s {
+		switch r {
+		case 's':
+			rt.Service = true
+		case 'q':
+			rt.Container = true
+		case 'o':
+			rt.Object = true
+		default:
+			return fmt.Errorf("Invalid resource type: '%v'", r)
+		}
+	}
+	return nil
 }

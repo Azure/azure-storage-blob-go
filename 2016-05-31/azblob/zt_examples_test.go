@@ -297,10 +297,9 @@ func ExampleAccountSASSignatureValues() {
 	serviceURL := NewServiceURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
 	// Now, you can use this serviceURL just like any other to make requests of the resource.
 
-	// If you have a SAS query parameter string, you can parse it into its parts:
-	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values, true)
-	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
+	// You can parse a URL into its constituent parts:
+	blobURLParts := NewBlobURLParts(serviceURL.URL())
+	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = serviceURL // Avoid compiler's "declared and not used" error
 }
@@ -347,9 +346,8 @@ func ExampleBlobSASSignatureValues() {
 	// Now, you can use this blobURL just like any other to make requests of the resource.
 
 	// If you have a SAS query parameter string, you can parse it into its parts:
-	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values, true)
-	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
+	blobURLParts := NewBlobURLParts(blobURL.URL())
+	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = blobURL // Avoid compiler's "declared and not used" error
 }
@@ -650,7 +648,7 @@ func ExampleBlockBlobURL() {
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err := blobURL.PutBlockList(ctx, base64BlockIDs, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := blobURL.PutBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -688,7 +686,7 @@ func ExampleAppendBlobURL() {
 	appendBlobURL := NewAppendBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := appendBlobURL.Create(ctx, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -722,7 +720,7 @@ func ExamplePageBlobURL() {
 		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := blobURL.Create(ctx, PageBlobPageBytes*4, 0, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}

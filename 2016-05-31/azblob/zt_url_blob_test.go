@@ -292,7 +292,7 @@ func (b *BlobURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
 
-	resp, err = blob.BreakLease(context.Background(), newID, 5, azblob.HTTPAccessConditions{})
+	resp, err = blob.BreakLease(context.Background(), 5, azblob.HTTPAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.Date().IsZero(), chk.Equals, false)
