@@ -18,7 +18,7 @@ func (b *AppendBlobURLSuite) TestAppendBlock(c *chk.C) {
 
 	blob := container.NewAppendBlobURL(generateBlobName())
 
-	resp, err := blob.Create(context.Background(), nil, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	resp, err := blob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 

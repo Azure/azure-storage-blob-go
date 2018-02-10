@@ -161,11 +161,12 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 
 				// Clone the original request to ensure that each try starts with the original (unmutated) request.
 				requestCopy := request.Copy()
-				if try > 1 {
-					// For a retry, seek to the beginning of the Body stream.
-					if err = requestCopy.RewindBody(); err != nil {
-						panic(err)
-					}
+
+				// For each try, seek to the beginning of the Body stream. We do this even for the 1st try because
+				// the stream may not be at offset 0 when we first get it and we want the same behavior for the
+				// 1st try as for additional tries.
+				if err = requestCopy.RewindBody(); err != nil {
+					panic(err)
 				}
 				if !tryingPrimary {
 					requestCopy.Request.URL.Host = o.RetryReadsFromSecondaryHost

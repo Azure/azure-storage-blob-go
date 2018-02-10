@@ -7,6 +7,33 @@ import (
 	"time"
 )
 
+// SASVersion indicates the SAS version.
+const SASVersion = "2015-04-05"
+
+type SASProtocol string
+
+const (
+	// SASProtocolHTTPS can be specified for a SAS protocol
+	SASProtocolHTTPS SASProtocol = "https"
+
+	// SASProtocolHTTPSandHTTP can be specified for a SAS protocol
+	SASProtocolHTTPSandHTTP SASProtocol = "https,http"
+)
+
+// FormatTimesForSASSigning converts a time.Time to a snapshotTimeFormat string suitable for a
+// SASField's StartTime or ExpiryTime fields. Returns "" if value.IsZero().
+func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) {
+	ss := ""
+	if !startTime.IsZero() {
+		ss = startTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
+	}
+	se := ""
+	if !expiryTime.IsZero() {
+		se = expiryTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
+	}
+	return ss, se
+}
+
 // SASTimeFormat represents the format of a SAS start or expiry time. Use it when formatting/parsing a time.Time.
 const SASTimeFormat = "2006-01-02T15:04:05Z" //"2017-07-27T00:00:00Z" // ISO 8601
 
@@ -20,17 +47,56 @@ const SASTimeFormat = "2006-01-02T15:04:05Z" //"2017-07-27T00:00:00Z" // ISO 860
 // This type defines the components used by all Azure Storage resources (Containers, Blobs, Files, & Queues).
 type SASQueryParameters struct {
 	// All members are immutable or values so copies of this struct are goroutine-safe.
-	Version       string    `param:"sv"`
-	Services      string    `param:"ss"`
-	ResourceTypes string    `param:"srt"`
-	Protocol      string    `param:"spr"`
-	StartTime     time.Time `param:"st"`
-	ExpiryTime    time.Time `param:"se"`
-	IPRange       IPRange   `param:"sip"`
-	Identifier    string    `param:"si"`
-	Resource      string    `param:"sr"`
-	Permissions   string    `param:"sp"`
-	Signature     string    `param:"sig"`
+	version       string      `param:"sv"`
+	services      string      `param:"ss"`
+	resourceTypes string      `param:"srt"`
+	protocol      SASProtocol `param:"spr"`
+	startTime     time.Time   `param:"st"`
+	expiryTime    time.Time   `param:"se"`
+	ipRange       IPRange     `param:"sip"`
+	identifier    string      `param:"si"`
+	resource      string      `param:"sr"`
+	permissions   string      `param:"sp"`
+	signature     string      `param:"sig"`
+}
+
+func (p *SASQueryParameters) Version() string {
+	return p.version
+}
+
+func (p *SASQueryParameters) Services() string {
+	return p.services
+}
+func (p *SASQueryParameters) ResourceTypes() string {
+	return p.resourceTypes
+}
+func (p *SASQueryParameters) Protocol() SASProtocol {
+	return p.protocol
+}
+func (p *SASQueryParameters) StartTime() time.Time {
+	return p.startTime
+}
+func (p *SASQueryParameters) ExpiryTime() time.Time {
+	return p.expiryTime
+}
+
+func (p *SASQueryParameters) IPRange() IPRange {
+	return p.ipRange
+}
+
+func (p *SASQueryParameters) Identifier() string {
+	return p.identifier
+}
+
+func (p *SASQueryParameters) Resource() string {
+	return p.resource
+}
+func (p *SASQueryParameters) Permissions() string {
+	return p.permissions
+}
+
+func (p *SASQueryParameters) Signature() string {
+	return p.signature
 }
 
 // IPRange represents a SAS IP range's start IP and (optionally) end IP.
@@ -55,40 +121,40 @@ func (ipr *IPRange) String() string {
 // query parameter map's passed-in values. If deleteSASParametersFromValues is true,
 // all SAS-related query parameters are removed from the passed-in map. If
 // deleteSASParametersFromValues is false, the map passed-in map is unaltered.
-func NewSASQueryParameters(values url.Values, deleteSASParametersFromValues bool) SASQueryParameters {
+func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool) SASQueryParameters {
 	p := SASQueryParameters{}
 	for k, v := range values {
 		val := v[0]
 		isSASKey := true
 		switch strings.ToLower(k) {
 		case "sv":
-			p.Version = val
+			p.version = val
 		case "ss":
-			p.Services = val
+			p.services = val
 		case "srt":
-			p.ResourceTypes = val
+			p.resourceTypes = val
 		case "spr":
-			p.Protocol = val
+			p.protocol = SASProtocol(val)
 		case "st":
-			p.StartTime, _ = time.Parse(SASTimeFormat, val)
+			p.startTime, _ = time.Parse(SASTimeFormat, val)
 		case "se":
-			p.ExpiryTime, _ = time.Parse(SASTimeFormat, val)
+			p.expiryTime, _ = time.Parse(SASTimeFormat, val)
 		case "sip":
 			dashIndex := strings.Index(val, "-")
 			if dashIndex == -1 {
-				p.IPRange.Start = net.ParseIP(val)
+				p.ipRange.Start = net.ParseIP(val)
 			} else {
-				p.IPRange.Start = net.ParseIP(val[:dashIndex])
-				p.IPRange.End = net.ParseIP(val[dashIndex+1:])
+				p.ipRange.Start = net.ParseIP(val[:dashIndex])
+				p.ipRange.End = net.ParseIP(val[dashIndex+1:])
 			}
 		case "si":
-			p.Identifier = val
+			p.identifier = val
 		case "sr":
-			p.Resource = val
+			p.resource = val
 		case "sp":
-			p.Permissions = val
+			p.permissions = val
 		case "sig":
-			p.Signature = val
+			p.signature = val
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
@@ -100,39 +166,39 @@ func NewSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 }
 
 // AddToValues adds the SAS components to the specified query parameters map.
-func (p *SASQueryParameters) AddToValues(v url.Values) url.Values {
-	if p.Version != "" {
-		v.Add("sv", p.Version)
+func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
+	if p.version != "" {
+		v.Add("sv", p.version)
 	}
-	if p.Services != "" {
-		v.Add("ss", p.Services)
+	if p.services != "" {
+		v.Add("ss", p.services)
 	}
-	if p.ResourceTypes != "" {
-		v.Add("srt", p.ResourceTypes)
+	if p.resourceTypes != "" {
+		v.Add("srt", p.resourceTypes)
 	}
-	if p.Protocol != "" {
-		v.Add("spr", p.Protocol)
+	if p.protocol != "" {
+		v.Add("spr", string(p.protocol))
 	}
-	if !p.StartTime.IsZero() {
-		v.Add("st", p.StartTime.Format(SASTimeFormat))
+	if !p.startTime.IsZero() {
+		v.Add("st", p.startTime.Format(SASTimeFormat))
 	}
-	if !p.ExpiryTime.IsZero() {
-		v.Add("se", p.ExpiryTime.Format(SASTimeFormat))
+	if !p.expiryTime.IsZero() {
+		v.Add("se", p.expiryTime.Format(SASTimeFormat))
 	}
-	if len(p.IPRange.Start) > 0 {
-		v.Add("sip", p.IPRange.String())
+	if len(p.ipRange.Start) > 0 {
+		v.Add("sip", p.ipRange.String())
 	}
-	if p.Identifier != "" {
-		v.Add("si", p.Identifier)
+	if p.identifier != "" {
+		v.Add("si", p.identifier)
 	}
-	if p.Resource != "" {
-		v.Add("sr", p.Resource)
+	if p.resource != "" {
+		v.Add("sr", p.resource)
 	}
-	if p.Permissions != "" {
-		v.Add("sp", p.Permissions)
+	if p.permissions != "" {
+		v.Add("sp", p.permissions)
 	}
-	if p.Signature != "" {
-		v.Add("sig", p.Signature)
+	if p.signature != "" {
+		v.Add("sig", p.signature)
 	}
 	return v
 }
@@ -140,6 +206,6 @@ func (p *SASQueryParameters) AddToValues(v url.Values) url.Values {
 // Encode encodes the SAS query parameters into URL encoded form sorted by key.
 func (p *SASQueryParameters) Encode() string {
 	v := url.Values{}
-	p.AddToValues(v)
+	p.addToValues(v)
 	return v.Encode()
 }

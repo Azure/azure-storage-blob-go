@@ -3,6 +3,7 @@ package azblob
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -152,13 +153,27 @@ func (p AccessPolicyPermission) String() string {
 }
 
 // Parse initializes the AccessPolicyPermission's fields from a string.
-func (p *AccessPolicyPermission) Parse(s string) {
-	p.Read = strings.ContainsRune(s, 'r')
-	p.Add = strings.ContainsRune(s, 'a')
-	p.Create = strings.ContainsRune(s, 'c')
-	p.Write = strings.ContainsRune(s, 'w')
-	p.Delete = strings.ContainsRune(s, 'd')
-	p.List = strings.ContainsRune(s, 'l')
+func (p *AccessPolicyPermission) Parse(s string) error {
+	*p = AccessPolicyPermission{} // Clear the flags
+	for _, r := range s {
+		switch r {
+		case 'r':
+			p.Read = true
+		case 'a':
+			p.Add = true
+		case 'c':
+			p.Create = true
+		case 'w':
+			p.Write = true
+		case 'd':
+			p.Delete = true
+		case 'l':
+			p.List = true
+		default:
+			return fmt.Errorf("Invalid permission: '%v'", r)
+		}
+	}
+	return nil
 }
 
 // SetPermissions sets the container's permissions. The permissions indicate whether blobs in a container may be accessed publicly.
@@ -196,9 +211,9 @@ func (c ContainerURL) ReleaseLease(ctx context.Context, leaseID string, ac HTTPA
 
 // BreakLease breaks the container's previously-acquired lease (if it exists).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-container.
-func (c ContainerURL) BreakLease(ctx context.Context, leaseID string, period int32, ac HTTPAccessConditions) (*ContainerLeaseResponse, error) {
+func (c ContainerURL) BreakLease(ctx context.Context, period int32, ac HTTPAccessConditions) (*ContainerLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.pointers()
-	return c.client.Lease(ctx, LeaseActionBreak, nil, &leaseID, leasePeriodPointer(period), nil, nil, ifModifiedSince, ifUnmodifiedSince, nil)
+	return c.client.Lease(ctx, LeaseActionBreak, nil, nil, leasePeriodPointer(period), nil, nil, ifModifiedSince, ifUnmodifiedSince, nil)
 }
 
 // ChangeLease changes the container's lease ID.

@@ -9,10 +9,11 @@ import (
 	"net/http"
 
 	"bytes"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // CommonResponseHeaders returns the headers common to all blob REST API responses.
@@ -150,7 +151,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		}
 	}
 	// All put blocks were successful, call Put Block List to finalize the blob
-	return blockBlobURL.PutBlockList(ctx, blockIDList, o.Metadata, o.BlobHTTPHeaders, o.AccessConditions)
+	return blockBlobURL.PutBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
 }
 
 // UploadFileToBlockBlob uploads a file in blocks to a block blob.
