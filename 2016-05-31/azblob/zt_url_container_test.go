@@ -296,7 +296,7 @@ func (s *ContainerURLSuite) TestSetMetadataCondition(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 	time.Sleep(time.Second * 3)
-	currTime := time.Now()
+	currTime := time.Now().UTC()
 	rResp, err := container.SetMetadata(context.Background(), azblob.Metadata{"foo": "bar"},
 		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: currTime}})
 	c.Assert(err, chk.NotNil)

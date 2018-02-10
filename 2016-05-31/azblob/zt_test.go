@@ -384,7 +384,7 @@ func (s *aztestsSuite) TestCreateBlobURLWithSnapshotAndSAS(c *chk.C) {
 	containerURL, containerName := getContainerURL(c, bsu)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
-	currentTime := time.Now()
+	currentTime := time.Now().UTC()
 	credential := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
 	sasQueryParams := azblob.AccountSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,
@@ -2060,7 +2060,7 @@ func (s *aztestsSuite) TestBlobSnapshotOfSnapshot(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	snapshotURL := blobURL.WithSnapshot(time.Now())
+	snapshotURL := blobURL.WithSnapshot(time.Now().UTC())
 	// The library allows the server to handle the snapshot of snapshot error
 	_, err := snapshotURL.CreateSnapshot(ctx, nil, azblob.BlobAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodeInvalidQueryParameterValue)
