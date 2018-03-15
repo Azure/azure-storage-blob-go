@@ -251,8 +251,8 @@ func ExampleBlobURLParts() {
 	// Now, we access the parts (this example prints them).
 	fmt.Println(parts.Host, parts.ContainerName, parts.BlobName, parts.Snapshot)
 	sas := parts.SAS
-	fmt.Println(sas.Version, sas.Resource, sas.StartTime, sas.ExpiryTime, sas.Permissions,
-		sas.IPRange, sas.Protocol, sas.Identifier, sas.Services, sas.Signature)
+	fmt.Println(sas.Version(), sas.Resource(), sas.StartTime(), sas.ExpiryTime(), sas.Permissions(),
+		sas.IPRange(), sas.Protocol(), sas.Identifier(), sas.Services(), sas.Signature())
 
 	// You can then change some of the fields and construct a new URL:
 	parts.SAS = SASQueryParameters{}       // Remove the SAS query parameters
