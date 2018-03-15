@@ -20,7 +20,15 @@ import (
 // https://godoc.org/github.com/fluhus/godoc-tricks
 
 func accountInfo() (string, string) {
-	return os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY")
+	return mustGetEnv("ACCOUNT_NAME"), mustGetEnv("ACCOUNT_KEY")
+}
+
+func mustGetEnv(key string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		panic("Env variable '" + key + "' required for integration tests.")
+	}
+	return v
 }
 
 // This example shows how to get started using the Azure Storage Blob SDK for Go.
