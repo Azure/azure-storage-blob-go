@@ -1,7 +1,9 @@
 # Azure Storage Blob SDK for Go
+[![GoDoc Widget]][GoDoc]
+
 The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
-This repository contains the open source Blob SDK for Go. Documentation and examples can be found [here](https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob).
+This repository contains the open source Blob SDK for Go.
 
 ## Features
 * Blob Storage
@@ -40,3 +42,6 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+[GoDoc]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob
+[GoDoc Widget]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob?status.svg
