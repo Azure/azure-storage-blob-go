@@ -4,17 +4,18 @@ import (
 	"context"
 	"io"
 	"net/url"
-	"time"
 
+	"encoding/base64"
+	"encoding/binary"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 const (
-	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to PutBlob.
-	BlockBlobMaxPutBlobBytes = 256 * 1024 * 1024 // 256MB
+	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
+	BlockBlobMaxUploadBlobBytes = 256 * 1024 * 1024 // 256MB
 
-	// BlockBlobMaxPutBlockBytes indicates the maximum number of bytes that can be sent in a call to PutBlock.
-	BlockBlobMaxPutBlockBytes = 100 * 1024 * 1024 // 100MB
+	// BlockBlobMaxStageBlockBytes indicates the maximum number of bytes that can be sent in a call to StageBlock.
+	BlockBlobMaxStageBlockBytes = 100 * 1024 * 1024 // 100MB
 
 	// BlockBlobMaxBlocks indicates the maximum number of blocks allowed in a block blob.
 	BlockBlobMaxBlocks = 50000
@@ -42,24 +43,49 @@ func (bb BlockBlobURL) WithPipeline(p pipeline.Pipeline) BlockBlobURL {
 }
 
 // WithSnapshot creates a new BlockBlobURL object identical to the source but with the specified snapshot timestamp.
-// Pass time.Time{} to remove the snapshot returning a URL to the base blob.
-func (bb BlockBlobURL) WithSnapshot(snapshot time.Time) BlockBlobURL {
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 	p := NewBlobURLParts(bb.URL())
 	p.Snapshot = snapshot
 	return NewBlockBlobURL(p.URL(), bb.blobClient.Pipeline())
 }
 
-// PutBlob creates a new block blob, or updates the content of an existing block blob.
+// Upload creates a new block blob or overwrites an existing block blob.
 // Updating an existing block blob overwrites any existing metadata on the blob. Partial updates are not
-// supported with PutBlob; the content of the existing blob is overwritten with the new content. To
-// perform a partial update of a block blob's, use PutBlock and PutBlockList.
+// supported with Upload; the content of the existing blob is overwritten with the new content. To
+// perform a partial update of a block blob, use StageBlock and CommitBlockList.
+// This method panics if the stream is not at position 0.
+// Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (bb BlockBlobURL) PutBlob(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlobsPutResponse, error) {
+func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlockBlobsUploadResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return bb.blobClient.Put(ctx, BlobBlockBlob, body, nil, nil,
-		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.contentMD5Pointer(), &h.CacheControl,
-		metadata, ac.LeaseAccessConditions.pointers(),
-		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil, nil, nil)
+	return bb.bbClient.Upload(ctx, validateSeekableStreamAt0AndGetCount(body), body,nil,
+		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
+		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(),
+		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil)
+}
+
+// StageBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to CommitBlockList.
+// Note that the http client closes the body stream after the request is sent to the service.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
+func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobsStageBlockResponse, error) {
+	return bb.bbClient.StageBlock(ctx, base64BlockID, validateSeekableStreamAt0AndGetCount(body), body, nil, ac.pointers(), nil)
+}
+
+// CommitBlockList writes a blob by specifying the list of block IDs that make up the blob.
+// In order to be written as part of a blob, a block must have been successfully written
+// to the server in a prior PutBlock operation. You can call PutBlockList to update a blob
+// by uploading only those blocks that have changed, then committing the new and existing
+// blocks together. Any blocks not specified in the block list and permanently deleted.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
+func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
+	metadata Metadata, ac BlobAccessConditions) (*BlockBlobsCommitBlockListResponse, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
+		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
+		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
 // GetBlockList returns the list of blocks that have been uploaded as part of a block blob using the specified block list filter.
@@ -68,23 +94,55 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(), nil)
 }
 
-// PutBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to PutBlockList.
-// For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
-func (bb BlockBlobURL) PutBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobsPutBlockResponse, error) {
-	return bb.bbClient.PutBlock(ctx, base64BlockID, body, nil, ac.pointers(), nil)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type BlockID [64]byte
+
+func (blockID BlockID) ToBase64() string {
+	return base64.StdEncoding.EncodeToString(blockID[:])
 }
 
-// PutBlockList writes a blob by specifying the list of block IDs that make up the blob.
-// In order to be written as part of a blob, a block must have been successfully written
-// to the server in a prior PutBlock operation. You can call PutBlockList to update a blob
-// by uploading only those blocks that have changed, then committing the new and existing
-// blocks together. Any blocks not specified in the block list and permanently deleted.
-// For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
-func (bb BlockBlobURL) PutBlockList(ctx context.Context, base64BlockIDs []string, metadata Metadata,
-	h BlobHTTPHeaders, ac BlobAccessConditions) (*BlockBlobsPutBlockListResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return bb.bbClient.PutBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
-		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.contentMD5Pointer(),
-		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+func (blockID *BlockID) FromBase64(s string) error {
+	*blockID = BlockID{} // Zero out the block ID
+	_, err := base64.StdEncoding.Decode(blockID[:], ([]byte)(s))
+	return err
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+type uuidBlockID BlockID
+
+func (ubi uuidBlockID) UUID() uuid {
+	u := uuid{}
+	copy(u[:], ubi[:len(u)])
+	return u
+}
+
+func (ubi uuidBlockID) Number() uint32 {
+	return binary.BigEndian.Uint32(ubi[len(uuid{}):])
+}
+
+func newUuidBlockID(u uuid) uuidBlockID {
+	ubi := uuidBlockID{}     // Create a new uuidBlockID
+	copy(ubi[:len(u)], u[:]) // Copy the specified UUID into it
+	// Block number defaults to 0
+	return ubi
+}
+
+func (ubi *uuidBlockID) SetUUID(u uuid) *uuidBlockID {
+	copy(ubi[:len(u)], u[:])
+	return ubi
+}
+
+func (ubi uuidBlockID) WithBlockNumber(blockNumber uint32) uuidBlockID {
+	binary.BigEndian.PutUint32(ubi[len(uuid{}):], blockNumber) // Put block number after UUID
+	return ubi                                                 // Return the passed-in copy
+}
+
+func (ubi uuidBlockID) ToBase64() string {
+	return BlockID(ubi).ToBase64()
+}
+
+func (ubi *uuidBlockID) FromBase64(s string) error {
+	return (*BlockID)(ubi).FromBase64(s)
 }

@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -93,33 +94,33 @@ func (client serviceClient) getPropertiesResponder(resp pipeline.Response) (pipe
 	return result, nil
 }
 
-// GetStats retrieves statistics related to replication for the Blob service. It is only available on the secondary
-// location endpoint when read-access geo-redundant replication is enabled for the storage account.
+// GetStatistics retrieves statistics related to replication for the Blob service. It is only available on the
+// secondary location endpoint when read-access geo-redundant replication is enabled for the storage account.
 //
 // timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client serviceClient) GetStats(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceStats, error) {
+func (client serviceClient) GetStatistics(ctx context.Context, timeout *int32, requestID *string) (*StorageServiceStats, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.getStatsPreparer(timeout, requestID)
+	req, err := client.getStatisticsPreparer(timeout, requestID)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getStatsResponder}, req)
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getStatisticsResponder}, req)
 	if err != nil {
 		return nil, err
 	}
 	return resp.(*StorageServiceStats), err
 }
 
-// getStatsPreparer prepares the GetStats request.
-func (client serviceClient) getStatsPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
+// getStatisticsPreparer prepares the GetStatistics request.
+func (client serviceClient) getStatisticsPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -138,8 +139,8 @@ func (client serviceClient) getStatsPreparer(timeout *int32, requestID *string) 
 	return req, nil
 }
 
-// getStatsResponder handles the response to the GetStats request.
-func (client serviceClient) getStatsResponder(resp pipeline.Response) (pipeline.Response, error) {
+// getStatisticsResponder handles the response to the GetStatistics request.
+func (client serviceClient) getStatisticsResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -162,7 +163,8 @@ func (client serviceClient) getStatsResponder(resp pipeline.Response) (pipeline.
 	return result, nil
 }
 
-// ListContainers the List Containers operation returns a list of the containers under the specified account
+// ListContainersSegment the List Containers Segment operation returns a list of the containers under the specified
+// account
 //
 // prefix is filters the results to return only containers whose name begins with the specified prefix. marker is a
 // string value that identifies the portion of the list of containers to be returned with the next listing operation.
@@ -179,7 +181,7 @@ func (client serviceClient) getStatsResponder(resp pipeline.Response) (pipeline.
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client serviceClient) ListContainers(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersResponse, error) {
+func (client serviceClient) ListContainersSegment(ctx context.Context, prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (*ListContainersResponse, error) {
 	if err := validate([]validation{
 		{targetValue: maxresults,
 			constraints: []constraint{{target: "maxresults", name: null, rule: false,
@@ -189,28 +191,28 @@ func (client serviceClient) ListContainers(ctx context.Context, prefix *string, 
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.listContainersPreparer(prefix, marker, maxresults, include, timeout, requestID)
+	req, err := client.listContainersSegmentPreparer(prefix, marker, maxresults, include, timeout, requestID)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.listContainersResponder}, req)
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.listContainersSegmentResponder}, req)
 	if err != nil {
 		return nil, err
 	}
 	return resp.(*ListContainersResponse), err
 }
 
-// listContainersPreparer prepares the ListContainers request.
-func (client serviceClient) listContainersPreparer(prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
+// listContainersSegmentPreparer prepares the ListContainersSegment request.
+func (client serviceClient) listContainersSegmentPreparer(prefix *string, marker *string, maxresults *int32, include ListContainersIncludeType, timeout *int32, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
 	params := req.URL.Query()
-	if prefix != nil {
+	if prefix != nil && len(*prefix) > 0 {
 		params.Set("prefix", *prefix)
 	}
-	if marker != nil {
+	if marker != nil && len(*marker) > 0 {
 		params.Set("marker", *marker)
 	}
 	if maxresults != nil {
@@ -231,8 +233,8 @@ func (client serviceClient) listContainersPreparer(prefix *string, marker *strin
 	return req, nil
 }
 
-// listContainersResponder handles the response to the ListContainers request.
-func (client serviceClient) listContainersResponder(resp pipeline.Response) (pipeline.Response, error) {
+// listContainersSegmentResponder handles the response to the ListContainersSegment request.
+func (client serviceClient) listContainersSegmentResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK)
 	if resp == nil {
 		return nil, err
@@ -267,40 +269,26 @@ func (client serviceClient) SetProperties(ctx context.Context, storageServicePro
 	if err := validate([]validation{
 		{targetValue: storageServiceProperties,
 			constraints: []constraint{{target: "storageServiceProperties.Logging", name: null, rule: false,
-				chain: []constraint{{target: "storageServiceProperties.Logging.Version", name: null, rule: true, chain: nil},
-					{target: "storageServiceProperties.Logging.Delete", name: null, rule: true, chain: nil},
-					{target: "storageServiceProperties.Logging.Read", name: null, rule: true, chain: nil},
-					{target: "storageServiceProperties.Logging.Write", name: null, rule: true, chain: nil},
-					{target: "storageServiceProperties.Logging.RetentionPolicy", name: null, rule: true,
-						chain: []constraint{{target: "storageServiceProperties.Logging.RetentionPolicy.Enabled", name: null, rule: true, chain: nil},
-							{target: "storageServiceProperties.Logging.RetentionPolicy.Days", name: null, rule: false,
-								chain: []constraint{{target: "storageServiceProperties.Logging.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
-						}},
+				chain: []constraint{{target: "storageServiceProperties.Logging.RetentionPolicy", name: null, rule: true,
+					chain: []constraint{{target: "storageServiceProperties.Logging.RetentionPolicy.Days", name: null, rule: false,
+						chain: []constraint{{target: "storageServiceProperties.Logging.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
+					}},
 				}},
 				{target: "storageServiceProperties.HourMetrics", name: null, rule: false,
-					chain: []constraint{{target: "storageServiceProperties.HourMetrics.Version", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.HourMetrics.Enabled", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.HourMetrics.IncludeAPIs", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.HourMetrics.RetentionPolicy", name: null, rule: true,
-							chain: []constraint{{target: "storageServiceProperties.HourMetrics.RetentionPolicy.Enabled", name: null, rule: true, chain: nil},
-								{target: "storageServiceProperties.HourMetrics.RetentionPolicy.Days", name: null, rule: false,
-									chain: []constraint{{target: "storageServiceProperties.HourMetrics.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
-							}},
+					chain: []constraint{{target: "storageServiceProperties.HourMetrics.RetentionPolicy", name: null, rule: false,
+						chain: []constraint{{target: "storageServiceProperties.HourMetrics.RetentionPolicy.Days", name: null, rule: false,
+							chain: []constraint{{target: "storageServiceProperties.HourMetrics.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
+						}},
 					}},
 				{target: "storageServiceProperties.MinuteMetrics", name: null, rule: false,
-					chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.Version", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.MinuteMetrics.Enabled", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.MinuteMetrics.IncludeAPIs", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy", name: null, rule: true,
-							chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy.Enabled", name: null, rule: true, chain: nil},
-								{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy.Days", name: null, rule: false,
-									chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
-							}},
+					chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy", name: null, rule: false,
+						chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy.Days", name: null, rule: false,
+							chain: []constraint{{target: "storageServiceProperties.MinuteMetrics.RetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
+						}},
 					}},
 				{target: "storageServiceProperties.DeleteRetentionPolicy", name: null, rule: false,
-					chain: []constraint{{target: "storageServiceProperties.DeleteRetentionPolicy.Enabled", name: null, rule: true, chain: nil},
-						{target: "storageServiceProperties.DeleteRetentionPolicy.Days", name: null, rule: false,
-							chain: []constraint{{target: "storageServiceProperties.DeleteRetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
+					chain: []constraint{{target: "storageServiceProperties.DeleteRetentionPolicy.Days", name: null, rule: false,
+						chain: []constraint{{target: "storageServiceProperties.DeleteRetentionPolicy.Days", name: inclusiveMinimum, rule: 1, chain: nil}}},
 					}}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -353,5 +341,7 @@ func (client serviceClient) setPropertiesResponder(resp pipeline.Response) (pipe
 	if resp == nil {
 		return nil, err
 	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
 	return &ServiceSetPropertiesResponse{rawResponse: resp.Response()}, err
 }

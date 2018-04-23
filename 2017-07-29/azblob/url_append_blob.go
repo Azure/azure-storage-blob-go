@@ -4,9 +4,16 @@ import (
 	"context"
 	"io"
 	"net/url"
-	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
+)
+
+const (
+	// AppendBlobMaxAppendBlockBytes indicates the maximum number of bytes that can be sent in a call to AppendBlock.
+	AppendBlobMaxAppendBlockBytes = 4 * 1024 * 1024 // 4MB
+
+	// AppendBlobMaxBlocks indicates the maximum number of blocks allowed in an append blob.
+	AppendBlobMaxBlocks = 50000
 )
 
 // AppendBlobURL defines a set of operations applicable to append blobs.
@@ -28,8 +35,8 @@ func (ab AppendBlobURL) WithPipeline(p pipeline.Pipeline) AppendBlobURL {
 }
 
 // WithSnapshot creates a new AppendBlobURL object identical to the source but with the specified snapshot timestamp.
-// Pass time.Time{} to remove the snapshot returning a URL to the base blob.
-func (ab AppendBlobURL) WithSnapshot(snapshot time.Time) AppendBlobURL {
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 	p := NewBlobURLParts(ab.URL())
 	p.Snapshot = snapshot
 	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
@@ -37,22 +44,23 @@ func (ab AppendBlobURL) WithSnapshot(snapshot time.Time) AppendBlobURL {
 
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (ab AppendBlobURL) Create(ctx context.Context, metadata Metadata, h BlobHTTPHeaders, ac BlobAccessConditions) (*BlobsPutResponse, error) {
+func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*AppendBlobsCreateResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.HTTPAccessConditions.pointers()
-	return ab.blobClient.Put(ctx, BlobAppendBlob, nil, nil, nil,
-		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.contentMD5Pointer(), &h.CacheControl,
-		metadata, ac.LeaseAccessConditions.pointers(),
-		&h.ContentDisposition,
-		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, nil, nil, nil)
-
+	return ab.abClient.Create(ctx, 0, nil,
+		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
+		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
+		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, nil)
 }
 
-// AppendBlock commits a new block of data to the end of the existing append blob.
+// AppendBlock writes a stream to a new block of data to the end of the existing append blob.
+// This method panics if the stream is not at position 0.
+// Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block.
 func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac BlobAccessConditions) (*AppendBlobsAppendBlockResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := ac.AppendBlobAccessConditions.pointers()
-	return ab.abClient.AppendBlock(ctx, body, nil, ac.LeaseAccessConditions.pointers(),
+	return ab.abClient.AppendBlock(ctx, validateSeekableStreamAt0AndGetCount(body), body, nil,
+		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }

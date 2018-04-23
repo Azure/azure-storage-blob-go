@@ -5,11 +5,10 @@ package azblob
 
 import (
 	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"reflect"
 	"regexp"
 	"strings"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // Constraint stores constraint name, target field name
@@ -72,7 +71,6 @@ func validate(m []validation) error {
 				err = validateFloat(v, constraint)
 			case reflect.Array, reflect.Slice, reflect.Map:
 				err = validateArrayMap(v, constraint)
-			case reflect.Bool:
 			default:
 				err = createError(v, constraint, fmt.Sprintf("unknown type %v", v.Kind()))
 			}

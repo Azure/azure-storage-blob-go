@@ -26,6 +26,133 @@ func newBlockBlobsClient(url url.URL, p pipeline.Pipeline) blockBlobsClient {
 	return blockBlobsClient{newManagementClient(url, p)}
 }
 
+// CommitBlockList the Commit Block List operation writes a blob by specifying the list of block IDs that make up the
+// blob. In order to be written as part of a blob, a block must have been successfully written to the server in a prior
+// Put Block operation. You can call Put Block List to update a blob by uploading only those blocks that have changed,
+// then committing the new and existing blocks together. You can do this by specifying whether to commit a block from
+// the committed block list or from the uncommitted block list, or to commit the most recently uploaded version of the
+// block, whichever list it may belong to.
+//
+// timeout is the timeout parameter is expressed in seconds. For more information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> blobCacheControl is optional. Sets the blob's cache control. If specified,
+// this property is stored with the blob and returned with a read request. blobContentType is optional. Sets the blob's
+// content type. If specified, this property is stored with the blob and returned with a read request.
+// blobContentEncoding is optional. Sets the blob's content encoding. If specified, this property is stored with the
+// blob and returned with a read request. blobContentLanguage is optional. Set the blob's content language. If
+// specified, this property is stored with the blob and returned with a read request. blobContentMD5 is optional. An
+// MD5 hash of the blob content. Note that this hash is not validated, as the hashes for the individual blocks were
+// validated when each was uploaded. metadata is optional. Specifies a user-defined name-value pair associated with the
+// blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to the
+// destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
+// metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
+// metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and
+// Metadata for more information. leaseID is if specified, the operation only succeeds if the container's lease is
+// active and matches this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header.
+// ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
+// date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
+// since the specified date/time. ifMatches is specify an ETag value to operate only on blobs with a matching value.
+// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
+// client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
+// analytics logging is enabled.
+func (client blockBlobsClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsCommitBlockListResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
+		{targetValue: metadata,
+			constraints: []constraint{{target: "metadata", name: null, rule: false,
+				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.commitBlockListResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlockBlobsCommitBlockListResponse), err
+}
+
+// commitBlockListPreparer prepares the CommitBlockList request.
+func (client blockBlobsClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+	}
+	params.Set("comp", "blocklist")
+	req.URL.RawQuery = params.Encode()
+	if blobCacheControl != nil {
+		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)
+	}
+	if blobContentType != nil {
+		req.Header.Set("x-ms-blob-content-type", *blobContentType)
+	}
+	if blobContentEncoding != nil {
+		req.Header.Set("x-ms-blob-content-encoding", *blobContentEncoding)
+	}
+	if blobContentLanguage != nil {
+		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
+	}
+	if blobContentMD5 != nil {
+		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+	}
+	if metadata != nil {
+		for k, v := range metadata {
+			req.Header.Set("x-ms-meta-"+k, v)
+		}
+	}
+	if leaseID != nil {
+		req.Header.Set("x-ms-lease-id", *leaseID)
+	}
+	if blobContentDisposition != nil {
+		req.Header.Set("x-ms-blob-content-disposition", *blobContentDisposition)
+	}
+	if ifModifiedSince != nil {
+		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if ifMatches != nil {
+		req.Header.Set("If-Match", string(*ifMatches))
+	}
+	if ifNoneMatch != nil {
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+	}
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	b, err := xml.Marshal(blocks)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to marshal request body")
+	}
+	req.Header.Set("Content-Type", "application/xml")
+	err = req.SetBody(bytes.NewReader(b))
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to set request body")
+	}
+	return req, nil
+}
+
+// commitBlockListResponder handles the response to the CommitBlockList request.
+func (client blockBlobsClient) commitBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlockBlobsCommitBlockListResponse{rawResponse: resp.Response()}, err
+}
+
 // GetBlockList the Get Block List operation retrieves the list of blocks that have been uploaded as part of a block
 // blob
 //
@@ -38,7 +165,7 @@ func newBlockBlobsClient(url url.URL, p pipeline.Pipeline) blockBlobsClient {
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobsClient) GetBlockList(ctx context.Context, listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (*BlockList, error) {
+func (client blockBlobsClient) GetBlockList(ctx context.Context, listType BlockListType, snapshot *string, timeout *int32, leaseID *string, requestID *string) (*BlockList, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -57,14 +184,14 @@ func (client blockBlobsClient) GetBlockList(ctx context.Context, listType BlockL
 }
 
 // getBlockListPreparer prepares the GetBlockList request.
-func (client blockBlobsClient) getBlockListPreparer(listType BlockListType, snapshot *time.Time, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobsClient) getBlockListPreparer(listType BlockListType, snapshot *string, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
 	params := req.URL.Query()
-	if snapshot != nil {
-		params.Set("snapshot", (*snapshot).Format(rfc3339Format))
+	if snapshot != nil && len(*snapshot) > 0 {
+		params.Set("snapshot", *snapshot)
 	}
 	params.Set("blocklisttype", fmt.Sprintf("%v", listType))
 	if timeout != nil {
@@ -106,39 +233,37 @@ func (client blockBlobsClient) getBlockListResponder(resp pipeline.Response) (pi
 	return result, nil
 }
 
-// PutBlock the Put Block operation creates a new block to be committed as part of a blob
+// StageBlock the Stage Block operation creates a new block to be committed as part of a blob
 //
 // blockID is a valid Base64 string value that identifies the block. Prior to encoding, the string must be less than or
 // equal to 64 bytes in size. For a given blob, the length of the value specified for the blockid parameter must be the
-// same size for each block. body is initial data body will be closed upon successful return. Callers should ensure
-// closure when receiving an error.timeout is the timeout parameter is expressed in seconds. For more information, see
-// <a
+// same size for each block. contentLength is the length of the request. body is initial data body will be closed upon
+// successful return. Callers should ensure closure when receiving an error.timeout is the timeout parameter is
+// expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobsClient) PutBlock(ctx context.Context, blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobsPutBlockResponse, error) {
+func (client blockBlobsClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobsStageBlockResponse, error) {
 	if err := validate([]validation{
-		{targetValue: body,
-			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.putBlockPreparer(blockID, body, timeout, leaseID, requestID)
+	req, err := client.stageBlockPreparer(blockID, contentLength, body, timeout, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.putBlockResponder}, req)
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.stageBlockResponder}, req)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*BlockBlobsPutBlockResponse), err
+	return resp.(*BlockBlobsStageBlockResponse), err
 }
 
-// putBlockPreparer prepares the PutBlock request.
-func (client blockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+// stageBlockPreparer prepares the StageBlock request.
+func (client blockBlobsClient) stageBlockPreparer(blockID string, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -150,6 +275,7 @@ func (client blockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeek
 	}
 	params.Set("comp", "block")
 	req.URL.RawQuery = params.Encode()
+	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
@@ -160,32 +286,34 @@ func (client blockBlobsClient) putBlockPreparer(blockID string, body io.ReadSeek
 	return req, nil
 }
 
-// putBlockResponder handles the response to the PutBlock request.
-func (client blockBlobsClient) putBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
+// stageBlockResponder handles the response to the StageBlock request.
+func (client blockBlobsClient) stageBlockResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
 	}
-	return &BlockBlobsPutBlockResponse{rawResponse: resp.Response()}, err
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlockBlobsStageBlockResponse{rawResponse: resp.Response()}, err
 }
 
-// PutBlockList the Put Block List operation writes a blob by specifying the list of block IDs that make up the blob.
-// In order to be written as part of a blob, a block must have been successfully written to the server in a prior Put
-// Block operation. You can call Put Block List to update a blob by uploading only those blocks that have changed, then
-// committing the new and existing blocks together. You can do this by specifying whether to commit a block from the
-// committed block list or from the uncommitted block list, or to commit the most recently uploaded version of the
-// block, whichever list it may belong to.
+// Upload the Upload Block Blob operation updates the content of an existing block blob. Updating an existing block
+// blob overwrites any existing metadata on the blob. Partial updates are not supported with Put Blob; the content of
+// the existing blob is overwritten with the content of the new blob. To perform a partial update of the content of a
+// block blob, use the Put Block List operation.
 //
-// timeout is the timeout parameter is expressed in seconds. For more information, see <a
+// contentLength is the length of the request. body is initial data body will be closed upon successful return. Callers
+// should ensure closure when receiving an error.timeout is the timeout parameter is expressed in seconds. For more
+// information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> blobCacheControl is optional. Sets the blob's cache control. If specified,
-// this property is stored with the blob and returned with a read request. blobContentType is optional. Sets the blob's
-// content type. If specified, this property is stored with the blob and returned with a read request.
-// blobContentEncoding is optional. Sets the blob's content encoding. If specified, this property is stored with the
-// blob and returned with a read request. blobContentLanguage is optional. Set the blob's content language. If
-// specified, this property is stored with the blob and returned with a read request. blobContentMD5 is optional. An
-// MD5 hash of the blob content. Note that this hash is not validated, as the hashes for the individual blocks were
-// validated when each was uploaded. metadata is optional. Specifies a user-defined name-value pair associated with the
+// Timeouts for Blob Service Operations.</a> blobContentType is optional. Sets the blob's content type. If specified,
+// this property is stored with the blob and returned with a read request. blobContentEncoding is optional. Sets the
+// blob's content encoding. If specified, this property is stored with the blob and returned with a read request.
+// blobContentLanguage is optional. Set the blob's content language. If specified, this property is stored with the
+// blob and returned with a read request. blobContentMD5 is optional. An MD5 hash of the blob content. Note that this
+// hash is not validated, as the hashes for the individual blocks were validated when each was uploaded.
+// blobCacheControl is optional. Sets the blob's cache control. If specified, this property is stored with the blob and
+// returned with a read request. metadata is optional. Specifies a user-defined name-value pair associated with the
 // blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to the
 // destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
 // metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
@@ -198,7 +326,7 @@ func (client blockBlobsClient) putBlockResponder(resp pipeline.Response) (pipeli
 // ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client blockBlobsClient) PutBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsPutBlockListResponse, error) {
+func (client blockBlobsClient) Upload(ctx context.Context, contentLength int64, body io.ReadSeeker, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsUploadResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -208,20 +336,20 @@ func (client blockBlobsClient) PutBlockList(ctx context.Context, blocks BlockLoo
 				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.putBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.uploadPreparer(contentLength, body, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
-	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.putBlockListResponder}, req)
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.uploadResponder}, req)
 	if err != nil {
 		return nil, err
 	}
-	return resp.(*BlockBlobsPutBlockListResponse), err
+	return resp.(*BlockBlobsUploadResponse), err
 }
 
-// putBlockListPreparer prepares the PutBlockList request.
-func (client blockBlobsClient) putBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
-	req, err := pipeline.NewRequest("PUT", client.url, nil)
+// uploadPreparer prepares the Upload request.
+func (client blockBlobsClient) uploadPreparer(contentLength int64, body io.ReadSeeker, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
@@ -229,11 +357,8 @@ func (client blockBlobsClient) putBlockListPreparer(blocks BlockLookupList, time
 	if timeout != nil {
 		params.Set("timeout", fmt.Sprintf("%v", *timeout))
 	}
-	params.Set("comp", "blocklist")
 	req.URL.RawQuery = params.Encode()
-	if blobCacheControl != nil {
-		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)
-	}
+	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
 	if blobContentType != nil {
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
 	}
@@ -244,7 +369,10 @@ func (client blockBlobsClient) putBlockListPreparer(blocks BlockLookupList, time
 		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", *blobContentMD5)
+		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+	}
+	if blobCacheControl != nil {
+		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)
 	}
 	if metadata != nil {
 		for k, v := range metadata {
@@ -273,23 +401,17 @@ func (client blockBlobsClient) putBlockListPreparer(blocks BlockLookupList, time
 	if requestID != nil {
 		req.Header.Set("x-ms-client-request-id", *requestID)
 	}
-	b, err := xml.Marshal(blocks)
-	if err != nil {
-		return req, pipeline.NewError(err, "failed to marshal request body")
-	}
-	req.Header.Set("Content-Type", "application/xml")
-	err = req.SetBody(bytes.NewReader(b))
-	if err != nil {
-		return req, pipeline.NewError(err, "failed to set request body")
-	}
+	req.Header.Set("x-ms-blob-type", "BlockBlob")
 	return req, nil
 }
 
-// putBlockListResponder handles the response to the PutBlockList request.
-func (client blockBlobsClient) putBlockListResponder(resp pipeline.Response) (pipeline.Response, error) {
+// uploadResponder handles the response to the Upload request.
+func (client blockBlobsClient) uploadResponder(resp pipeline.Response) (pipeline.Response, error) {
 	err := validateResponse(resp, http.StatusOK, http.StatusCreated)
 	if resp == nil {
 		return nil, err
 	}
-	return &BlockBlobsPutBlockListResponse{rawResponse: resp.Response()}, err
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlockBlobsUploadResponse{rawResponse: resp.Response()}, err
 }

@@ -20,15 +20,7 @@ import (
 // https://godoc.org/github.com/fluhus/godoc-tricks
 
 func accountInfo() (string, string) {
-	return mustGetEnv("ACCOUNT_NAME"), mustGetEnv("ACCOUNT_KEY")
-}
-
-func mustGetEnv(key string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		panic("Env variable '" + key + "' required for integration tests.")
-	}
-	return v
+	return os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY")
 }
 
 // This example shows how to get started using the Azure Storage Blob SDK for Go.
@@ -74,20 +66,21 @@ func Example() {
 
 	// Create the blob with string (plain text) content.
 	data := "Hello World!"
-	_, err = blobURL.PutBlob(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Download the blob's contents and verify that it worked correctly
-	get, err := blobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	downloadedData := &bytes.Buffer{}
-	downloadedData.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader := get.Body(RetryReaderOptions{})
+	downloadedData.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	if data != downloadedData.String() {
 		log.Fatal("downloaded data doesn't match uploaded data")
 	}
@@ -95,7 +88,7 @@ func Example() {
 	// List the blob(s) in our container; since a container may hold millions of blobs, this is done 1 segment at a time.
 	for marker := (Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
 		// Get a result segment starting with the blob indicated by the current Marker.
-		listBlob, err := containerURL.ListBlobs(ctx, marker, ListBlobsOptions{})
+		listBlob, err := containerURL.ListBlobsFlatSegment(ctx, marker, ListBlobsSegmentOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -151,7 +144,9 @@ func ExampleNewPipeline() {
 				// This method is not called for filtered-out severities.
 				logger.Output(2, m) // This example uses Go's standard logger
 			},
-			MinimumLevelToLog: func() pipeline.LogLevel { return pipeline.LogInfo }, // Log all events from informational to more severe
+			ShouldLog: func(level pipeline.LogLevel) bool {
+				return level <= pipeline.LogWarning // Log all events from warning to more severe
+			},
 		},
 	}
 
@@ -176,7 +171,7 @@ func ExampleNewPipeline() {
 	// In this example, I reconfigure the retry policies, create a new pipeline, and then create a new
 	// ContainerURL object that has the same URL as its parent.
 	po.Retry = RetryOptions{
-		Policy:        RetryPolicyFixed, // Use exponential backoff as opposed to linear
+		Policy:        RetryPolicyFixed, // Use fixed time backoff
 		MaxTries:      4,                // Try at most 3 times to perform the operation (set to 1 to disable retries)
 		TryTimeout:    time.Minute * 1,  // Maximum time allowed for any single try
 		RetryDelay:    time.Second * 5,  // Backoff amount for each retry (exponential or linear)
@@ -219,12 +214,12 @@ func ExampleStorageError() {
 	create, err := containerURL.Create(context.Background(), Metadata{}, PublicAccessNone)
 
 	if err != nil { // An error occurred
-		if serr, ok := err.(StorageError); ok { // This error is a Service-specific error
+		if stgErr, ok := err.(StorageError); ok { // This error is a Service-specific error
 			// StorageError also implements net.Error so you could call its Timeout/Temporary methods if you want.
-			switch serr.ServiceCode() { // Compare serviceCode to various ServiceCodeXxx constants
+			switch stgErr.ServiceCode() { // Compare serviceCode to various ServiceCodeXxx constants
 			case ServiceCodeContainerAlreadyExists:
 				// You can also look at the http.Response object that failed.
-				if failedResponse := serr.Response(); failedResponse != nil {
+				if failedResponse := stgErr.Response(); failedResponse != nil {
 					// From the response object, you can get the initiating http.Request object
 					failedRequest := failedResponse.Request
 					_ = failedRequest // Avoid compiler's "declared and not used" error
@@ -249,7 +244,7 @@ func ExampleBlobURLParts() {
 	// Let's start with a URL that identifies a snapshot of a blob in a container.
 	// The URL also contains a Shared Access Signature (SAS):
 	u, _ := url.Parse("https://myaccount.blob.core.windows.net/mycontainter/ReadMe.txt?" +
-		"snapshot=2011-03-09T01:42:34.9360000Z" +
+		"snapshot=2011-03-09T01:42:34Z&" +
 		"sv=2015-02-21&sr=b&st=2111-01-09T01:42:34.936Z&se=2222-03-09T01:42:34.936Z&sp=rw&sip=168.1.5.60-168.1.5.70&" +
 		"spr=https,http&si=myIdentifier&ss=bf&srt=s&sig=92836758923659283652983562==")
 
@@ -259,12 +254,12 @@ func ExampleBlobURLParts() {
 	// Now, we access the parts (this example prints them).
 	fmt.Println(parts.Host, parts.ContainerName, parts.BlobName, parts.Snapshot)
 	sas := parts.SAS
-	fmt.Println(sas.Version, sas.Resource, sas.StartTime, sas.ExpiryTime, sas.Permissions,
-		sas.IPRange, sas.Protocol, sas.Identifier, sas.Services, sas.Signature)
+	fmt.Println(sas.Version(), sas.Resource(), sas.StartTime(), sas.ExpiryTime(), sas.Permissions(),
+		sas.IPRange(), sas.Protocol(), sas.Identifier(), sas.Services(), sas.Signature())
 
 	// You can then change some of the fields and construct a new URL:
 	parts.SAS = SASQueryParameters{}       // Remove the SAS query parameters
-	parts.Snapshot = time.Time{}           // Remove the snapshot timestamp
+	parts.Snapshot = ""                    // Remove the snapshot timestamp
 	parts.ContainerName = "othercontainer" // Change the container name
 	// In this example, we'll keep the blob name as is.
 
@@ -284,8 +279,8 @@ func ExampleAccountSASSignatureValues() {
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
 	sasQueryParams := AccountSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,               // Users MUST use HTTPS (not HTTP)
-		ExpiryTime:    time.Now().Add(48 * time.Hour), // 48-hours before expiration
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		Permissions:   AccountSASPermissions{Read: true, List: true}.String(),
 		Services:      AccountSASServices{Blob: true}.String(),
 		ResourceTypes: AccountSASResourceTypes{Container: true, Object: true}.String(),
@@ -305,10 +300,9 @@ func ExampleAccountSASSignatureValues() {
 	serviceURL := NewServiceURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
 	// Now, you can use this serviceURL just like any other to make requests of the resource.
 
-	// If you have a SAS query parameter string, you can parse it into its parts:
-	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values, true)
-	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
+	// You can parse a URL into its constituent parts:
+	blobURLParts := NewBlobURLParts(serviceURL.URL())
+	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = serviceURL // Avoid compiler's "declared and not used" error
 }
@@ -327,8 +321,8 @@ func ExampleBlobSASSignatureValues() {
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
 	sasQueryParams := BlobSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,               // Users MUST use HTTPS (not HTTP)
-		ExpiryTime:    time.Now().Add(48 * time.Hour), // 48-hours before expiration
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: containerName,
 		BlobName:      blobName,
 
@@ -355,15 +349,14 @@ func ExampleBlobSASSignatureValues() {
 	// Now, you can use this blobURL just like any other to make requests of the resource.
 
 	// If you have a SAS query parameter string, you can parse it into its parts:
-	values, _ := url.ParseQuery(qp)
-	sasQueryParams = NewSASQueryParameters(values, true)
-	fmt.Printf("SAS expiry time=%v", sasQueryParams.ExpiryTime)
+	blobURLParts := NewBlobURLParts(blobURL.URL())
+	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = blobURL // Avoid compiler's "declared and not used" error
 }
 
 // This example shows how to manipulate a container's permissions.
-func ExampleContainerURL_SetPermissions() {
+func ExampleContainerURL_SetContainerAccessPolicy() {
 	// From the Azure portal, get your Storage account's name and account key.
 	accountName, accountKey := accountInfo()
 
@@ -388,7 +381,7 @@ func ExampleContainerURL_SetPermissions() {
 	blobURL := containerURL.NewBlockBlobURL("HelloWorld.txt") // Blob names can be mixed case
 
 	// Create the blob and put some text in it
-	_, err = blobURL.PutBlob(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -403,7 +396,7 @@ func ExampleContainerURL_SetPermissions() {
 		// We expected this error because the service returns an HTTP 404 status code when a blob
 		// exists but the requester does not have permission to access it.
 		// This is how we change the container's permission to allow public/anonymous aceess:
-		_, err := containerURL.SetPermissions(ctx, PublicAccessBlob, []SignedIdentifier{}, ContainerAccessConditions{})
+		_, err := containerURL.SetAccessPolicy(ctx, PublicAccessBlob, []SignedIdentifier{}, ContainerAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -426,7 +419,7 @@ func ExampleBlobAccessConditions() {
 	accountName, accountKey := accountInfo()
 
 	// Create a BlockBlobURL object that wraps a blob's URL and a default pipeline.
-	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/Data,txt", accountName))
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/Data.txt", accountName))
 	blobURL := NewBlockBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
@@ -434,42 +427,42 @@ func ExampleBlobAccessConditions() {
 	// This helper function displays the results of an operation; it is called frequently below.
 	showResult := func(response pipeline.Response, err error) {
 		if err != nil {
-			if serr, ok := err.(StorageError); !ok {
+			if stgErr, ok := err.(StorageError); !ok {
 				log.Fatal(err) // Network failure
 			} else {
-				fmt.Print("Failure: " + serr.Response().Status + "\n")
+				fmt.Print("Failure: " + stgErr.Response().Status + "\n")
 			}
 		} else {
-			if get, ok := response.(*GetResponse); ok {
-				get.Body().Close() // The client must close the response body when finished with it
+			if get, ok := response.(*DownloadResponse); ok {
+				get.Body(RetryReaderOptions{}).Close() // The client must close the response body when finished with it
 			}
 			fmt.Print("Success: " + response.Response().Status + "\n")
 		}
 	}
 
 	// Create the blob (unconditionally; succeeds)
-	put, err := blobURL.PutBlob(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
-	showResult(put, err)
+	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	showResult(upload, err)
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
-	showResult(blobURL.GetBlob(ctx, BlobRange{},
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfModifiedSince: put.LastModified()}}, false))
+	showResult(blobURL.Download(ctx, 0, 0,
+		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
 
 	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
-	showResult(blobURL.GetBlob(ctx, BlobRange{},
+	showResult(blobURL.Download(ctx, 0, 0,
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
-	put, err = blobURL.PutBlob(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{},
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfMatch: put.ETag()}})
-	showResult(put, err)
+	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{},
+		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfMatch: upload.ETag()}})
+	showResult(upload, err)
 
 	// Download content if it has changed since the version identified by ETag (fails):
-	showResult(blobURL.GetBlob(ctx, BlobRange{},
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfNoneMatch: put.ETag()}}, false))
+	showResult(blobURL.Download(ctx, 0, 0,
+		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfNoneMatch: upload.ETag()}}, false))
 
 	// Upload content if the blob doesn't already exist (fails):
-	showResult(blobURL.PutBlob(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{},
+	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{},
 		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfNoneMatch: ETagAny}}))
 }
 
@@ -489,13 +482,13 @@ func ExampleMetadata_containers() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err := containerURL.Create(ctx, Metadata{"createdby": "Jeffrey", "app": creatingApp}, PublicAccessNone)
+	_, err := containerURL.Create(ctx, Metadata{"author": "Jeffrey", "app": creatingApp}, PublicAccessNone)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Query the container's metadata
-	get, err := containerURL.GetPropertiesAndMetadata(ctx, LeaseAccessConditions{})
+	get, err := containerURL.GetProperties(ctx, LeaseAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -507,7 +500,7 @@ func ExampleMetadata_containers() {
 	}
 
 	// Update the metadata and write it back to the container
-	metadata["createdby"] = "Aidan" // NOTE: The keyname is in all lowercase letters
+	metadata["author"] = "Aidan" // NOTE: The keyname is in all lowercase letters
 	_, err = containerURL.SetMetadata(ctx, metadata, ContainerAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
@@ -533,14 +526,14 @@ func ExampleMetadata_blobs() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err := blobURL.PutBlob(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{},
-		Metadata{"createdby": "Jeffrey", "app": creatingApp}, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{},
+		Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Query the blob's properties and metadata
-	get, err := blobURL.GetPropertiesAndMetadata(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -555,7 +548,7 @@ func ExampleMetadata_blobs() {
 	}
 
 	// Update the blob's metadata and write it back to the blob
-	metadata["updatedby"] = "Grant" // Add a new key/value; NOTE: The keyname is in all lowercase letters
+	metadata["editor"] = "Grant" // Add a new key/value; NOTE: The keyname is in all lowercase letters
 	_, err = blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
@@ -578,7 +571,7 @@ func ExampleBlobHTTPHeaders() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create a blob with HTTP headers
-	_, err := blobURL.PutBlob(ctx, strings.NewReader("Some text"),
+	_, err := blobURL.Upload(ctx, strings.NewReader("Some text"),
 		BlobHTTPHeaders{
 			ContentType:        "text/html; charset=utf-8",
 			ContentDisposition: "attachment",
@@ -588,7 +581,7 @@ func ExampleBlobHTTPHeaders() {
 	}
 
 	// GetMetadata returns the blob's properties, HTTP headers, and metadata
-	get, err := blobURL.GetPropertiesAndMetadata(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -602,7 +595,7 @@ func ExampleBlobHTTPHeaders() {
 
 	// Update the blob's HTTP Headers and write them back to the blob
 	httpHeaders.ContentType = "text/plain"
-	_, err = blobURL.SetProperties(ctx, httpHeaders, BlobAccessConditions{})
+	_, err = blobURL.SetHTTPHeaders(ctx, httpHeaders, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -651,14 +644,14 @@ func ExampleBlockBlobURL() {
 		base64BlockIDs[index] = blockIDIntToBase64(index) // Some people use UUIDs for block IDs
 
 		// Upload a block to this blob specifying the Block ID and its content (up to 100MB); this block is uncommitted.
-		_, err := blobURL.PutBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{})
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err := blobURL.PutBlockList(ctx, base64BlockIDs, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -674,13 +667,14 @@ func ExampleBlockBlobURL() {
 
 	// Download the blob in its entirety; download operations do not take blocks into account.
 	// NOTE: For really large blobs, downloading them like allocates a lot of memory.
-	get, err := blobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	blobData := &bytes.Buffer{}
-	blobData.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader := get.Body(RetryReaderOptions{})
+	blobData.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(blobData)
 }
 
@@ -696,7 +690,7 @@ func ExampleAppendBlobURL() {
 	appendBlobURL := NewAppendBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := appendBlobURL.Create(ctx, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -709,13 +703,14 @@ func ExampleAppendBlobURL() {
 	}
 
 	// Download the entire append blob's contents and show it.
-	get, err := appendBlobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	b := bytes.Buffer{}
-	b.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader := get.Body(RetryReaderOptions{})
+	b.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 }
 
@@ -730,40 +725,25 @@ func ExamplePageBlobURL() {
 		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := blobURL.Create(ctx, PageBlobPageBytes*4, 0, Metadata{}, BlobHTTPHeaders{}, BlobAccessConditions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	page := [PageBlobPageBytes]byte{}
 	copy(page[:], "Page 0")
-	_, err = blobURL.PutPages(ctx, PageRange{Start: 0 * PageBlobPageBytes, End: 1*PageBlobPageBytes - 1},
-		bytes.NewReader(page[:]), BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 0*PageBlobPageBytes, bytes.NewReader(page[:]), BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copy(page[:], "Page 1")
-	_, err = blobURL.PutPages(ctx, PageRange{Start: 2 * PageBlobPageBytes, End: 3*PageBlobPageBytes - 1},
-		bytes.NewReader(page[:]), BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 2*PageBlobPageBytes, bytes.NewReader(page[:]), BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	getPages, err := blobURL.GetPageRanges(ctx, BlobRange{Offset: 0 * PageBlobPageBytes, Count: 10*PageBlobPageBytes - 1}, BlobAccessConditions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, pr := range getPages.PageRange {
-		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
-	}
-
-	_, err = blobURL.ClearPages(ctx, PageRange{Start: 0 * PageBlobPageBytes, End: 1*PageBlobPageBytes - 1}, BlobAccessConditions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	getPages, err = blobURL.GetPageRanges(ctx, BlobRange{Offset: 0 * PageBlobPageBytes, Count: 10*PageBlobPageBytes - 1}, BlobAccessConditions{})
+	getPages, err := blobURL.GetPageRanges(ctx, 0*PageBlobPageBytes, 10*PageBlobPageBytes, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -771,13 +751,27 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	get, err := blobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	_, err = blobURL.ClearPages(ctx, 0*PageBlobPageBytes, 1*PageBlobPageBytes, BlobAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	getPages, err = blobURL.GetPageRanges(ctx, 0*PageBlobPageBytes, 10*PageBlobPageBytes, BlobAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, pr := range getPages.PageRange {
+		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
+	}
+
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	blobData := &bytes.Buffer{}
-	blobData.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader := get.Body(RetryReaderOptions{})
+	blobData.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	fmt.Printf("%#v", blobData.Bytes())
 }
 
@@ -798,7 +792,7 @@ func Example_blobSnapshots() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create the original blob:
-	_, err := baseBlobURL.PutBlob(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -808,33 +802,35 @@ func Example_blobSnapshots() {
 	snapshot := createSnapshot.Snapshot()
 
 	// Modify the original blob & show it:
-	_, err = baseBlobURL.PutBlob(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	get, err := baseBlobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	b := bytes.Buffer{}
-	b.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader := get.Body(RetryReaderOptions{})
+	b.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 
 	// Show snapshot blob via original blob URI & snapshot time:
 	snapshotBlobURL := baseBlobURL.WithSnapshot(snapshot)
-	get, err = snapshotBlobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	b.Reset()
-	b.ReadFrom(get.Body())
-	get.Body().Close() // The client must close the response body when finished with it
+	reader = get.Body(RetryReaderOptions{})
+	b.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 
-	// FYI: You can get the base blob URL from one of its snapshot by passing time.Time{} to WithSnapshot:
-	baseBlobURL = snapshotBlobURL.WithSnapshot(time.Time{})
+	// FYI: You can get the base blob URL from one of its snapshot by passing "" to WithSnapshot:
+	baseBlobURL = snapshotBlobURL.WithSnapshot("")
 
 	// Show all blobs in the container with their snapshots:
 	// List the blob(s) in our container; since a container may hold millions of blobs, this is done 1 segment at a time.
 	for marker := (Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
 		// Get a result segment starting with the blob indicated by the current Marker.
-		listBlobs, err := containerURL.ListBlobs(ctx, marker, ListBlobsOptions{
+		listBlobs, err := containerURL.ListBlobsFlatSegment(ctx, marker, ListBlobsSegmentOptions{
 			Details: BlobListingDetails{Snapshots: true}})
 		if err != nil {
 			log.Fatal(err)
@@ -846,15 +842,15 @@ func Example_blobSnapshots() {
 		// Process the blobs returned in this result segment (if the segment is empty, the loop body won't execute)
 		for _, blobInfo := range listBlobs.Blobs.Blob {
 			snaptime := "N/A"
-			if !blobInfo.Snapshot.IsZero() {
-				snaptime = blobInfo.Snapshot.String()
+			if blobInfo.Snapshot != "" {
+				snaptime = blobInfo.Snapshot
 			}
 			fmt.Printf("Blob name: %s, Snapshot: %s\n", blobInfo.Name, snaptime)
 		}
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopy(ctx, snapshotBlobURL.URL(), Metadata{}, BlobAccessConditions{}, BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, BlobAccessConditions{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -889,7 +885,7 @@ func Example_progressUploadDownload() {
 	requestBody := strings.NewReader("Some text to write")
 
 	// Wrap the request body in a RequestBodyProgress and pass a callback function for progress reporting.
-	_, err := blobURL.PutBlob(ctx,
+	_, err := blobURL.Upload(ctx,
 		pipeline.NewRequestBodyProgress(requestBody, func(bytesTransferred int64) {
 			fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Len())
 		}),
@@ -902,14 +898,16 @@ func Example_progressUploadDownload() {
 	}
 
 	// Here's how to read the blob's data with progress reporting:
-	get, err := blobURL.GetBlob(ctx, BlobRange{}, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// Wrap the response body in a ResponseBodyProgress and pass a callback function for progress reporting.
-	responseBody := pipeline.NewResponseBodyProgress(get.Body(), func(bytesTransferred int64) {
-		fmt.Printf("Read %d of %d bytes.", bytesTransferred, get.ContentLength())
-	})
+	responseBody := pipeline.NewResponseBodyProgress(get.Body(RetryReaderOptions{}),
+		func(bytesTransferred int64) {
+			fmt.Printf("Read %d of %d bytes.", bytesTransferred, get.ContentLength())
+		})
 
 	downloadedData := &bytes.Buffer{}
 	downloadedData.ReadFrom(responseBody)
@@ -931,18 +929,16 @@ func ExampleBlobURL_startCopy() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopy(ctx, *src, nil, BlobAccessConditions{}, BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, BlobAccessConditions{}, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	//abortCopy, err := blobURL.AbortCopy(ct, copyID, LeaseAccessConditions{})
 
 	copyID := startCopy.CopyID()
 	copyStatus := startCopy.CopyStatus()
 	for copyStatus == CopyStatusPending {
 		time.Sleep(time.Second * 2)
-		getMetadata, err := blobURL.GetPropertiesAndMetadata(ctx, BlobAccessConditions{})
+		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1000,18 +996,11 @@ func ExampleNewDownloadStream() {
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
 	// NewGetRetryStream creates an intelligent retryable stream around a blob; it returns an io.ReadCloser.
-	rs := NewDownloadStream(context.Background(),
-		// We pass more tha "blobUrl.GetBlob" here so we can capture the blob's full
-		// content length on the very first internal call to Read.
-		func(ctx context.Context, blobRange BlobRange, ac BlobAccessConditions, rangeGetContentMD5 bool) (*GetResponse, error) {
-			get, err := blobURL.GetBlob(ctx, blobRange, ac, rangeGetContentMD5)
-			if err == nil && contentLength == 0 {
-				// If 1st successful Get, record blob's full size for progress reporting
-				contentLength = get.ContentLength()
-			}
-			return get, err
-		},
-		DownloadStreamOptions{})
+	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false)
+	if err != nil {
+		log.Fatal(err)
+	}
+	rs := dr.Body(RetryReaderOptions{})
 
 	// NewResponseBodyStream wraps the GetRetryStream with progress reporting; it returns an io.ReadCloser.
 	stream := pipeline.NewResponseBodyProgress(rs,

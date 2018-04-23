@@ -19,18 +19,18 @@ func (b *PageBlobURLSuite) TestPutGetPages(c *chk.C) {
 	blob, _ := createNewPageBlob(c, container)
 
 	pageRange := azblob.PageRange{Start: 0, End: 1023}
-	putResp, err := blob.PutPages(context.Background(), pageRange, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{})
+	putResp, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(putResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
 	c.Assert(putResp.ContentMD5(), chk.Not(chk.Equals), "")
-	c.Assert(putResp.BlobSequenceNumber(), chk.Equals, int32(0))
+	c.Assert(putResp.BlobSequenceNumber(), chk.Equals, int64(0))
 	c.Assert(putResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.Date().IsZero(), chk.Equals, false)
 
-	pageList, err := blob.GetPageRanges(context.Background(), azblob.BlobRange{Offset: 0, Count: 1023}, azblob.BlobAccessConditions{})
+	pageList, err := blob.GetPageRanges(context.Background(), 0, 1023, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(pageList.Response().StatusCode, chk.Equals, 200)
 	c.Assert(pageList.LastModified().IsZero(), chk.Equals, false)
@@ -49,26 +49,26 @@ func (b *PageBlobURLSuite) TestClearDiffPages(c *chk.C) {
 	defer delContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
-	_, err := blob.PutPages(context.Background(), azblob.PageRange{Start: 0, End: 2047}, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{})
+	_, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	snapshotResp, err := blob.CreateSnapshot(context.Background(), nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blob.PutPages(context.Background(), azblob.PageRange{Start: 2048, End: 4095}, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{})
+	_, err = blob.UploadPages(context.Background(), 2048, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	pageList, err := blob.GetPageRangesDiff(context.Background(), azblob.BlobRange{Offset: 0, Count: 4095}, snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
+	pageList, err := blob.GetPageRangesDiff(context.Background(), 0, 4096, snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(pageList.PageRange, chk.HasLen, 1)
-	c.Assert(pageList.PageRange[0].Start, chk.Equals, int32(2048))
-	c.Assert(pageList.PageRange[0].End, chk.Equals, int32(4095))
+	c.Assert(pageList.PageRange[0].Start, chk.Equals, int64(2048))
+	c.Assert(pageList.PageRange[0].End, chk.Equals, int64(4095))
 
-	clearResp, err := blob.ClearPages(context.Background(), azblob.PageRange{Start: 2048, End: 4095}, azblob.BlobAccessConditions{})
+	clearResp, err := blob.ClearPages(context.Background(), 2048, 2048, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(clearResp.Response().StatusCode, chk.Equals, 201)
 
-	pageList, err = blob.GetPageRangesDiff(context.Background(), azblob.BlobRange{Offset: 0, Count: 4095}, snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
+	pageList, err = blob.GetPageRangesDiff(context.Background(), 0, 4095, snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(pageList.PageRange, chk.HasLen, 0)
 }
@@ -77,18 +77,18 @@ func (b *PageBlobURLSuite) TestIncrementalCopy(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
-	_, err := container.SetPermissions(context.Background(), azblob.PublicAccessBlob, nil, azblob.ContainerAccessConditions{})
+	_, err := container.SetAccessPolicy(context.Background(), azblob.PublicAccessBlob, nil, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	srcBlob, _ := createNewPageBlob(c, container)
-	_, err = srcBlob.PutPages(context.Background(), azblob.PageRange{Start: 0, End: 1023}, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{})
+	_, err = srcBlob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	snapshotResp, err := srcBlob.CreateSnapshot(context.Background(), nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	dstBlob := container.NewPageBlobURL(generateBlobName())
 
-	resp, err := dstBlob.StartIncrementalCopy(context.Background(), srcBlob.URL(), snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
+	resp, err := dstBlob.StartCopyIncremental(context.Background(), srcBlob.URL(), snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
@@ -116,7 +116,7 @@ func (b *PageBlobURLSuite) TestResizePageBlob(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 
-	resp2, err := blob.GetPropertiesAndMetadata(ctx, azblob.BlobAccessConditions{})
+	resp2, err := blob.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.ContentLength(), chk.Equals, int64(8192))
 }
@@ -128,15 +128,15 @@ func (b *PageBlobURLSuite) TestPageSequenceNumbers(c *chk.C) {
 
 	defer delContainer(c, container)
 
-	resp, err := blob.SetSequenceNumber(context.Background(), azblob.SequenceNumberActionIncrement, 0, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	resp, err := blob.UpdateSequenceNumber(context.Background(), azblob.SequenceNumberActionIncrement, 0, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 
-	resp, err = blob.SetSequenceNumber(context.Background(), azblob.SequenceNumberActionMax, 7, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	resp, err = blob.UpdateSequenceNumber(context.Background(), azblob.SequenceNumberActionMax, 7, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 
-	resp, err = blob.SetSequenceNumber(context.Background(), azblob.SequenceNumberActionUpdate, 11, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	resp, err = blob.UpdateSequenceNumber(context.Background(), azblob.SequenceNumberActionUpdate, 11, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 }

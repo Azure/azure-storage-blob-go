@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/Azure/azure-pipeline-go"
   packages = ["pipeline"]
-  revision = "9804b770d6810999e2bcb7480fb509504e72b2ba"
-  version = "0.1.4"
+  revision = "0f0dbf237bd47d5688310dbd3fac369353f280d0"
+  version = "0.1.5"
 
 [[projects]]
   branch = "v1"
@@ -16,6 +16,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "31410b00fb3923035bcfdfb37ad828c04e176bd86f7367b5f8df9548e5cc93a2"
+  inputs-digest = "a6aef008d020b1455ef28ec8264c056f69bc26c0d32f711127c05dde5802f737"
   solver-name = "gps-cdcl"
   solver-version = 1
