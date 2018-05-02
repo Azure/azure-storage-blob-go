@@ -240,6 +240,9 @@ func (c ContainerURL) ListBlobsFlatSegment(ctx context.Context, marker Marker, o
 // previously-returned Marker) to get the next segment.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/list-blobs.
 func (c ContainerURL) ListBlobsHierarchySegment(ctx context.Context, marker Marker, delimiter string, o ListBlobsSegmentOptions) (*ListBlobsHierarchyResponse, error) {
+	if o.Details.Snapshots {
+		panic("snapshots are not supported in this listing operation")
+	}
 	prefix, include, maxResults := o.pointers()
 	return c.client.ListBlobHierarchySegment(ctx, delimiter, prefix, marker.val, maxResults, include, nil, nil)
 }

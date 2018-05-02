@@ -138,7 +138,3 @@ func (bsu ServiceURL) SetProperties(ctx context.Context, properties StorageServi
 func (bsu ServiceURL) GetStatistics(ctx context.Context) (*StorageServiceStats, error) {
 	return bsu.client.GetStatistics(ctx, nil, nil)
 }
-
-func (bsu ServiceURL) PreflightRequest(ctx context.Context) (*StorageServiceStats, error) {
-	return nil, nil
-}

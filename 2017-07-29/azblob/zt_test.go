@@ -48,13 +48,13 @@ const (
 
 var ctx = context.Background()
 var basicHeaders = azblob.BlobHTTPHeaders{
-	ContentType: "my_type",
+	ContentType:        "my_type",
 	ContentDisposition: "my_disposition",
-	CacheControl: "control",
-	ContentMD5: nil,
-	ContentLanguage: "my_language",
-	ContentEncoding: "my_encoding",
-	}
+	CacheControl:       "control",
+	ContentMD5:         nil,
+	ContentLanguage:    "my_language",
+	ContentEncoding:    "my_encoding",
+}
 
 var basicMetadata = azblob.Metadata{"foo": "bar"}
 
@@ -831,6 +831,22 @@ func (s *aztestsSuite) TestContainerListBlobsValidDelimiter(c *chk.C) {
 	c.Assert(resp.Blobs.Blob[0].Name, chk.Equals, blobName)
 }
 
+func (s *aztestsSuite) TestContainerListBlobsWithSnapshots(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+
+	// If ListBlobs panics, as it should, this function will be called and recover from the panic, allowing the test to pass
+	defer func() {
+		recover()
+	}()
+
+	containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true}})
+
+	// We will only reach this if we did not panic
+	c.Fail()
+}
+
 func (s *aztestsSuite) TestContainerListBlobsInvalidDelimiter(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
@@ -962,7 +978,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu azblob.ServiceURL) 
 	_, err = blobURL3.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{},
-		azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true, Copy: true, Deleted:true}})
+		azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true, Copy: true, Deleted: true}})
 
 	c.Assert(err, chk.IsNil)
 	if len(resp.Blobs.Blob) != 5 { // If there are fewer blobs in the container than there should be, it will be because one was permanently deleted.
@@ -1108,7 +1124,6 @@ func (s *aztestsSuite) TestContainerGetSetPermissionsMultiplePolicies(c *chk.C) 
 		azblob.ContainerAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
-
 
 	resp, err := containerURL.GetAccessPolicy(ctx, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -2322,7 +2337,7 @@ func (s *aztestsSuite) TestBlobSnapshotIfNoneMatchTrue(c *chk.C) {
 	resp, err := blobURL.CreateSnapshot(ctx, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: "garbage"}})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Snapshot()== "", chk.Equals, false)
+	c.Assert(resp.Snapshot() == "", chk.Equals, false)
 }
 
 func (s *aztestsSuite) TestBlobSnapshotIfNoneMatchFalse(c *chk.C) {
@@ -2803,7 +2818,7 @@ func (s *aztestsSuite) TestBlobPutBlobHTTPHeaders(c *chk.C) {
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	h := resp.NewHTTPHeaders()
-	h.ContentMD5=nil // the service generates a MD5 value, omit before comparing
+	h.ContentMD5 = nil // the service generates a MD5 value, omit before comparing
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
 
@@ -5131,7 +5146,7 @@ func (s *aztestsSuite) TestBlobDiffPageRangesNonExistantSnapshot(c *chk.C) {
 
 	snapshotTime, _ := time.Parse(azblob.SnapshotTimeFormat, snapshot)
 	snapshotTime = snapshotTime.Add(time.Minute)
-	_, err := blobURL.GetPageRangesDiff(ctx, 0, 0,  snapshotTime.Format(azblob.SnapshotTimeFormat), azblob.BlobAccessConditions{})
+	_, err := blobURL.GetPageRangesDiff(ctx, 0, 0, snapshotTime.Format(azblob.SnapshotTimeFormat), azblob.BlobAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodePreviousSnapshotNotFound)
 }
 

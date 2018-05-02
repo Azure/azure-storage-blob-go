@@ -948,7 +948,7 @@ func ExampleBlobURL_startCopy() {
 }
 
 // This example shows how to copy a large stream in blocks (chunks) to a block blob.
-func ExampleUploadStreamToBlockBlob() {
+func ExampleUploadFileToBlockBlob() {
 	file, err := os.Open("BigFile.bin") // Open the file we want to upload
 	if err != nil {
 		log.Fatal(err)
@@ -985,7 +985,7 @@ func ExampleUploadStreamToBlockBlob() {
 // This example shows how to download a large stream with intelligent retries. Specifically, if
 // the connection fails while reading, continuing to read from this stream initiates a new
 // GetBlob call passing a range that starts from the last byte successfully read before the failure.
-func ExampleNewDownloadStream() {
+func ExampleBlobUrl_Download() {
 	// From the Azure portal, get your Storage account blob service URL endpoint.
 	accountName, accountKey := accountInfo()
 
@@ -995,14 +995,14 @@ func ExampleNewDownloadStream() {
 
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
-	// NewGetRetryStream creates an intelligent retryable stream around a blob; it returns an io.ReadCloser.
+	// Download returns an intelligent retryable stream around a blob; it returns an io.ReadCloser.
 	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	rs := dr.Body(RetryReaderOptions{})
 
-	// NewResponseBodyStream wraps the GetRetryStream with progress reporting; it returns an io.ReadCloser.
+	// NewResponseBodyProgress wraps the GetRetryStream with progress reporting; it returns an io.ReadCloser.
 	stream := pipeline.NewResponseBodyProgress(rs,
 		func(bytesTransferred int64) {
 			fmt.Printf("Downloaded %d of %d bytes.\n", bytesTransferred, contentLength)
@@ -1022,6 +1022,148 @@ func ExampleNewDownloadStream() {
 	_ = written // Avoid compiler's "declared and not used" error
 }
 
-// Lease example?
-// Root container?
-// List containers/blobs with metadata & HTTP headers? Other?
+// This example shows how to perform various lease operations on a container.
+// The same lease operations can be performed on individual blobs as well.
+// A lease on a container prevents it from being deleted by others, while a lease on a blob
+// protects it from both modifications and deletions.
+func ExampleLeaseContainer() {
+	// From the Azure portal, get your Storage account's name and account key.
+	accountName, accountKey := accountInfo()
+
+	// Use your Storage account's name and key to create a credential object; this is used to access your account.
+	credential := NewSharedKeyCredential(accountName, accountKey)
+
+	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
+	containerURL := NewContainerURL(*u, NewPipeline(credential, PipelineOptions{}))
+
+	// All operations allow you to specify a timeout via a Go context.Context object.
+	ctx := context.Background() // This example uses a never-expiring context
+
+	// Now acquire a lease on the container.
+	// You can choose to pass an empty string for proposed ID so that the service automatically assigns one for you.
+	acquireLeaseResponse, err := containerURL.AcquireLease(ctx, "", 60, HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The container is leased for delete operations with lease ID", acquireLeaseResponse.LeaseID())
+
+	// The container cannot be deleted without providing the lease ID.
+	_, err = containerURL.Delete(ctx, ContainerAccessConditions{})
+	if err == nil {
+		log.Fatal("delete should have failed")
+	}
+	fmt.Println("The container cannot be deleted while there is an active lease")
+
+	// We can release the lease now and the container can be deleted.
+	_, err = containerURL.ReleaseLease(ctx, acquireLeaseResponse.LeaseID(), HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The lease on the container is now released")
+
+	// Acquire a lease again to perform other operations.
+	acquireLeaseResponse, err = containerURL.AcquireLease(ctx, "", 60, HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The container is leased again with lease ID", acquireLeaseResponse.LeaseID())
+
+	// We can change the ID of an existing lease.
+	// A lease ID can be any valid GUID string format.
+	newLeaseID := uuid{}
+	newLeaseID[0] = 1
+	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The lease ID was changed to", changeLeaseResponse.LeaseID())
+
+	// The lease can be renewed.
+	renewLeaseResponse, err := containerURL.RenewLease(ctx, changeLeaseResponse.LeaseID(), HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The lease was renewed with the same ID", renewLeaseResponse.LeaseID())
+
+	// Finally, the lease can be broken and we could prevent others from acquiring a lease for a period of time
+	_, err = containerURL.BreakLease(ctx, 60, HTTPAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("The lease was borken, and nobody can acquire a lease for 60 seconds")
+}
+
+// This example shows how to list blobs with hierarchy, by using a delimiter.
+func ExampleListBlobsHierarchy() {
+	// From the Azure portal, get your Storage account's name and account key.
+	accountName, accountKey := accountInfo()
+
+	// Use your Storage account's name and key to create a credential object; this is used to access your account.
+	credential := NewSharedKeyCredential(accountName, accountKey)
+
+	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
+	containerURL := NewContainerURL(*u, NewPipeline(credential, PipelineOptions{}))
+
+	// All operations allow you to specify a timeout via a Go context.Context object.
+	ctx := context.Background() // This example uses a never-expiring context
+
+	// Create 4 blobs: 3 of which have a virtual directory
+	blobNames := []string{"a/1", "a/2", "b/1", "boaty_mcboatface"}
+	for _, blobName := range blobNames {
+		blobURL := containerURL.NewBlockBlobURL(blobName)
+		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{},nil, BlobAccessConditions{})
+
+		if err != nil {
+			log.Fatal("an error occurred while creating blobs for the example setup")
+		}
+	}
+
+	// Perform a listing operation on blobs with hierarchy
+	resp, err := containerURL.ListBlobsHierarchySegment(ctx, Marker{}, "/", ListBlobsSegmentOptions{})
+	if err != nil {
+		log.Fatal("an error occurred while listing blobs")
+	}
+
+	// When a delimiter is used, the listing operation returns BlobPrefix elements that acts as
+	// a placeholder for all blobs whose names begin with the same substring up to the appearance of the delimiter character.
+	// In our example, this means that a/ and b/ will be both returned
+	fmt.Println("======First listing=====")
+	for _, blobPrefix := range resp.Blobs.BlobPrefix {
+		fmt.Println("The blob prefix with name", blobPrefix.Name, "was returned in the listing operation")
+	}
+
+	// The blobs that do not contain the delimiter are still returned
+	for _, blob := range resp.Blobs.Blob {
+		fmt.Println("The blob with name", blob.Name, "was returned in the listing operation")
+	}
+
+	// For the prefixes that are returned, we can perform another listing operation on them, to see their contents
+	resp, err = containerURL.ListBlobsHierarchySegment(ctx, Marker{}, "/", ListBlobsSegmentOptions{
+		Prefix: "a/",
+	})
+	if err != nil {
+		log.Fatal("an error occurred while listing blobs")
+	}
+
+	// This time, there is no blob prefix returned, since nothing under a/ has another / in its name.
+	// In other words, in the virtual directory of a/, there aren't any sub-level virtual directory.
+	fmt.Println("======Second listing=====")
+	fmt.Println("No prefiex should be returned now, and the actual count is", len(resp.Blobs.BlobPrefix))
+
+	// The blobs a/1 and a/2 should be returned
+	for _, blob := range resp.Blobs.Blob {
+		fmt.Println("The blob with name", blob.Name, "was returned in the listing operation")
+	}
+
+	// Delete the blobs created by this example
+	for _, blobName := range blobNames {
+		blobURL := containerURL.NewBlockBlobURL(blobName)
+		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+
+		if err != nil {
+			log.Fatal("an error occurred while deleting the blobs created by the example")
+		}
+	}
+}

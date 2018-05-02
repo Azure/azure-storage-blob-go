@@ -6,7 +6,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 	"net/http"
 	"net/url"
 	"sort"
@@ -53,8 +52,6 @@ func (f *SharedKeyCredential) New(next pipeline.Policy, po *pipeline.PolicyOptio
 
 		response, err := next.Do(ctx, request)
 		if err != nil && response != nil && response.Response() != nil && response.Response().StatusCode == http.StatusForbidden {
-			fmt.Println("HASH:", signature)
-			fmt.Println("S2S\n", stringToSign)
 			// Service failed to authenticate request, log it
 			po.Log(pipeline.LogError, "===== HTTP Forbidden status, String-to-Sign:\n"+stringToSign+"\n===============================\n")
 		}

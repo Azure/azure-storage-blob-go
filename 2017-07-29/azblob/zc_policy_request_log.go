@@ -18,9 +18,6 @@ type RequestLogOptions struct {
 	// LogWarningIfTryOverThreshold logs a warning if a tried operation takes longer than the specified
 	// duration (-1=no logging; 0=default threshold).
 	LogWarningIfTryOverThreshold time.Duration
-
-	// TurnOffDefaultLogging turns off the default logging written to Windows Event Log or syslog.
-	//TurnOffDefaultLogging        bool
 }
 
 func (o RequestLogOptions) defaults() RequestLogOptions {
@@ -100,7 +97,7 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 				}
 				msg := b.String()
 
-				if forceLog /*&& !o.TurnOffDefaultLogging */{
+				if forceLog {
 					pipeline.ForceLog(logLevel, msg)
 				}
 				if shouldLog {
