@@ -366,7 +366,7 @@ func (t *uploadStreamToBlockBlobOptions) start(ctx context.Context) (interface{}
 
 func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, buffer []byte) error {
 	if num == 0 && len(buffer) < t.o.BufferSize {
-		// If whole payload fits in 1 block, dont' stage it; End will upload it with 1 I/O operation
+		// If whole payload fits in 1 block, don't stage it; End will upload it with 1 I/O operation
 		t.firstBlock = buffer
 		return nil
 	}
@@ -391,8 +391,8 @@ func (t *uploadStreamToBlockBlobOptions) end(ctx context.Context) (interface{}, 
 	}
 	// Multiple blocks staged, commit them all now
 	blockID := newUuidBlockID(t.blockIDPrefix)
-	blockIDs := make([]string, t.maxBlockNum)
-	for bn := uint32(0); bn < t.maxBlockNum; bn++ {
+	blockIDs := make([]string, t.maxBlockNum + 1)
+	for bn := uint32(0); bn <= t.maxBlockNum; bn++ {
 		blockIDs[bn] = blockID.WithBlockNumber(bn).ToBase64()
 	}
 	return t.b.CommitBlockList(ctx, blockIDs, t.o.BlobHTTPHeaders, t.o.Metadata, t.o.AccessConditions)
