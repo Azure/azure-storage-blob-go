@@ -240,7 +240,7 @@ func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 }
 
 // DownloadBlobToFile downloads an Azure file to a local file.
-// The file would be created if it doesn't exist, and would be truncated if the size doesn't match.
+// The file would be truncated if the size doesn't match.
 func DownloadBlobToFile(ctx context.Context, blobURL BlobURL,
 	ac BlobAccessConditions, file *os.File, o DownloadFromBlobOptions) error {
 	// 1. Validate parameters.

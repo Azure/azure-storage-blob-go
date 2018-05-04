@@ -16,6 +16,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
+	"math/rand"
 )
 
 // https://godoc.org/github.com/fluhus/godoc-tricks
@@ -951,7 +952,7 @@ func ExampleBlobURL_startCopy() {
 }
 
 // This example shows how to copy a large stream in blocks (chunks) to a block blob.
-func ExampleUploadFileToBlockBlob() {
+func ExampleUploadFileToBlockBlobAndDownloadItBack() {
 	file, err := os.Open("BigFile.bin") // Open the file we want to upload
 	if err != nil {
 		log.Fatal(err)
@@ -983,6 +984,23 @@ func ExampleUploadFileToBlockBlob() {
 		log.Fatal(err)
 	}
 	_ = response // Avoid compiler's "declared and not used" error
+
+	// Set up file to download the blob to
+	destFileName := "BigFile-downloaded.bin"
+	destFile, err := os.Create(destFileName)
+	defer destFile.Close()
+
+	// Perform download
+	err = azblob.DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, azblob.BlobAccessConditions{}, destFile,
+		azblob.DownloadFromBlobOptions{
+			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
+			Progress: func(bytesTransferred int64) {
+				fmt.Printf("Downloaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
+			},})
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // This example shows how to download a large stream with intelligent retries. Specifically, if
@@ -1023,6 +1041,33 @@ func ExampleBlobUrl_Download() {
 		log.Fatal(err)
 	}
 	_ = written // Avoid compiler's "declared and not used" error
+}
+
+func ExampleUploadStreamToBlockBlob() {
+	// From the Azure portal, get your Storage account blob service URL endpoint.
+	accountName, accountKey := accountInfo()
+
+	// Create a BlockBlobURL object to a blob in the container (we assume the container already exists).
+	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlockBlob.bin", accountName))
+	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+
+	ctx := context.Background() // This example uses a never-expiring context
+
+	// Create some data to test the upload stream
+	blobSize := 8 * 1024 * 1024
+	data := make([]byte, blobSize)
+	rand.Read(data)
+
+	// Perform UploadStreamToBlockBlob
+	bufferSize := 2 * 1024 * 1024 // Configure the size of the rotating buffers that are used when uploading
+	maxBuffers := 3 // Configure the number of rotating buffers that are used when uploading
+	_, err := azblob.UploadStreamToBlockBlob(ctx, bytes.NewReader(data), blockBlobURL,
+		azblob.UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
+
+	// Verify that upload was successful
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // This example shows how to perform various lease operations on a container.

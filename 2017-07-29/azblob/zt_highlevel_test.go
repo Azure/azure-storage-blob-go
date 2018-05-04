@@ -27,7 +27,7 @@ func performUploadStreamToBlockBlobTest(c *chk.C, blobSize, bufferSize, maxBuffe
 	// Set up test blob
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	// Create a some data to test the upload stream
+	// Create some data to test the upload stream
 	blobContentReader, blobData := getRandomDataAndReader(blobSize)
 
 	// Perform UploadStreamToBlockBlob
