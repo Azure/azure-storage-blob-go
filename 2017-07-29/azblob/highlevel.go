@@ -147,7 +147,7 @@ func UploadFileToBlockBlob(ctx context.Context, file *os.File,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
+
 const BlobDefaultDownloadBlockSize = int64(4 * 1024 * 1024) // 4MB
 
 // DownloadFromAzureFileOptions identifies options used by the DownloadAzureFileToBuffer and DownloadAzureFileToFile functions.
@@ -169,7 +169,8 @@ type DownloadFromBlobOptions struct {
 }
 
 // downloadAzureFileToBuffer downloads an Azure file to a buffer with parallel.
-func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64, ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions,
+func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
+	ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions,
 	initialDownloadResponse *DownloadResponse) error {
 	// Validate parameters, and set defaults.
 	if o.BlockSize < 0 {
@@ -179,7 +180,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 		o.BlockSize = BlobDefaultDownloadBlockSize
 	}
 
-	if count == -1 { // If size not specified, calculate it
+	if count == CountToEnd { // If size not specified, calculate it
 		if initialDownloadResponse != nil {
 			count = initialDownloadResponse.ContentLength() - offset // if we have the length, use it
 		} else {
@@ -193,7 +194,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 	}
 
 	if int64(len(b)) < count {
-		panic(fmt.Errorf("The buffer's size should be equal to or larger than the request count of bytes: %d.", count))
+		panic(fmt.Errorf("the buffer's size should be equal to or larger than the request count of bytes: %d", count))
 	}
 
 	// Prepare and do parallel download.
@@ -202,7 +203,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 
 	err := doBatchTransfer(ctx, batchTransferOptions{
 		operationName: "downloadBlobToBuffer",
-		bufferSize:    count,
+		transferSize:    count,
 		chunkSize:     o.BlockSize,
 		parallelism:   o.Parallelism,
 		operation: func(offset int64, count int64) error {
@@ -233,13 +234,15 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 }
 
 // DownloadAzureFileToBuffer downloads an Azure file to a buffer with parallel.
-func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, b []byte, o DownloadFromBlobOptions) error {
-	return downloadBlobToBuffer(ctx, blobURL, nil, b, o)
+func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
+	ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions) error {
+	return downloadBlobToBuffer(ctx, blobURL, offset, count, ac, b, o, nil)
 }
 
 // DownloadBlobToFile downloads an Azure file to a local file.
 // The file would be created if it doesn't exist, and would be truncated if the size doesn't match.
-func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, ac BlobAccessConditions, file *os.File, o DownloadFromBlobOptions) error {
+func DownloadBlobToFile(ctx context.Context, blobURL BlobURL,
+	ac BlobAccessConditions, file *os.File, o DownloadFromBlobOptions) error {
 	// 1. Validate parameters.
 	if file == nil {
 		panic("file must not be nil")
@@ -269,9 +272,9 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, ac BlobAccessCondi
 		return err
 	}
 	defer m.unmap()
-	return downloadBlobToBuffer(ctx, blobURL, props, m, o)
+	return downloadBlobToBuffer(ctx, blobURL, 0, size, ac, m, o, nil)
 }
-*/
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -345,11 +348,11 @@ type UploadStreamToBlockBlobOptions struct {
 }
 
 func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL BlockBlobURL,
-	o UploadStreamToBlockBlobOptions) (*BlockBlobsCommitBlockListResponse, error) {
+	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
 	result, err := uploadStream(ctx, reader,
 		UploadStreamOptions{BufferSize: o.BufferSize, MaxBuffers: o.MaxBuffers},
 		&uploadStreamToBlockBlobOptions{b: blockBlobURL, o: o, blockIDPrefix: newUUID()})
-	return result.(*BlockBlobsCommitBlockListResponse), err
+	return result.(CommonResponse), err
 }
 
 type uploadStreamToBlockBlobOptions struct {

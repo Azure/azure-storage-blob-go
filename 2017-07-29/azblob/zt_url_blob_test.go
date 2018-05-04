@@ -1,7 +1,6 @@
 package azblob_test
 
 import (
-	"bytes"
 	"context"
 	"crypto/md5"
 	"crypto/rand"
@@ -17,19 +16,6 @@ import (
 type BlobURLSuite struct{}
 
 var _ = chk.Suite(&BlobURLSuite{})
-
-func getReaderToRandomBytes(n int) *bytes.Reader {
-	r, _ := getRandomDataAndReader(n)
-	return r
-}
-
-func getRandomDataAndReader(n int) (*bytes.Reader, []byte) {
-	data := make([]byte, n, n)
-	for i := 0; i < n; i++ {
-		data[i] = byte(i)
-	}
-	return bytes.NewReader(data), data
-}
 
 func (b *BlobURLSuite) TestCreateDelete(c *chk.C) {
 	bsu := getBSU()

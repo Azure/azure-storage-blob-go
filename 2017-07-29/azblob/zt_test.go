@@ -20,6 +20,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
+	"math/rand"
 )
 
 // For testing docs, see: https://labix.org/gocheck
@@ -124,6 +125,17 @@ func getPageBlobURL(c *chk.C, container azblob.ContainerURL) (blob azblob.PageBl
 	blob = container.NewPageBlobURL(name)
 
 	return
+}
+
+func getReaderToRandomBytes(n int) *bytes.Reader {
+	r, _ := getRandomDataAndReader(n)
+	return r
+}
+
+func getRandomDataAndReader(n int) (*bytes.Reader, []byte) {
+	data := make([]byte, n, n)
+	rand.Read(data)
+	return bytes.NewReader(data), data
 }
 
 func createNewContainer(c *chk.C, bsu azblob.ServiceURL) (container azblob.ContainerURL, name string) {
