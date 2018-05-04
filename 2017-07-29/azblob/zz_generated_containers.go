@@ -7,12 +7,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -66,13 +66,13 @@ func (client containersClient) acquireLeasePreparer(timeout *int32, duration *in
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	params.Set("restype", "container")
 	req.URL.RawQuery = params.Encode()
 	if duration != nil {
-		req.Header.Set("x-ms-lease-duration", fmt.Sprintf("%v", *duration))
+		req.Header.Set("x-ms-lease-duration", strconv.FormatInt(int64(*duration), 10))
 	}
 	if proposedLeaseID != nil {
 		req.Header.Set("x-ms-proposed-lease-id", *proposedLeaseID)
@@ -142,13 +142,13 @@ func (client containersClient) breakLeasePreparer(timeout *int32, breakPeriod *i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	params.Set("restype", "container")
 	req.URL.RawQuery = params.Encode()
 	if breakPeriod != nil {
-		req.Header.Set("x-ms-lease-break-period", fmt.Sprintf("%v", *breakPeriod))
+		req.Header.Set("x-ms-lease-break-period", strconv.FormatInt(int64(*breakPeriod), 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -214,7 +214,7 @@ func (client containersClient) changeLeasePreparer(leaseID string, proposedLease
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	params.Set("restype", "container")
@@ -288,7 +288,7 @@ func (client containersClient) createPreparer(timeout *int32, metadata map[strin
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	req.URL.RawQuery = params.Encode()
@@ -298,7 +298,7 @@ func (client containersClient) createPreparer(timeout *int32, metadata map[strin
 		}
 	}
 	if access != PublicAccessNone {
-		req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
+		req.Header.Set("x-ms-blob-public-access", string(access))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
@@ -354,7 +354,7 @@ func (client containersClient) deletePreparer(timeout *int32, leaseID *string, i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	req.URL.RawQuery = params.Encode()
@@ -419,7 +419,7 @@ func (client containersClient) getAccessPolicyPreparer(timeout *int32, leaseID *
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	params.Set("comp", "acl")
@@ -492,7 +492,7 @@ func (client containersClient) getPropertiesPreparer(timeout *int32, leaseID *st
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	req.URL.RawQuery = params.Encode()
@@ -568,13 +568,13 @@ func (client containersClient) listBlobFlatSegmentPreparer(prefix *string, marke
 		params.Set("marker", *marker)
 	}
 	if maxresults != nil {
-		params.Set("maxresults", fmt.Sprintf("%v", *maxresults))
+		params.Set("maxresults", strconv.FormatInt(int64(*maxresults), 10))
 	}
 	if include != nil && len(include) > 0 {
-		params.Set("include", fmt.Sprintf("%v", joinConst(include, ",")))
+		params.Set("include", joinConst(include, ","))
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	params.Set("comp", "list")
@@ -665,13 +665,13 @@ func (client containersClient) listBlobHierarchySegmentPreparer(delimiter string
 		params.Set("marker", *marker)
 	}
 	if maxresults != nil {
-		params.Set("maxresults", fmt.Sprintf("%v", *maxresults))
+		params.Set("maxresults", strconv.FormatInt(int64(*maxresults), 10))
 	}
 	if include != nil && len(include) > 0 {
-		params.Set("include", fmt.Sprintf("%v", joinConst(include, ",")))
+		params.Set("include", joinConst(include, ","))
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	params.Set("comp", "list")
@@ -744,7 +744,7 @@ func (client containersClient) releaseLeasePreparer(leaseID string, timeout *int
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	params.Set("restype", "container")
@@ -812,7 +812,7 @@ func (client containersClient) renewLeasePreparer(leaseID string, timeout *int32
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	params.Set("restype", "container")
@@ -881,7 +881,7 @@ func (client containersClient) setAccessPolicyPreparer(containerACL []SignedIden
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	params.Set("comp", "acl")
@@ -890,7 +890,7 @@ func (client containersClient) setAccessPolicyPreparer(containerACL []SignedIden
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if access != PublicAccessNone {
-		req.Header.Set("x-ms-blob-public-access", fmt.Sprintf("%v", access))
+		req.Header.Set("x-ms-blob-public-access", string(access))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -967,7 +967,7 @@ func (client containersClient) setMetadataPreparer(timeout *int32, leaseID *stri
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "container")
 	params.Set("comp", "metadata")

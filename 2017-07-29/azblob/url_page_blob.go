@@ -68,7 +68,7 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 	count := validateSeekableStreamAt0AndGetCount(body)
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.PageBlobAccessConditions.pointers()
-	return pb.pbClient.UploadPages(ctx, count, body, nil,
+	return pb.pbClient.UploadPages(ctx, body, count, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,

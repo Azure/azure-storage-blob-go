@@ -59,7 +59,7 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac BlobAccessConditions) (*AppendBlobsAppendBlockResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := ac.AppendBlobAccessConditions.pointers()
-	return ab.abClient.AppendBlock(ctx, validateSeekableStreamAt0AndGetCount(body), body, nil,
+	return ab.abClient.AppendBlock(ctx, body, validateSeekableStreamAt0AndGetCount(body), nil,
 		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)

@@ -59,7 +59,7 @@ func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlockBlobsUploadResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return bb.bbClient.Upload(ctx, validateSeekableStreamAt0AndGetCount(body), body,nil,
+	return bb.bbClient.Upload(ctx, body, validateSeekableStreamAt0AndGetCount(body),nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(),
 		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,

@@ -5,12 +5,13 @@ package azblob
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -60,7 +61,7 @@ func (client blobsClient) abortCopyFromURLPreparer(copyID string, timeout *int32
 	params := req.URL.Query()
 	params.Set("copyid", copyID)
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "copy")
 	req.URL.RawQuery = params.Encode()
@@ -127,12 +128,12 @@ func (client blobsClient) acquireLeasePreparer(timeout *int32, duration *int32, 
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	req.URL.RawQuery = params.Encode()
 	if duration != nil {
-		req.Header.Set("x-ms-lease-duration", fmt.Sprintf("%v", *duration))
+		req.Header.Set("x-ms-lease-duration", strconv.FormatInt(int64(*duration), 10))
 	}
 	if proposedLeaseID != nil {
 		req.Header.Set("x-ms-proposed-lease-id", *proposedLeaseID)
@@ -210,12 +211,12 @@ func (client blobsClient) breakLeasePreparer(timeout *int32, breakPeriod *int32,
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	req.URL.RawQuery = params.Encode()
 	if breakPeriod != nil {
-		req.Header.Set("x-ms-lease-break-period", fmt.Sprintf("%v", *breakPeriod))
+		req.Header.Set("x-ms-lease-break-period", strconv.FormatInt(int64(*breakPeriod), 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -288,7 +289,7 @@ func (client blobsClient) changeLeasePreparer(leaseID string, proposedLeaseID st
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	req.URL.RawQuery = params.Encode()
@@ -370,7 +371,7 @@ func (client blobsClient) createSnapshotPreparer(timeout *int32, metadata map[st
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "snapshot")
 	req.URL.RawQuery = params.Encode()
@@ -466,14 +467,14 @@ func (client blobsClient) deletePreparer(snapshot *string, timeout *int32, lease
 		params.Set("snapshot", *snapshot)
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if deleteSnapshots != DeleteSnapshotsOptionNone {
-		req.Header.Set("x-ms-delete-snapshots", fmt.Sprintf("%v", deleteSnapshots))
+		req.Header.Set("x-ms-delete-snapshots", string(deleteSnapshots))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -551,7 +552,7 @@ func (client blobsClient) downloadPreparer(snapshot *string, timeout *int32, ran
 		params.Set("snapshot", *snapshot)
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
 	if rangeParameter != nil {
@@ -561,7 +562,7 @@ func (client blobsClient) downloadPreparer(snapshot *string, timeout *int32, ran
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if rangeGetContentMD5 != nil {
-		req.Header.Set("x-ms-range-get-content-md5", fmt.Sprintf("%v", *rangeGetContentMD5))
+		req.Header.Set("x-ms-range-get-content-md5", strconv.FormatBool(*rangeGetContentMD5))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -635,7 +636,7 @@ func (client blobsClient) getPropertiesPreparer(snapshot *string, timeout *int32
 		params.Set("snapshot", *snapshot)
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
 	if leaseID != nil {
@@ -709,7 +710,7 @@ func (client blobsClient) releaseLeasePreparer(leaseID string, timeout *int32, i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	req.URL.RawQuery = params.Encode()
@@ -783,7 +784,7 @@ func (client blobsClient) renewLeasePreparer(leaseID string, timeout *int32, ifM
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "lease")
 	req.URL.RawQuery = params.Encode()
@@ -864,7 +865,7 @@ func (client blobsClient) setHTTPHeadersPreparer(timeout *int32, blobCacheContro
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "properties")
 	req.URL.RawQuery = params.Encode()
@@ -875,7 +876,7 @@ func (client blobsClient) setHTTPHeadersPreparer(timeout *int32, blobCacheContro
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
 	if blobContentEncoding != nil {
 		req.Header.Set("x-ms-blob-content-encoding", *blobContentEncoding)
@@ -965,7 +966,7 @@ func (client blobsClient) setMetadataPreparer(timeout *int32, metadata map[strin
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "metadata")
 	req.URL.RawQuery = params.Encode()
@@ -1043,11 +1044,11 @@ func (client blobsClient) setTierPreparer(tier AccessTierType, timeout *int32, r
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "tier")
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("x-ms-access-tier", fmt.Sprintf("%v", tier))
+	req.Header.Set("x-ms-access-tier", string(tier))
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
 		req.Header.Set("x-ms-client-request-id", *requestID)
@@ -1119,7 +1120,7 @@ func (client blobsClient) startCopyFromURLPreparer(copySource string, timeout *i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
 	if metadata != nil {
@@ -1208,7 +1209,7 @@ func (client blobsClient) undeletePreparer(timeout *int32, requestID *string) (p
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "undelete")
 	req.URL.RawQuery = params.Encode()

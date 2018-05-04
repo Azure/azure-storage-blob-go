@@ -7,12 +7,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
-	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 // serviceClient is the client for the Service methods of the Azblob service.
@@ -58,7 +58,7 @@ func (client serviceClient) getPropertiesPreparer(timeout *int32, requestID *str
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "service")
 	params.Set("comp", "properties")
@@ -127,7 +127,7 @@ func (client serviceClient) getStatisticsPreparer(timeout *int32, requestID *str
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "service")
 	params.Set("comp", "stats")
@@ -216,13 +216,13 @@ func (client serviceClient) listContainersSegmentPreparer(prefix *string, marker
 		params.Set("marker", *marker)
 	}
 	if maxresults != nil {
-		params.Set("maxresults", fmt.Sprintf("%v", *maxresults))
+		params.Set("maxresults", strconv.FormatInt(int64(*maxresults), 10))
 	}
 	if include != ListContainersIncludeNone {
-		params.Set("include", fmt.Sprintf("%v", include))
+		params.Set("include", string(include))
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "list")
 	req.URL.RawQuery = params.Encode()
@@ -314,7 +314,7 @@ func (client serviceClient) setPropertiesPreparer(storageServiceProperties Stora
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("restype", "service")
 	params.Set("comp", "properties")

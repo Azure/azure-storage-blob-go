@@ -5,12 +5,13 @@ package azblob
 
 import (
 	"context"
-	"fmt"
+	"encoding/base64"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -28,8 +29,8 @@ func newAppendBlobsClient(url url.URL, p pipeline.Pipeline) appendBlobsClient {
 // Block operation is permitted only if the blob was created with x-ms-blob-type set to AppendBlob. Append Block is
 // supported only on version 2015-02-21 version or later.
 //
-// contentLength is the length of the request. body is initial data body will be closed upon successful return. Callers
-// should ensure closure when receiving an error.timeout is the timeout parameter is expressed in seconds. For more
+// body is initial data body will be closed upon successful return. Callers should ensure closure when receiving an
+// error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
@@ -45,14 +46,16 @@ func newAppendBlobsClient(url url.URL, p pipeline.Pipeline) appendBlobsClient {
 // operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
 // matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
 // in the analytics logs when storage analytics logging is enabled.
-func (client appendBlobsClient) AppendBlock(ctx context.Context, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
+func (client appendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
 	if err := validate([]validation{
+		{targetValue: body,
+			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.appendBlockPreparer(contentLength, body, timeout, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.appendBlockPreparer(body, contentLength, timeout, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,26 +67,26 @@ func (client appendBlobsClient) AppendBlock(ctx context.Context, contentLength i
 }
 
 // appendBlockPreparer prepares the AppendBlock request.
-func (client appendBlobsClient) appendBlockPreparer(contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobsClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "appendblock")
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if maxSize != nil {
-		req.Header.Set("x-ms-blob-condition-maxsize", fmt.Sprintf("%v", *maxSize))
+		req.Header.Set("x-ms-blob-condition-maxsize", strconv.FormatInt(int64(*maxSize), 10))
 	}
 	if appendPosition != nil {
-		req.Header.Set("x-ms-blob-condition-appendpos", fmt.Sprintf("%v", *appendPosition))
+		req.Header.Set("x-ms-blob-condition-appendpos", strconv.FormatInt(int64(*appendPosition), 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -169,10 +172,10 @@ func (client appendBlobsClient) createPreparer(contentLength int64, timeout *int
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if blobContentType != nil {
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
 	}
@@ -183,7 +186,7 @@ func (client appendBlobsClient) createPreparer(contentLength int64, timeout *int
 		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
 	if blobCacheControl != nil {
 		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)

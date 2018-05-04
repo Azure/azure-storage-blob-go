@@ -5,13 +5,14 @@ package azblob
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/xml"
-	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -67,11 +68,11 @@ func (client pageBlobsClient) clearPagesPreparer(contentLength int64, timeout *i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "page")
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if rangeParameter != nil {
 		req.Header.Set("x-ms-range", *rangeParameter)
 	}
@@ -79,13 +80,13 @@ func (client pageBlobsClient) clearPagesPreparer(contentLength int64, timeout *i
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if ifSequenceNumberLessThanOrEqualTo != nil {
-		req.Header.Set("x-ms-if-sequence-number-le", fmt.Sprintf("%v", *ifSequenceNumberLessThanOrEqualTo))
+		req.Header.Set("x-ms-if-sequence-number-le", strconv.FormatInt(*ifSequenceNumberLessThanOrEqualTo, 10))
 	}
 	if ifSequenceNumberLessThan != nil {
-		req.Header.Set("x-ms-if-sequence-number-lt", fmt.Sprintf("%v", *ifSequenceNumberLessThan))
+		req.Header.Set("x-ms-if-sequence-number-lt", strconv.FormatInt(*ifSequenceNumberLessThan, 10))
 	}
 	if ifSequenceNumberEqualTo != nil {
-		req.Header.Set("x-ms-if-sequence-number-eq", fmt.Sprintf("%v", *ifSequenceNumberEqualTo))
+		req.Header.Set("x-ms-if-sequence-number-eq", strconv.FormatInt(*ifSequenceNumberEqualTo, 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
@@ -168,7 +169,7 @@ func (client pageBlobsClient) copyIncrementalPreparer(copySource string, timeout
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "incrementalcopy")
 	req.URL.RawQuery = params.Encode()
@@ -265,10 +266,10 @@ func (client pageBlobsClient) createPreparer(contentLength int64, timeout *int32
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if blobContentType != nil {
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
 	}
@@ -279,7 +280,7 @@ func (client pageBlobsClient) createPreparer(contentLength int64, timeout *int32
 		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
 	if blobCacheControl != nil {
 		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)
@@ -308,10 +309,10 @@ func (client pageBlobsClient) createPreparer(contentLength int64, timeout *int32
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
 	if blobContentLength != nil {
-		req.Header.Set("x-ms-blob-content-length", fmt.Sprintf("%v", *blobContentLength))
+		req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(*blobContentLength, 10))
 	}
 	if blobSequenceNumber != nil {
-		req.Header.Set("x-ms-blob-sequence-number", fmt.Sprintf("%v", *blobSequenceNumber))
+		req.Header.Set("x-ms-blob-sequence-number", strconv.FormatInt(*blobSequenceNumber, 10))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
@@ -377,7 +378,7 @@ func (client pageBlobsClient) getPageRangesPreparer(snapshot *string, timeout *i
 		params.Set("snapshot", *snapshot)
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "pagelist")
 	req.URL.RawQuery = params.Encode()
@@ -479,7 +480,7 @@ func (client pageBlobsClient) getPageRangesDiffPreparer(snapshot *string, timeou
 		params.Set("snapshot", *snapshot)
 	}
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	if prevsnapshot != nil && len(*prevsnapshot) > 0 {
 		params.Set("prevsnapshot", *prevsnapshot)
@@ -574,7 +575,7 @@ func (client pageBlobsClient) resizePreparer(blobContentLength int64, timeout *i
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "properties")
 	req.URL.RawQuery = params.Encode()
@@ -593,7 +594,7 @@ func (client pageBlobsClient) resizePreparer(blobContentLength int64, timeout *i
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
-	req.Header.Set("x-ms-blob-content-length", fmt.Sprintf("%v", blobContentLength))
+	req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(blobContentLength, 10))
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
 		req.Header.Set("x-ms-client-request-id", *requestID)
@@ -653,7 +654,7 @@ func (client pageBlobsClient) updateSequenceNumberPreparer(sequenceNumberAction 
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "properties")
 	req.URL.RawQuery = params.Encode()
@@ -672,9 +673,9 @@ func (client pageBlobsClient) updateSequenceNumberPreparer(sequenceNumberAction 
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
-	req.Header.Set("x-ms-sequence-number-action", fmt.Sprintf("%v", sequenceNumberAction))
+	req.Header.Set("x-ms-sequence-number-action", string(sequenceNumberAction))
 	if blobSequenceNumber != nil {
-		req.Header.Set("x-ms-blob-sequence-number", fmt.Sprintf("%v", *blobSequenceNumber))
+		req.Header.Set("x-ms-blob-sequence-number", strconv.FormatInt(*blobSequenceNumber, 10))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
@@ -696,8 +697,8 @@ func (client pageBlobsClient) updateSequenceNumberResponder(resp pipeline.Respon
 
 // UploadPages the Upload Pages operation writes a range of pages to a page blob
 //
-// contentLength is the length of the request. body is initial data body will be closed upon successful return. Callers
-// should ensure closure when receiving an error.timeout is the timeout parameter is expressed in seconds. For more
+// body is initial data body will be closed upon successful return. Callers should ensure closure when receiving an
+// error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> rangeParameter is return only the bytes of the blob in the specified
@@ -711,14 +712,16 @@ func (client pageBlobsClient) updateSequenceNumberResponder(resp pipeline.Respon
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client pageBlobsClient) UploadPages(ctx context.Context, contentLength int64, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsUploadPagesResponse, error) {
+func (client pageBlobsClient) UploadPages(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*PageBlobsUploadPagesResponse, error) {
 	if err := validate([]validation{
+		{targetValue: body,
+			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPagesPreparer(contentLength, body, timeout, rangeParameter, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.uploadPagesPreparer(body, contentLength, timeout, rangeParameter, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -730,18 +733,18 @@ func (client pageBlobsClient) UploadPages(ctx context.Context, contentLength int
 }
 
 // uploadPagesPreparer prepares the UploadPages request.
-func (client pageBlobsClient) uploadPagesPreparer(contentLength int64, body io.ReadSeeker, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobsClient) uploadPagesPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "page")
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if rangeParameter != nil {
 		req.Header.Set("x-ms-range", *rangeParameter)
 	}
@@ -749,13 +752,13 @@ func (client pageBlobsClient) uploadPagesPreparer(contentLength int64, body io.R
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if ifSequenceNumberLessThanOrEqualTo != nil {
-		req.Header.Set("x-ms-if-sequence-number-le", fmt.Sprintf("%v", *ifSequenceNumberLessThanOrEqualTo))
+		req.Header.Set("x-ms-if-sequence-number-le", strconv.FormatInt(*ifSequenceNumberLessThanOrEqualTo, 10))
 	}
 	if ifSequenceNumberLessThan != nil {
-		req.Header.Set("x-ms-if-sequence-number-lt", fmt.Sprintf("%v", *ifSequenceNumberLessThan))
+		req.Header.Set("x-ms-if-sequence-number-lt", strconv.FormatInt(*ifSequenceNumberLessThan, 10))
 	}
 	if ifSequenceNumberEqualTo != nil {
-		req.Header.Set("x-ms-if-sequence-number-eq", fmt.Sprintf("%v", *ifSequenceNumberEqualTo))
+		req.Header.Set("x-ms-if-sequence-number-eq", strconv.FormatInt(*ifSequenceNumberEqualTo, 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))

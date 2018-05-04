@@ -6,13 +6,14 @@ package azblob
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/xml"
-	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -84,7 +85,7 @@ func (client blockBlobsClient) commitBlockListPreparer(blocks BlockLookupList, t
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "blocklist")
 	req.URL.RawQuery = params.Encode()
@@ -101,7 +102,7 @@ func (client blockBlobsClient) commitBlockListPreparer(blocks BlockLookupList, t
 		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
 	if metadata != nil {
 		for k, v := range metadata {
@@ -193,9 +194,9 @@ func (client blockBlobsClient) getBlockListPreparer(listType BlockListType, snap
 	if snapshot != nil && len(*snapshot) > 0 {
 		params.Set("snapshot", *snapshot)
 	}
-	params.Set("blocklisttype", fmt.Sprintf("%v", listType))
+	params.Set("blocklisttype", string(listType))
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "blocklist")
 	req.URL.RawQuery = params.Encode()
@@ -246,6 +247,8 @@ func (client blockBlobsClient) getBlockListResponder(resp pipeline.Response) (pi
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client blockBlobsClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, timeout *int32, leaseID *string, requestID *string) (*BlockBlobsStageBlockResponse, error) {
 	if err := validate([]validation{
+		{targetValue: body,
+			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
@@ -271,11 +274,11 @@ func (client blockBlobsClient) stageBlockPreparer(blockID string, contentLength 
 	params := req.URL.Query()
 	params.Set("blockid", blockID)
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	params.Set("comp", "block")
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
@@ -302,8 +305,8 @@ func (client blockBlobsClient) stageBlockResponder(resp pipeline.Response) (pipe
 // the existing blob is overwritten with the content of the new blob. To perform a partial update of the content of a
 // block blob, use the Put Block List operation.
 //
-// contentLength is the length of the request. body is initial data body will be closed upon successful return. Callers
-// should ensure closure when receiving an error.timeout is the timeout parameter is expressed in seconds. For more
+// body is initial data body will be closed upon successful return. Callers should ensure closure when receiving an
+// error.contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> blobContentType is optional. Sets the blob's content type. If specified,
@@ -326,8 +329,10 @@ func (client blockBlobsClient) stageBlockResponder(resp pipeline.Response) (pipe
 // ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client blockBlobsClient) Upload(ctx context.Context, contentLength int64, body io.ReadSeeker, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsUploadResponse, error) {
+func (client blockBlobsClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobsUploadResponse, error) {
 	if err := validate([]validation{
+		{targetValue: body,
+			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}},
@@ -336,7 +341,7 @@ func (client blockBlobsClient) Upload(ctx context.Context, contentLength int64, 
 				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPreparer(contentLength, body, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.uploadPreparer(body, contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -348,17 +353,17 @@ func (client blockBlobsClient) Upload(ctx context.Context, contentLength int64, 
 }
 
 // uploadPreparer prepares the Upload request.
-func (client blockBlobsClient) uploadPreparer(contentLength int64, body io.ReadSeeker, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobsClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
 	}
 	params := req.URL.Query()
 	if timeout != nil {
-		params.Set("timeout", fmt.Sprintf("%v", *timeout))
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
 	}
 	req.URL.RawQuery = params.Encode()
-	req.Header.Set("Content-Length", fmt.Sprintf("%v", contentLength))
+	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
 	if blobContentType != nil {
 		req.Header.Set("x-ms-blob-content-type", *blobContentType)
 	}
@@ -369,7 +374,7 @@ func (client blockBlobsClient) uploadPreparer(contentLength int64, body io.ReadS
 		req.Header.Set("x-ms-blob-content-language", *blobContentLanguage)
 	}
 	if blobContentMD5 != nil {
-		req.Header.Set("x-ms-blob-content-md5", fmt.Sprintf("%v", blobContentMD5))
+		req.Header.Set("x-ms-blob-content-md5", base64.StdEncoding.EncodeToString(blobContentMD5))
 	}
 	if blobCacheControl != nil {
 		req.Header.Set("x-ms-blob-cache-control", *blobCacheControl)
