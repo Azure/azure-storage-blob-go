@@ -233,7 +233,7 @@ func (s *aztestsSuite) TestUploadAndDownloadBufferSingleRoutine(c *chk.C) {
 
 // TODO currently failing due to empty body
 func (s *aztestsSuite) TestUploadAndDownloadBufferEmpty(c *chk.C) {
-	bufferSize := 8 * 1024
+	bufferSize := 0
 	blockSize := 1024
 	parallelism := 3
 	performUploadAndDownloadBufferTest(c, bufferSize, blockSize, parallelism)

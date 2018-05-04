@@ -1,4 +1,4 @@
-package azblob
+package azblob_test
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 )
 
 // https://godoc.org/github.com/fluhus/godoc-tricks
@@ -29,19 +30,19 @@ func Example() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create a request pipeline that is used to process HTTP(S) requests and responses. It requires
 	// your account credentials. In more advanced scenarios, you can configure telemetry, retry policies,
 	// logging, and other options. Also, you can configure multiple request pipelines for different scenarios.
-	p := NewPipeline(credential, PipelineOptions{})
+	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 
 	// From the Azure portal, get your Storage account blob service URL endpoint.
 	// The URL typically looks like this:
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net", accountName))
 
 	// Create an ServiceURL object that wraps the service URL and a request pipeline.
-	serviceURL := NewServiceURL(*u, p)
+	serviceURL := azblob.NewServiceURL(*u, p)
 
 	// Now, you can use the serviceURL to perform various container and blob operations.
 
@@ -55,7 +56,7 @@ func Example() {
 	containerURL := serviceURL.NewContainerURL("mycontainer") // Container names require lowercase
 
 	// Create the container on the service (with no metadata and no public access)
-	_, err := containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,19 +67,19 @@ func Example() {
 
 	// Create the blob with string (plain text) content.
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Download the blob's contents and verify that it worked correctly
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	downloadedData := &bytes.Buffer{}
-	reader := get.Body(RetryReaderOptions{})
+	reader := get.Body(azblob.RetryReaderOptions{})
 	downloadedData.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	if data != downloadedData.String() {
@@ -86,9 +87,9 @@ func Example() {
 	}
 
 	// List the blob(s) in our container; since a container may hold millions of blobs, this is done 1 segment at a time.
-	for marker := (Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
+	for marker := (azblob.Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
 		// Get a result segment starting with the blob indicated by the current Marker.
-		listBlob, err := containerURL.ListBlobsFlatSegment(ctx, marker, ListBlobsSegmentOptions{})
+		listBlob, err := containerURL.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -103,13 +104,13 @@ func Example() {
 	}
 
 	// Delete the blob we created earlier.
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Delete the container we created earlier.
-	_, err = containerURL.Delete(ctx, ContainerAccessConditions{})
+	_, err = containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -123,10 +124,10 @@ func ExampleNewPipeline() {
 
 	// Create/configure a request pipeline options object.
 	// All PipelineOptions' fields are optional; reasonable defaults are set for anything you do not specify
-	po := PipelineOptions{
+	po := azblob.PipelineOptions{
 		// Set RetryOptions to control how HTTP request are retried when retryable failures occur
-		Retry: RetryOptions{
-			Policy:        RetryPolicyExponential, // Use exponential backoff as opposed to linear
+		Retry: azblob.RetryOptions{
+			Policy:        azblob.RetryPolicyExponential, // Use exponential backoff as opposed to linear
 			MaxTries:      3,                      // Try at most 3 times to perform the operation (set to 1 to disable retries)
 			TryTimeout:    time.Second * 3,        // Maximum time allowed for any single try
 			RetryDelay:    time.Second * 1,        // Backoff amount for each retry (exponential or linear)
@@ -134,7 +135,7 @@ func ExampleNewPipeline() {
 		},
 
 		// Set RequestLogOptions to control how each HTTP request & its response is logged
-		RequestLog: RequestLogOptions{
+		RequestLog: azblob.RequestLogOptions{
 			LogWarningIfTryOverThreshold: time.Millisecond * 200, // A successful response taking more than this time to arrive is logged as a warning
 		},
 
@@ -152,11 +153,11 @@ func ExampleNewPipeline() {
 
 	// Create a request pipeline object configured with credentials and with pipeline options. Once created,
 	// a pipeline object is goroutine-safe and can be safely used with many XxxURL objects simultaneously.
-	p := NewPipeline(NewAnonymousCredential(), po) // A pipeline always requires some credential object
+	p := azblob.NewPipeline(azblob.NewAnonymousCredential(), po) // A pipeline always requires some credential object
 
 	// Once you've created a pipeline object, associate it with an XxxURL object so that you can perform HTTP requests with it.
 	u, _ := url.Parse("https://myaccount.blob.core.windows.net")
-	serviceURL := NewServiceURL(*u, p)
+	serviceURL := azblob.NewServiceURL(*u, p)
 	// Use the serviceURL as desired...
 
 	// NOTE: When you use an XxxURL object to create another XxxURL object, the new XxxURL object inherits the
@@ -170,14 +171,14 @@ func ExampleNewPipeline() {
 
 	// In this example, I reconfigure the retry policies, create a new pipeline, and then create a new
 	// ContainerURL object that has the same URL as its parent.
-	po.Retry = RetryOptions{
-		Policy:        RetryPolicyFixed, // Use fixed time backoff
+	po.Retry = azblob.RetryOptions{
+		Policy:        azblob.RetryPolicyFixed, // Use fixed time backoff
 		MaxTries:      4,                // Try at most 3 times to perform the operation (set to 1 to disable retries)
 		TryTimeout:    time.Minute * 1,  // Maximum time allowed for any single try
 		RetryDelay:    time.Second * 5,  // Backoff amount for each retry (exponential or linear)
 		MaxRetryDelay: time.Second * 10, // Max delay between retries
 	}
-	newContainerURL := containerURL.WithPipeline(NewPipeline(NewAnonymousCredential(), po))
+	newContainerURL := containerURL.WithPipeline(azblob.NewPipeline(azblob.NewAnonymousCredential(), po))
 
 	// Now, any XxxBlobURL object created using newContainerURL inherits the pipeline with the new retry policy.
 	newBlobURL := newContainerURL.NewBlockBlobURL("ReadMe.txt")
@@ -210,14 +211,14 @@ func ExampleStorageError() {
 	//    service-returned http.Response. And, from the http.Response, you can get the initiating http.Request.
 
 	u, _ := url.Parse("http://myaccount.blob.core.windows.net/mycontainer")
-	containerURL := NewContainerURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
-	create, err := containerURL.Create(context.Background(), Metadata{}, PublicAccessNone)
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{}))
+	create, err := containerURL.Create(context.Background(), azblob.Metadata{}, azblob.PublicAccessNone)
 
 	if err != nil { // An error occurred
-		if stgErr, ok := err.(StorageError); ok { // This error is a Service-specific error
+		if stgErr, ok := err.(azblob.StorageError); ok { // This error is a Service-specific error
 			// StorageError also implements net.Error so you could call its Timeout/Temporary methods if you want.
 			switch stgErr.ServiceCode() { // Compare serviceCode to various ServiceCodeXxx constants
-			case ServiceCodeContainerAlreadyExists:
+			case azblob.ServiceCodeContainerAlreadyExists:
 				// You can also look at the http.Response object that failed.
 				if failedResponse := stgErr.Response(); failedResponse != nil {
 					// From the response object, you can get the initiating http.Request object
@@ -225,7 +226,7 @@ func ExampleStorageError() {
 					_ = failedRequest // Avoid compiler's "declared and not used" error
 				}
 
-			case ServiceCodeContainerBeingDeleted:
+			case azblob.ServiceCodeContainerBeingDeleted:
 				// Handle this error ...
 			default:
 				// Handle other errors ...
@@ -249,7 +250,7 @@ func ExampleBlobURLParts() {
 		"spr=https,http&si=myIdentifier&ss=bf&srt=s&sig=92836758923659283652983562==")
 
 	// You can parse this URL into its constituent parts:
-	parts := NewBlobURLParts(*u)
+	parts := azblob.NewBlobURLParts(*u)
 
 	// Now, we access the parts (this example prints them).
 	fmt.Println(parts.Host, parts.ContainerName, parts.BlobName, parts.Snapshot)
@@ -258,7 +259,7 @@ func ExampleBlobURLParts() {
 		sas.IPRange(), sas.Protocol(), sas.Identifier(), sas.Services(), sas.Signature())
 
 	// You can then change some of the fields and construct a new URL:
-	parts.SAS = SASQueryParameters{}       // Remove the SAS query parameters
+	parts.SAS = azblob.SASQueryParameters{}       // Remove the SAS query parameters
 	parts.Snapshot = ""                    // Remove the snapshot timestamp
 	parts.ContainerName = "othercontainer" // Change the container name
 	// In this example, we'll keep the blob name as is.
@@ -275,15 +276,15 @@ func ExampleAccountSASSignatureValues() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is required to sign a SAS.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
-	sasQueryParams := AccountSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+	sasQueryParams := azblob.AccountSASSignatureValues{
+		Protocol:      azblob.SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
-		Permissions:   AccountSASPermissions{Read: true, List: true}.String(),
-		Services:      AccountSASServices{Blob: true}.String(),
-		ResourceTypes: AccountSASResourceTypes{Container: true, Object: true}.String(),
+		Permissions:   azblob.AccountSASPermissions{Read: true, List: true}.String(),
+		Services:      azblob.AccountSASServices{Blob: true}.String(),
+		ResourceTypes: azblob.AccountSASResourceTypes{Container: true, Object: true}.String(),
 	}.NewSASQueryParameters(credential)
 
 	qp := sasQueryParams.Encode()
@@ -297,11 +298,11 @@ func ExampleAccountSASSignatureValues() {
 
 	// Create an ServiceURL object that wraps the service URL (and its SAS) and a pipeline.
 	// When using a SAS URLs, anonymous credentials are required.
-	serviceURL := NewServiceURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+	serviceURL := azblob.NewServiceURL(*u, azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{}))
 	// Now, you can use this serviceURL just like any other to make requests of the resource.
 
 	// You can parse a URL into its constituent parts:
-	blobURLParts := NewBlobURLParts(serviceURL.URL())
+	blobURLParts := azblob.NewBlobURLParts(serviceURL.URL())
 	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = serviceURL // Avoid compiler's "declared and not used" error
@@ -313,22 +314,22 @@ func ExampleBlobSASSignatureValues() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is required to sign a SAS.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// This is the name of the container and blob that we're creating a SAS to.
 	containerName := "mycontainer" // Container names require lowercase
 	blobName := "HelloWorld.txt"   // Blob names can be mixed case
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
-	sasQueryParams := BlobSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+	sasQueryParams := azblob.BlobSASSignatureValues{
+		Protocol:      azblob.SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: containerName,
 		BlobName:      blobName,
 
 		// To produce a container SAS (as opposed to a blob SAS), assign to Permissions using
 		// ContainerSASPermissions and make sure the BlobName field is "" (the default).
-		Permissions: BlobSASPermissions{Add: true, Read: true, Write: true}.String(),
+		Permissions: azblob.BlobSASPermissions{Add: true, Read: true, Write: true}.String(),
 	}.NewSASQueryParameters(credential)
 
 	// Create the URL of the resource you wish to access and append the SAS query parameters.
@@ -345,11 +346,11 @@ func ExampleBlobSASSignatureValues() {
 
 	// Create an BlobURL object that wraps the blob URL (and its SAS) and a pipeline.
 	// When using a SAS URLs, anonymous credentials are required.
-	blobURL := NewBlobURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+	blobURL := azblob.NewBlobURL(*u, azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{}))
 	// Now, you can use this blobURL just like any other to make requests of the resource.
 
 	// If you have a SAS query parameter string, you can parse it into its parts:
-	blobURLParts := NewBlobURLParts(blobURL.URL())
+	blobURLParts := azblob.NewBlobURLParts(blobURL.URL())
 	fmt.Printf("SAS expiry time=%v", blobURLParts.SAS.ExpiryTime())
 
 	_ = blobURL // Avoid compiler's "declared and not used" error
@@ -361,17 +362,17 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := NewContainerURL(*u, NewPipeline(credential, PipelineOptions{}))
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	// All operations allow you to specify a timeout via a Go context.Context object.
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create the container (with no metadata and no public access)
-	_, err := containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -381,7 +382,8 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 	blobURL := containerURL.NewBlockBlobURL("HelloWorld.txt") // Blob names can be mixed case
 
 	// Create the blob and put some text in it
-	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), azblob.BlobHTTPHeaders{ContentType: "text/plain"},
+		azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -396,7 +398,7 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 		// We expected this error because the service returns an HTTP 404 status code when a blob
 		// exists but the requester does not have permission to access it.
 		// This is how we change the container's permission to allow public/anonymous aceess:
-		_, err := containerURL.SetAccessPolicy(ctx, PublicAccessBlob, []SignedIdentifier{}, ContainerAccessConditions{})
+		_, err := containerURL.SetAccessPolicy(ctx, azblob.PublicAccessBlob, []azblob.SignedIdentifier{}, azblob.ContainerAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -420,50 +422,50 @@ func ExampleBlobAccessConditions() {
 
 	// Create a BlockBlobURL object that wraps a blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/Data.txt", accountName))
-	blobURL := NewBlockBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// This helper function displays the results of an operation; it is called frequently below.
 	showResult := func(response pipeline.Response, err error) {
 		if err != nil {
-			if stgErr, ok := err.(StorageError); !ok {
+			if stgErr, ok := err.(azblob.StorageError); !ok {
 				log.Fatal(err) // Network failure
 			} else {
 				fmt.Print("Failure: " + stgErr.Response().Status + "\n")
 			}
 		} else {
-			if get, ok := response.(*DownloadResponse); ok {
-				get.Body(RetryReaderOptions{}).Close() // The client must close the response body when finished with it
+			if get, ok := response.(*azblob.DownloadResponse); ok {
+				get.Body(azblob.RetryReaderOptions{}).Close() // The client must close the response body when finished with it
 			}
 			fmt.Print("Success: " + response.Response().Status + "\n")
 		}
 	}
 
 	// Create the blob (unconditionally; succeeds)
-	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	showResult(upload, err)
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
+		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
 
 	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
+		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
-	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{},
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfMatch: upload.ETag()}})
+	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), azblob.BlobHTTPHeaders{}, azblob.Metadata{},
+		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: upload.ETag()}})
 	showResult(upload, err)
 
 	// Download content if it has changed since the version identified by ETag (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfNoneMatch: upload.ETag()}}, false))
+		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: upload.ETag()}}, false))
 
 	// Upload content if the blob doesn't already exist (fails):
-	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{},
-		BlobAccessConditions{HTTPAccessConditions: HTTPAccessConditions{IfNoneMatch: ETagAny}}))
+	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), azblob.BlobHTTPHeaders{}, azblob.Metadata{},
+		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: azblob.ETagAny}}))
 }
 
 // This examples shows how to create a container with metadata and then how to read & update the metadata.
@@ -473,8 +475,8 @@ func ExampleMetadata_containers() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := NewContainerURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	containerURL := azblob.NewContainerURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -482,13 +484,13 @@ func ExampleMetadata_containers() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err := containerURL.Create(ctx, Metadata{"author": "Jeffrey", "app": creatingApp}, PublicAccessNone)
+	_, err := containerURL.Create(ctx, azblob.Metadata{"author": "Jeffrey", "app": creatingApp}, azblob.PublicAccessNone)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Query the container's metadata
-	get, err := containerURL.GetProperties(ctx, LeaseAccessConditions{})
+	get, err := containerURL.GetProperties(ctx, azblob.LeaseAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -501,7 +503,7 @@ func ExampleMetadata_containers() {
 
 	// Update the metadata and write it back to the container
 	metadata["author"] = "Aidan" // NOTE: The keyname is in all lowercase letters
-	_, err = containerURL.SetMetadata(ctx, metadata, ContainerAccessConditions{})
+	_, err = containerURL.SetMetadata(ctx, metadata, azblob.ContainerAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -517,8 +519,8 @@ func ExampleMetadata_blobs() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/ReadMe.txt", accountName))
-	blobURL := NewBlockBlobURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlockBlobURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -526,14 +528,14 @@ func ExampleMetadata_blobs() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err := blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{},
-		Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, strings.NewReader("Some text"), azblob.BlobHTTPHeaders{},
+		azblob.Metadata{"author": "Jeffrey", "app": creatingApp}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Query the blob's properties and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -549,7 +551,7 @@ func ExampleMetadata_blobs() {
 
 	// Update the blob's metadata and write it back to the blob
 	metadata["editor"] = "Grant" // Add a new key/value; NOTE: The keyname is in all lowercase letters
-	_, err = blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{})
+	_, err = blobURL.SetMetadata(ctx, metadata, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -565,23 +567,23 @@ func ExampleBlobHTTPHeaders() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/ReadMe.txt", accountName))
-	blobURL := NewBlockBlobURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlockBlobURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create a blob with HTTP headers
 	_, err := blobURL.Upload(ctx, strings.NewReader("Some text"),
-		BlobHTTPHeaders{
+		azblob.BlobHTTPHeaders{
 			ContentType:        "text/html; charset=utf-8",
 			ContentDisposition: "attachment",
-		}, Metadata{}, BlobAccessConditions{})
+		}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// GetMetadata returns the blob's properties, HTTP headers, and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -595,7 +597,7 @@ func ExampleBlobHTTPHeaders() {
 
 	// Update the blob's HTTP Headers and write them back to the blob
 	httpHeaders.ContentType = "text/plain"
-	_, err = blobURL.SetHTTPHeaders(ctx, httpHeaders, BlobAccessConditions{})
+	_, err = blobURL.SetHTTPHeaders(ctx, httpHeaders, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -612,8 +614,8 @@ func ExampleBlockBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyBlockBlob.txt", accountName))
-	blobURL := NewBlockBlobURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlockBlobURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -644,20 +646,20 @@ func ExampleBlockBlobURL() {
 		base64BlockIDs[index] = blockIDIntToBase64(index) // Some people use UUIDs for block IDs
 
 		// Upload a block to this blob specifying the Block ID and its content (up to 100MB); this block is uncommitted.
-		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{})
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), azblob.LeaseAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, base64BlockIDs, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// For the blob, show each block (ID and size) that is a committed part of it.
-	getBlock, err := blobURL.GetBlockList(ctx, BlockListAll, LeaseAccessConditions{})
+	getBlock, err := blobURL.GetBlockList(ctx, azblob.BlockListAll, azblob.LeaseAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -667,12 +669,12 @@ func ExampleBlockBlobURL() {
 
 	// Download the blob in its entirety; download operations do not take blocks into account.
 	// NOTE: For really large blobs, downloading them like allocates a lot of memory.
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	blobData := &bytes.Buffer{}
-	reader := get.Body(RetryReaderOptions{})
+	reader := get.Body(azblob.RetryReaderOptions{})
 	blobData.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(blobData)
@@ -687,28 +689,28 @@ func ExampleAppendBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyAppendBlob.txt", accountName))
-	appendBlobURL := NewAppendBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	appendBlobURL := azblob.NewAppendBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := appendBlobURL.Create(ctx, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i := 0; i < 5; i++ { // Append 5 blocks to the append blob
-		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), BlobAccessConditions{})
+		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), azblob.BlobAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// Download the entire append blob's contents and show it.
-	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := appendBlobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	b := bytes.Buffer{}
-	reader := get.Body(RetryReaderOptions{})
+	reader := get.Body(azblob.RetryReaderOptions{})
 	b.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
@@ -721,42 +723,30 @@ func ExamplePageBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyPageBlob.txt", accountName))
-	blobURL := NewPageBlobURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewPageBlobURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err := blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.Create(ctx, azblob.PageBlobPageBytes*4, 0, azblob.BlobHTTPHeaders{},
+		azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	page := [PageBlobPageBytes]byte{}
+	page := [azblob.PageBlobPageBytes]byte{}
 	copy(page[:], "Page 0")
-	_, err = blobURL.UploadPages(ctx, 0*PageBlobPageBytes, bytes.NewReader(page[:]), BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 0*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copy(page[:], "Page 1")
-	_, err = blobURL.UploadPages(ctx, 2*PageBlobPageBytes, bytes.NewReader(page[:]), BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 2*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	getPages, err := blobURL.GetPageRanges(ctx, 0*PageBlobPageBytes, 10*PageBlobPageBytes, BlobAccessConditions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	for _, pr := range getPages.PageRange {
-		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
-	}
-
-	_, err = blobURL.ClearPages(ctx, 0*PageBlobPageBytes, 1*PageBlobPageBytes, BlobAccessConditions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	getPages, err = blobURL.GetPageRanges(ctx, 0*PageBlobPageBytes, 10*PageBlobPageBytes, BlobAccessConditions{})
+	getPages, err := blobURL.GetPageRanges(ctx, 0*azblob.PageBlobPageBytes, 10*azblob.PageBlobPageBytes, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -764,12 +754,25 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	_, err = blobURL.ClearPages(ctx, 0*azblob.PageBlobPageBytes, 1*azblob.PageBlobPageBytes, azblob.BlobAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	getPages, err = blobURL.GetPageRanges(ctx, 0*azblob.PageBlobPageBytes, 10*azblob.PageBlobPageBytes, azblob.BlobAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, pr := range getPages.PageRange {
+		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
+	}
+
+	get, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 	blobData := &bytes.Buffer{}
-	reader := get.Body(RetryReaderOptions{})
+	reader := get.Body(azblob.RetryReaderOptions{})
 	blobData.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	fmt.Printf("%#v", blobData.Bytes())
@@ -783,8 +786,8 @@ func Example_blobSnapshots() {
 
 	// Create a ContainerURL object to a container where we'll create a blob and its snapshot.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := NewContainerURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	containerURL := azblob.NewContainerURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	// Create a BlockBlobURL object to a blob in the container.
 	baseBlobURL := containerURL.NewBlockBlobURL("Original.txt")
@@ -792,33 +795,33 @@ func Example_blobSnapshots() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create the original blob:
-	_, err := baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := baseBlobURL.Upload(ctx, strings.NewReader("Some text"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Create a snapshot of the original blob & save its timestamp:
-	createSnapshot, err := baseBlobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	createSnapshot, err := baseBlobURL.CreateSnapshot(ctx, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	snapshot := createSnapshot.Snapshot()
 
 	// Modify the original blob & show it:
-	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := baseBlobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	b := bytes.Buffer{}
-	reader := get.Body(RetryReaderOptions{})
+	reader := get.Body(azblob.RetryReaderOptions{})
 	b.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
 
 	// Show snapshot blob via original blob URI & snapshot time:
 	snapshotBlobURL := baseBlobURL.WithSnapshot(snapshot)
-	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err = snapshotBlobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	b.Reset()
-	reader = get.Body(RetryReaderOptions{})
+	reader = get.Body(azblob.RetryReaderOptions{})
 	b.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
 	fmt.Println(b.String())
@@ -828,10 +831,10 @@ func Example_blobSnapshots() {
 
 	// Show all blobs in the container with their snapshots:
 	// List the blob(s) in our container; since a container may hold millions of blobs, this is done 1 segment at a time.
-	for marker := (Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
+	for marker := (azblob.Marker{}); marker.NotDone(); { // The parens around Marker{} are required to avoid compiler error.
 		// Get a result segment starting with the blob indicated by the current Marker.
-		listBlobs, err := containerURL.ListBlobsFlatSegment(ctx, marker, ListBlobsSegmentOptions{
-			Details: BlobListingDetails{Snapshots: true}})
+		listBlobs, err := containerURL.ListBlobsFlatSegment(ctx, marker, azblob.ListBlobsSegmentOptions{
+			Details: azblob.BlobListingDetails{Snapshots: true}})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -850,7 +853,7 @@ func Example_blobSnapshots() {
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, BlobAccessConditions{}, BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), azblob.Metadata{}, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -859,7 +862,7 @@ func Example_blobSnapshots() {
 	// DeleteSnapshotsOptionOnly deletes all the base blob's snapshots but not the base blob itself
 	// DeleteSnapshotsOptionInclude deletes the base blob & all its snapshots.
 	// DeleteSnapshotOptionNone produces an error if the base blob has any snapshots.
-	_, err = baseBlobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err = baseBlobURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -868,14 +871,14 @@ func Example_blobSnapshots() {
 func Example_progressUploadDownload() {
 	// Create a request pipeline using your Storage account's name and account key.
 	accountName, accountKey := accountInfo()
-	credential := NewSharedKeyCredential(accountName, accountKey)
-	p := NewPipeline(credential, PipelineOptions{})
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 
 	// From the Azure portal, get your Storage account blob service URL endpoint.
 	cURL, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
 
 	// Create an ServiceURL object that wraps the service URL and a request pipeline to making requests.
-	containerURL := NewContainerURL(*cURL, p)
+	containerURL := azblob.NewContainerURL(*cURL, p)
 
 	ctx := context.Background() // This example uses a never-expiring context
 	// Here's how to create a blob with HTTP headers and metadata (I'm using the same metadata that was put on the container):
@@ -889,22 +892,22 @@ func Example_progressUploadDownload() {
 		pipeline.NewRequestBodyProgress(requestBody, func(bytesTransferred int64) {
 			fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Len())
 		}),
-		BlobHTTPHeaders{
+		azblob.BlobHTTPHeaders{
 			ContentType:        "text/html; charset=utf-8",
 			ContentDisposition: "attachment",
-		}, Metadata{}, BlobAccessConditions{})
+		}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Here's how to read the blob's data with progress reporting:
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Wrap the response body in a ResponseBodyProgress and pass a callback function for progress reporting.
-	responseBody := pipeline.NewResponseBodyProgress(get.Body(RetryReaderOptions{}),
+	responseBody := pipeline.NewResponseBodyProgress(get.Body(azblob.RetryReaderOptions{}),
 		func(bytesTransferred int64) {
 			fmt.Printf("Read %d of %d bytes.", bytesTransferred, get.ContentLength())
 		})
@@ -923,22 +926,22 @@ func ExampleBlobURL_startCopy() {
 	// Create a ContainerURL object to a container where we'll create a blob and its snapshot.
 	// Create a BlockBlobURL object to a blob in the container.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/CopiedBlob.bin", accountName))
-	blobURL := NewBlobURL(*u,
-		NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlobURL(*u,
+		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, BlobAccessConditions{}, BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copyID := startCopy.CopyID()
 	copyStatus := startCopy.CopyStatus()
-	for copyStatus == CopyStatusPending {
+	for copyStatus == azblob.CopyStatusPending {
 		time.Sleep(time.Second * 2)
-		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+		getMetadata, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -964,13 +967,13 @@ func ExampleUploadFileToBlockBlob() {
 
 	// Create a BlockBlobURL object to a blob in the container (we assume the container already exists).
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlockBlob.bin", accountName))
-	blockBlobURL := NewBlockBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Pass the Context, stream, stream size, block blob URL, and options to StreamToBlockBlob
-	response, err := UploadFileToBlockBlob(ctx, file, blockBlobURL,
-		UploadToBlockBlobOptions{
+	response, err := azblob.UploadFileToBlockBlob(ctx, file, blockBlobURL,
+		azblob.UploadToBlockBlobOptions{
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
 				fmt.Printf("Uploaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
@@ -991,16 +994,16 @@ func ExampleBlobUrl_Download() {
 
 	// Create a BlobURL object to a blob in the container (we assume the container & blob already exist).
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlob.bin", accountName))
-	blobURL := NewBlobURL(*u, NewPipeline(NewSharedKeyCredential(accountName, accountKey), PipelineOptions{}))
+	blobURL := azblob.NewBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
 
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
 	// Download returns an intelligent retryable stream around a blob; it returns an io.ReadCloser.
-	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false)
+	dr, err := blobURL.Download(context.TODO(), 0, -1, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		log.Fatal(err)
 	}
-	rs := dr.Body(RetryReaderOptions{})
+	rs := dr.Body(azblob.RetryReaderOptions{})
 
 	// NewResponseBodyProgress wraps the GetRetryStream with progress reporting; it returns an io.ReadCloser.
 	stream := pipeline.NewResponseBodyProgress(rs,
@@ -1031,39 +1034,39 @@ func ExampleLeaseContainer() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := NewContainerURL(*u, NewPipeline(credential, PipelineOptions{}))
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	// All operations allow you to specify a timeout via a Go context.Context object.
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Now acquire a lease on the container.
 	// You can choose to pass an empty string for proposed ID so that the service automatically assigns one for you.
-	acquireLeaseResponse, err := containerURL.AcquireLease(ctx, "", 60, HTTPAccessConditions{})
+	acquireLeaseResponse, err := containerURL.AcquireLease(ctx, "", 60, azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The container is leased for delete operations with lease ID", acquireLeaseResponse.LeaseID())
 
 	// The container cannot be deleted without providing the lease ID.
-	_, err = containerURL.Delete(ctx, ContainerAccessConditions{})
+	_, err = containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
 	if err == nil {
 		log.Fatal("delete should have failed")
 	}
 	fmt.Println("The container cannot be deleted while there is an active lease")
 
 	// We can release the lease now and the container can be deleted.
-	_, err = containerURL.ReleaseLease(ctx, acquireLeaseResponse.LeaseID(), HTTPAccessConditions{})
+	_, err = containerURL.ReleaseLease(ctx, acquireLeaseResponse.LeaseID(), azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease on the container is now released")
 
 	// Acquire a lease again to perform other operations.
-	acquireLeaseResponse, err = containerURL.AcquireLease(ctx, "", 60, HTTPAccessConditions{})
+	acquireLeaseResponse, err = containerURL.AcquireLease(ctx, "", 60, azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1073,21 +1076,21 @@ func ExampleLeaseContainer() {
 	// A lease ID can be any valid GUID string format.
 	newLeaseID := uuid{}
 	newLeaseID[0] = 1
-	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), HTTPAccessConditions{})
+	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease ID was changed to", changeLeaseResponse.LeaseID())
 
 	// The lease can be renewed.
-	renewLeaseResponse, err := containerURL.RenewLease(ctx, changeLeaseResponse.LeaseID(), HTTPAccessConditions{})
+	renewLeaseResponse, err := containerURL.RenewLease(ctx, changeLeaseResponse.LeaseID(), azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease was renewed with the same ID", renewLeaseResponse.LeaseID())
 
 	// Finally, the lease can be broken and we could prevent others from acquiring a lease for a period of time
-	_, err = containerURL.BreakLease(ctx, 60, HTTPAccessConditions{})
+	_, err = containerURL.BreakLease(ctx, 60, azblob.HTTPAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1100,11 +1103,11 @@ func ExampleListBlobsHierarchy() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := NewSharedKeyCredential(accountName, accountKey)
+	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := NewContainerURL(*u, NewPipeline(credential, PipelineOptions{}))
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	// All operations allow you to specify a timeout via a Go context.Context object.
 	ctx := context.Background() // This example uses a never-expiring context
@@ -1113,7 +1116,7 @@ func ExampleListBlobsHierarchy() {
 	blobNames := []string{"a/1", "a/2", "b/1", "boaty_mcboatface"}
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{},nil, BlobAccessConditions{})
+		_, err := blobURL.Upload(ctx, strings.NewReader("test"), azblob.BlobHTTPHeaders{},nil, azblob.BlobAccessConditions{})
 
 		if err != nil {
 			log.Fatal("an error occurred while creating blobs for the example setup")
@@ -1121,7 +1124,7 @@ func ExampleListBlobsHierarchy() {
 	}
 
 	// Perform a listing operation on blobs with hierarchy
-	resp, err := containerURL.ListBlobsHierarchySegment(ctx, Marker{}, "/", ListBlobsSegmentOptions{})
+	resp, err := containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{})
 	if err != nil {
 		log.Fatal("an error occurred while listing blobs")
 	}
@@ -1140,7 +1143,7 @@ func ExampleListBlobsHierarchy() {
 	}
 
 	// For the prefixes that are returned, we can perform another listing operation on them, to see their contents
-	resp, err = containerURL.ListBlobsHierarchySegment(ctx, Marker{}, "/", ListBlobsSegmentOptions{
+	resp, err = containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{
 		Prefix: "a/",
 	})
 	if err != nil {
@@ -1160,7 +1163,7 @@ func ExampleListBlobsHierarchy() {
 	// Delete the blobs created by this example
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+		_, err := blobURL.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 
 		if err != nil {
 			log.Fatal("an error occurred while deleting the blobs created by the example")
