@@ -266,13 +266,17 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL,
 		}
 	}
 
-	// 4. Set mmap and call DownloadAzureFileToBuffer.
-	m, err := newMMF(file, true, 0, int(size))
-	if err != nil {
-		return err
+	if size > 0 {
+		// 4. Set mmap and call DownloadAzureFileToBuffer.
+		m, err := newMMF(file, true, 0, int(size))
+		if err != nil {
+			return err
+		}
+		defer m.unmap()
+		return downloadBlobToBuffer(ctx, blobURL, 0, size, ac, m, o, nil)
+	} else { // if the blob's size is 0, there is no need in downloading it
+		return nil
 	}
-	defer m.unmap()
-	return downloadBlobToBuffer(ctx, blobURL, 0, size, ac, m, o, nil)
 }
 
 

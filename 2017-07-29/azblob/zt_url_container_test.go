@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
+	"bytes"
 )
 
 type ContainerURLSuite struct{}
@@ -151,7 +152,7 @@ func (s *ContainerURLSuite) TestListBlobs(c *chk.C) {
 
 	blob := container.NewBlockBlobURL(generateBlobName())
 
-	_, err = blob.Upload(context.Background(), nil, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	_, err = blob.Upload(context.Background(), bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	blobs, err = container.ListBlobsFlatSegment(context.Background(), azblob.Marker{}, azblob.ListBlobsSegmentOptions{})

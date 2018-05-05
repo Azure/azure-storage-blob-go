@@ -2824,7 +2824,7 @@ func (s *aztestsSuite) TestBlobPutBlobHTTPHeaders(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, nil, basicHeaders, nil, azblob.BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), basicHeaders, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -2840,7 +2840,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataNotEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, basicMetadata, azblob.BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, basicMetadata, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -2854,7 +2854,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -2887,7 +2887,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfModifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: currentTime}})
 	c.Assert(err, chk.IsNil)
 
@@ -2902,7 +2902,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfModifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: currentTime}})
 	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
 }
@@ -2915,7 +2915,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfUnmodifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfUnmodifiedSince: currentTime}})
 	c.Assert(err, chk.IsNil)
 
@@ -2930,7 +2930,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfUnmodifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfUnmodifiedSince: currentTime}})
 	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
 }
@@ -2944,7 +2944,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchTrue(c *chk.C) {
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: resp.ETag()}})
 	c.Assert(err, chk.IsNil)
 
@@ -2960,7 +2960,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchFalse(c *chk.C) {
 	_, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: azblob.ETag("garbage")}})
 	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
 }
@@ -2974,7 +2974,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchTrue(c *chk.C) {
 	_, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: azblob.ETag("garbage")}})
 	c.Assert(err, chk.IsNil)
 
@@ -2990,7 +2990,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchFalse(c *chk.C) {
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, nil, azblob.BlobHTTPHeaders{}, nil,
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil,
 		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: resp.ETag()}})
 	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
 }
@@ -3621,7 +3621,7 @@ func (s *aztestsSuite) TestBlobPutBlockEmptyBody(c *chk.C) {
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
 	_, err := blobURL.StageBlock(ctx, azblob.BlockID{0}.ToBase64(), strings.NewReader(""), azblob.LeaseAccessConditions{})
-	validateStorageError(c, err, azblob.ServiceCodeMissingContentLengthHeader) // The server does not accept getReaderToRandomBytes length = 0
+	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
 }
 
 func setupPutBlockListTest(c *chk.C) (containerURL azblob.ContainerURL, blobURL azblob.BlockBlobURL, id string) {
@@ -4039,7 +4039,7 @@ func (s *aztestsSuite) TestBlobAppendBlockNilBody(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.AppendBlock(ctx, nil, azblob.BlobAccessConditions{})
+	_, err := blobURL.AppendBlock(ctx, bytes.NewReader(nil), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.NotNil)
 	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
 }
@@ -4051,7 +4051,7 @@ func (s *aztestsSuite) TestBlobAppendBlockEmptyBody(c *chk.C) {
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(""), azblob.BlobAccessConditions{})
-	validateStorageError(c, err, azblob.ServiceCodeMissingContentLengthHeader) // The server does not accept getReaderToRandomBytes length = 0
+	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
 }
 
 func (s *aztestsSuite) TestBlobAppendBlockNonExistantBlob(c *chk.C) {

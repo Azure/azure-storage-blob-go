@@ -70,7 +70,6 @@ func (s *aztestsSuite) TestUploadStreamToBlockBlobSingleIO(c *chk.C) {
 	performUploadStreamToBlockBlobTest(c, blobSize, bufferSize, maxBuffers)
 }
 
-// TODO currently failing due to empty body
 func (s *aztestsSuite) TestUploadStreamToBlockBlobEmpty(c *chk.C) {
 	blobSize := 0
 	bufferSize := 8 * 1024
@@ -159,7 +158,6 @@ func (s *aztestsSuite) TestUploadAndDownloadFileSingleRoutine(c *chk.C) {
 	performUploadAndDownloadFileTest(c, fileSize, blockSize, parallelism)
 }
 
-// TODO currently failing due to empty body
 func (s *aztestsSuite) TestUploadAndDownloadFileEmpty(c *chk.C) {
 	fileSize := 0
 	blockSize := 1024
@@ -231,7 +229,6 @@ func (s *aztestsSuite) TestUploadAndDownloadBufferSingleRoutine(c *chk.C) {
 	performUploadAndDownloadBufferTest(c, bufferSize, blockSize, parallelism)
 }
 
-// TODO currently failing due to empty body
 func (s *aztestsSuite) TestUploadAndDownloadBufferEmpty(c *chk.C) {
 	bufferSize := 0
 	blockSize := 1024

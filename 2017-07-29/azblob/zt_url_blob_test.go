@@ -11,6 +11,7 @@ import (
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
+	"bytes"
 )
 
 type BlobURLSuite struct{}
@@ -24,7 +25,7 @@ func (b *BlobURLSuite) TestCreateDelete(c *chk.C) {
 
 	blob := container.NewBlockBlobURL(generateBlobName())
 
-	putResp, err := blob.Upload(context.Background(), nil, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	putResp, err := blob.Upload(context.Background(), bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
