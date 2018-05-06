@@ -180,6 +180,14 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 		o.BlockSize = BlobDefaultDownloadBlockSize
 	}
 
+	if offset < 0 {
+		panic("offset option must be >= 0")
+	}
+
+	if count < 0 {
+		panic("count option must be >= 0")
+	}
+
 	if count == CountToEnd { // If size not specified, calculate it
 		if initialDownloadResponse != nil {
 			count = initialDownloadResponse.ContentLength() - offset // if we have the length, use it
@@ -206,8 +214,8 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 		transferSize:    count,
 		chunkSize:     o.BlockSize,
 		parallelism:   o.Parallelism,
-		operation: func(offset int64, count int64) error {
-			dr, err := blobURL.Download(ctx, offset, count, ac, false)
+		operation: func(chunkStart int64, count int64) error {
+			dr, err := blobURL.Download(ctx, chunkStart+ offset, count, ac, false)
 			body := dr.Body(o.RetryReaderOptionsPerBlock)
 			if o.Progress != nil {
 				rangeProgress := int64(0)
@@ -222,7 +230,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 						progressLock.Unlock()
 					})
 			}
-			_, err = io.ReadFull(body, b[offset:offset+count])
+			_, err = io.ReadFull(body, b[chunkStart:chunkStart+count])
 			body.Close()
 			return err
 		},
@@ -234,6 +242,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 }
 
 // DownloadAzureFileToBuffer downloads an Azure file to a buffer with parallel.
+// Offset and count are optional, pass 0 for both to download the entire blob.
 func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions) error {
 	return downloadBlobToBuffer(ctx, blobURL, offset, count, ac, b, o, nil)
@@ -241,19 +250,27 @@ func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 
 // DownloadBlobToFile downloads an Azure file to a local file.
 // The file would be truncated if the size doesn't match.
-func DownloadBlobToFile(ctx context.Context, blobURL BlobURL,
+// Offset and count are optional, pass 0 for both to download the entire blob.
+func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	ac BlobAccessConditions, file *os.File, o DownloadFromBlobOptions) error {
 	// 1. Validate parameters.
 	if file == nil {
 		panic("file must not be nil")
 	}
 
-	// 2. Try to get Azure file's size.
-	props, err := blobURL.GetProperties(ctx, ac)
-	if err != nil {
-		return err
+	// 2. Calculate the size of the destination file
+	var size int64
+
+	if count == CountToEnd {
+		// Try to get Azure file's size
+		props, err := blobURL.GetProperties(ctx, ac)
+		if err != nil {
+			return err
+		}
+		size = props.ContentLength() - offset
+	} else {
+		size = count
 	}
-	size := props.ContentLength()
 
 	// 3. Compare and try to resize local file's size if it doesn't match Azure file's size.
 	stat, err := file.Stat()
@@ -273,7 +290,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL,
 			return err
 		}
 		defer m.unmap()
-		return downloadBlobToBuffer(ctx, blobURL, 0, size, ac, m, o, nil)
+		return downloadBlobToBuffer(ctx, blobURL, offset, size, ac, m, o, nil)
 	} else { // if the blob's size is 0, there is no need in downloading it
 		return nil
 	}
@@ -316,9 +333,10 @@ func doBatchTransfer(ctx context.Context, o batchTransferOptions) error {
 		}()
 	}
 
-	curChunkSize := o.chunkSize
 	// Add each chunk's operation to the channel.
 	for chunkNum := uint16(0); chunkNum < numChunks; chunkNum++ {
+		curChunkSize := o.chunkSize
+
 		if chunkNum == numChunks-1 { // Last chunk
 			curChunkSize = o.transferSize - (int64(chunkNum) * o.chunkSize) // Remove size of all transferred chunks from total
 		}

@@ -991,7 +991,7 @@ func ExampleUploadFileToBlockBlobAndDownloadItBack() {
 	defer destFile.Close()
 
 	// Perform download
-	err = azblob.DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, azblob.BlobAccessConditions{}, destFile,
+	err = azblob.DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, destFile,
 		azblob.DownloadFromBlobOptions{
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
