@@ -4212,7 +4212,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNonZero(c *ch
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	_, err = blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
-		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfAppendPositionEqual: int32(len(blockBlobDefaultData))}})
+		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfAppendPositionEqual: int64(len(blockBlobDefaultData))}})
 	c.Assert(err, chk.IsNil)
 
 	validateBlockAppended(c, blobURL, len(blockBlobDefaultData)*2)
@@ -4249,7 +4249,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeTrue(c *chk.C) {
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
-		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfMaxSizeLessThanOrEqual: int32(len(blockBlobDefaultData) + 1)}})
+		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) + 1)}})
 	c.Assert(err, chk.IsNil)
 
 	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
@@ -4262,7 +4262,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeFalse(c *chk.C) {
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
-		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfMaxSizeLessThanOrEqual: int32(len(blockBlobDefaultData) - 1)}})
+		azblob.BlobAccessConditions{AppendBlobAccessConditions: azblob.AppendBlobAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) - 1)}})
 	validateStorageError(c, err, azblob.ServiceCodeMaxBlobSizeConditionNotMet)
 }
 

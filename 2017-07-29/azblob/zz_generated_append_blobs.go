@@ -46,7 +46,7 @@ func newAppendBlobsClient(url url.URL, p pipeline.Pipeline) appendBlobsClient {
 // operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs without a
 // matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded
 // in the analytics logs when storage analytics logging is enabled.
-func (client appendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
+func (client appendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*AppendBlobsAppendBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -67,7 +67,7 @@ func (client appendBlobsClient) AppendBlock(ctx context.Context, body io.ReadSee
 }
 
 // appendBlockPreparer prepares the AppendBlock request.
-func (client appendBlobsClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int32, appendPosition *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobsClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -83,10 +83,10 @@ func (client appendBlobsClient) appendBlockPreparer(body io.ReadSeeker, contentL
 		req.Header.Set("x-ms-lease-id", *leaseID)
 	}
 	if maxSize != nil {
-		req.Header.Set("x-ms-blob-condition-maxsize", strconv.FormatInt(int64(*maxSize), 10))
+		req.Header.Set("x-ms-blob-condition-maxsize", strconv.FormatInt(*maxSize, 10))
 	}
 	if appendPosition != nil {
-		req.Header.Set("x-ms-blob-condition-appendpos", strconv.FormatInt(int64(*appendPosition), 10))
+		req.Header.Set("x-ms-blob-condition-appendpos", strconv.FormatInt(*appendPosition, 10))
 	}
 	if ifModifiedSince != nil {
 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))

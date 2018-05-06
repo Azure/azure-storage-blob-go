@@ -72,25 +72,25 @@ type AppendBlobAccessConditions struct {
 	// IfAppendPositionEqual=0 means no 'IfAppendPositionEqual' header specified.
 	// IfAppendPositionEqual>0 means 'IfAppendPositionEqual' header specified with its value
 	// IfAppendPositionEqual==-1 means IfAppendPositionEqual' header specified with a value of 0
-	IfAppendPositionEqual int32
+	IfAppendPositionEqual int64
 
 	// IfMaxSizeLessThanOrEqual ensures that the AppendBlock operation succeeds
 	// only if the append blob's size is less than or equal to a value.
 	// IfMaxSizeLessThanOrEqual=0 means no 'IfMaxSizeLessThanOrEqual' header specified.
 	// IfMaxSizeLessThanOrEqual>0 means 'IfMaxSizeLessThanOrEqual' header specified with its value
 	// IfMaxSizeLessThanOrEqual==-1 means 'IfMaxSizeLessThanOrEqual' header specified with a value of 0
-	IfMaxSizeLessThanOrEqual int32
+	IfMaxSizeLessThanOrEqual int64
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac AppendBlobAccessConditions) pointers() (iape *int32, imsltoe *int32) {
+func (ac AppendBlobAccessConditions) pointers() (iape *int64, imsltoe *int64) {
 	if ac.IfAppendPositionEqual < -1 {
 		panic("IfAppendPositionEqual can't be less than -1")
 	}
 	if ac.IfMaxSizeLessThanOrEqual < -1 {
 		panic("IfMaxSizeLessThanOrEqual can't be less than -1")
 	}
-	var zero int32 // defaults to 0
+	var zero int64 // defaults to 0
 	switch ac.IfAppendPositionEqual {
 	case -1:
 		iape = &zero
