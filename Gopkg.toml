@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/Azure/azure-pipeline-go"
-  version = "0.1.5"
+  version = "0.1.6"
 
 [[constraint]]
   branch = "v1"
