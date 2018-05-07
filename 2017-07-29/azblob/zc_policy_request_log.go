@@ -82,12 +82,12 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 				}
 				fmt.Fprintf(b, "==> REQUEST/RESPONSE (Try=%d/%v%s, OpTime=%v) -- ", try, tryDuration, slow, opDuration)
 				if err != nil { // This HTTP request did not get a response from the service
-					fmt.Fprintf(b, "REQUEST ERROR\n")
+					fmt.Fprint(b, "REQUEST ERROR\n")
 				} else {
 					if logLevel == pipeline.LogError {
-						fmt.Fprintf(b, "RESPONSE STATUS CODE ERROR\n")
+						fmt.Fprint(b, "RESPONSE STATUS CODE ERROR\n")
 					} else {
-						fmt.Fprintf(b, "RESPONSE SUCCESSFULLY RECEIVED\n")
+						fmt.Fprint(b, "RESPONSE SUCCESSFULLY RECEIVED\n")
 					}
 				}
 

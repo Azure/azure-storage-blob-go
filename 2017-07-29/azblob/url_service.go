@@ -9,50 +9,12 @@ import (
 )
 
 const (
-	// RootContainerName is the special Azure Storage name used to identify a storage account's root container.
-	RootContainerName = "$root"
+	// ContainerNameRoot is the special Azure Storage name used to identify a storage account's root container.
+	ContainerNameRoot = "$root"
+
+	// ContainerNameLogs is the special Azure Storage name used to identify a storage account's logs container.
+	ContainerNameLogs = "$logs"
 )
-
-// PipelineOptions is used to configure a request policy pipeline's retry policy and logging.
-type PipelineOptions struct {
-	// Log configures the pipeline's logging infrastructure indicating what information is logged and where.
-	Log pipeline.LogOptions
-
-	// Retry configures the built-in retry policy behavior.
-	Retry RetryOptions
-
-	// RequestLog configures the built-in request logging policy.
-	RequestLog RequestLogOptions
-
-	// Telemetry configures the built-in telemetry policy behavior.
-	Telemetry TelemetryOptions
-}
-
-// NewPipeline creates a Pipeline using the specified credentials and options.
-func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
-	if c == nil {
-		panic("c can't be nil")
-	}
-
-	// Closest to API goes first; closest to the wire goes last
-	f := []pipeline.Factory{
-		NewTelemetryPolicyFactory(o.Telemetry),
-		NewUniqueRequestIDPolicyFactory(),
-		NewRetryPolicyFactory(o.Retry),
-	}
-
-	if _, ok := c.(*anonymousCredentialPolicyFactory); !ok {
-		// For AnonymousCredential, we optimize out the policy factory since it doesn't do anything
-		// NOTE: The credential's policy factory must appear close to the wire so it can sign any
-		// changes made by other factories (like UniqueRequestIDPolicyFactory)
-		f = append(f, c)
-	}
-	f = append(f,
-		pipeline.MethodFactoryMarker(), // indicates at what stage in the pipeline the method factory is invoked
-		NewRequestLogPolicyFactory(o.RequestLog))
-
-	return pipeline.NewPipeline(f, pipeline.Options{HTTPSender: nil, Log: o.Log})
-}
 
 // A ServiceURL represents a URL to the Azure Storage Blob service allowing you to manipulate blob containers.
 type ServiceURL struct {
@@ -94,15 +56,6 @@ func (s ServiceURL) NewContainerURL(containerName string) ContainerURL {
 	return NewContainerURL(containerURL, s.client.Pipeline())
 }
 
-// NewRootContainerURL creates a new ContainerURL object by concatenating $root (RootContainerName)
-// to the end of ServiceURL's URL. The new ContainerURL uses the same request policy pipeline as the
-// ServiceURL. To change the pipeline, create the ContainerURL and then call its WithPipeline method
-// passing in the desired pipeline object. Or, call NewContainerURL instead of calling the NewContainerURL method.
-func (s ServiceURL) NewRootContainerURL() ContainerURL {
-	containerURL := appendToURLPath(s.URL(), RootContainerName)
-	return NewContainerURL(containerURL, s.client.Pipeline())
-}
-
 // appendToURLPath appends a string to the end of a URL's path (prefixing the string with a '/' if required)
 func appendToURLPath(u url.URL, name string) url.URL {
 	// e.g. "https://ms.com/a/b/?k1=v1&k2=v2#f"
@@ -123,25 +76,25 @@ func appendToURLPath(u url.URL, name string) url.URL {
 	return u
 }
 
-// ListContainers returns a single segment of containers starting from the specified Marker. Use an empty
+// ListContainersFlatSegment returns a single segment of containers starting from the specified Marker. Use an empty
 // Marker to start enumeration from the beginning. Container names are returned in lexicographic order.
-// After getting a segment, process it, and then call ListContainers again (passing the the previously-returned
-// Marker) to get the next segment. For more information, see
+// After getting a segment, process it, and then call ListContainersFlatSegment again (passing the the
+// previously-returned Marker) to get the next segment. For more information, see
 // https://docs.microsoft.com/rest/api/storageservices/list-containers2.
-func (s ServiceURL) ListContainers(ctx context.Context, marker Marker, o ListContainersOptions) (*ListContainersResponse, error) {
+func (s ServiceURL) ListContainersSegment(ctx context.Context, marker Marker, o ListContainersSegmentOptions) (*ListContainersResponse, error) {
 	prefix, include, maxResults := o.pointers()
-	return s.client.ListContainers(ctx, prefix, marker.val, maxResults, include, nil, nil)
+	return s.client.ListContainersSegment(ctx, prefix, marker.val, maxResults, include, nil, nil)
 }
 
 // ListContainersOptions defines options available when calling ListContainers.
-type ListContainersOptions struct {
+type ListContainersSegmentOptions struct {
 	Detail     ListContainersDetail // No IncludeType header is produced if ""
-	Prefix     string               // No Prefix header is produced if ""
-	MaxResults int32                // 0 means unspecified
+	Prefix     string                   // No Prefix header is produced if ""
+	MaxResults int32                    // 0 means unspecified
 	// TODO: update swagger to generate this type?
 }
 
-func (o *ListContainersOptions) pointers() (prefix *string, include ListContainersIncludeType, maxResults *int32) {
+func (o *ListContainersSegmentOptions) pointers() (prefix *string, include ListContainersIncludeType, maxResults *int32) {
 	if o.Prefix != "" {
 		prefix = &o.Prefix
 	}
@@ -155,7 +108,7 @@ func (o *ListContainersOptions) pointers() (prefix *string, include ListContaine
 	return
 }
 
-// ListContainersDetail indicates what additional information the service should return with each container.
+// ListContainersFlatDetail indicates what additional information the service should return with each container.
 type ListContainersDetail struct {
 	// Tells the service whether to return metadata for each container.
 	Metadata bool
@@ -174,23 +127,14 @@ func (d *ListContainersDetail) string() string {
 	return string(ListContainersIncludeNone)
 }
 
-// GetProperties operation gets the properties of a storage account’s Blob service, including properties
-// for Storage Analytics and CORS (Cross-Origin Resource Sharing) rules. For more information see
-// https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-service-properties.
-func (s ServiceURL) GetProperties(ctx context.Context) (*StorageServiceProperties, error) {
-	return s.client.GetProperties(ctx, nil, nil)
+func (bsu ServiceURL) GetProperties(ctx context.Context) (*StorageServiceProperties, error) {
+	return bsu.client.GetProperties(ctx, nil, nil)
 }
 
-// SetProperties operation sets properties for a storage account’s Blob service endpoint,
-// including properties for Storage Analytics and CORS (Cross-Origin Resource Sharing) rules. For more
-// information see https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-service-properties.
-func (s ServiceURL) SetProperties(ctx context.Context, properties StorageServiceProperties) (*ServiceSetPropertiesResponse, error) {
-	return s.client.SetProperties(ctx, properties, nil, nil)
+func (bsu ServiceURL) SetProperties(ctx context.Context, properties StorageServiceProperties) (*ServiceSetPropertiesResponse, error) {
+	return bsu.client.SetProperties(ctx, properties, nil, nil)
 }
 
-// GetStats operation retrieves statistics related to replication for the Blob service. It is only available on the secondary location
-// endpoint when read-access geo-redundant replication is enabled for the storage account.
-// https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-service-stats
-func (s ServiceURL) GetStats(ctx context.Context) (*StorageServiceStats, error) {
-	return s.client.GetStats(ctx, nil, nil)
+func (bsu ServiceURL) GetStatistics(ctx context.Context) (*StorageServiceStats, error) {
+	return bsu.client.GetStatistics(ctx, nil, nil)
 }

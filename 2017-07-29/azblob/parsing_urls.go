@@ -3,22 +3,22 @@ package azblob
 import (
 	"net/url"
 	"strings"
-	"time"
 )
 
 const (
-	snapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
+	snapshot           = "snapshot"
+	SnapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
 // A BlobURLParts object represents the components that make up an Azure Storage Container/Blob URL. You parse an
 // existing URL into its parts by calling NewBlobURLParts(). You construct a URL from parts by calling URL().
 // NOTE: Changing any SAS-related field requires computing a new SAS signature.
 type BlobURLParts struct {
-	Scheme         string    // Ex: "https://"
-	Host           string    // Ex: "account.blob.core.windows.net"
-	ContainerName  string    // "" if no container
-	BlobName       string    // "" if no blob
-	Snapshot       time.Time // IsZero is true if not a snapshot
+	Scheme         string // Ex: "https://"
+	Host           string // Ex: "account.blob.core.windows.net"
+	ContainerName  string // "" if no container
+	BlobName       string // "" if no blob
+	Snapshot       string // "" if not a snapshot
 	SAS            SASQueryParameters
 	UnparsedParams string
 }
@@ -51,13 +51,13 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 	// Convert the query parameters to a case-sensitive map & trim whitespace
 	paramsMap := u.Query()
 
-	up.Snapshot = time.Time{} // Assume no snapshot
-	if snapshotStr, ok := caseInsensitiveValues(paramsMap).Get("snapshot"); ok {
-		up.Snapshot, _ = time.Parse(snapshotTimeFormat, snapshotStr[0])
+	up.Snapshot = "" // Assume no snapshot
+	if snapshotStr, ok := caseInsensitiveValues(paramsMap).Get(snapshot); ok {
+		up.Snapshot = snapshotStr[0]
 		// If we recognized the query parameter, remove it from the map
-		delete(paramsMap, "snapshot")
+		delete(paramsMap, snapshot)
 	}
-	up.SAS = NewSASQueryParameters(paramsMap, true)
+	up.SAS = newSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
 	return up
 }
@@ -88,11 +88,11 @@ func (up BlobURLParts) URL() url.URL {
 	rawQuery := up.UnparsedParams
 
 	// Concatenate blob snapshot query parameter (if it exists)
-	if !up.Snapshot.IsZero() {
+	if up.Snapshot != "" {
 		if len(rawQuery) > 0 {
 			rawQuery += "&"
 		}
-		rawQuery += "snapshot=" + up.Snapshot.Format(snapshotTimeFormat)
+		rawQuery += snapshot + "=" + up.Snapshot
 	}
 	sas := up.SAS.Encode()
 	if sas != "" {

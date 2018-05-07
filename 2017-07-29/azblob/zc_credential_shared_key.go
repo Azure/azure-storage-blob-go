@@ -39,38 +39,28 @@ func (f SharedKeyCredential) AccountName() string {
 }
 
 // New creates a credential policy object.
-func (f *SharedKeyCredential) New(next pipeline.Policy, config *pipeline.PolicyOptions) pipeline.Policy {
-	return sharedKeyCredentialPolicy{factory: f, next: next, config: config}
+func (f *SharedKeyCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
+	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
+		// Add a x-ms-date header if it doesn't already exist
+		if d := request.Header.Get(headerXmsDate); d == "" {
+			request.Header[headerXmsDate] = []string{time.Now().UTC().Format(http.TimeFormat)}
+		}
+		stringToSign := f.buildStringToSign(request)
+		signature := f.ComputeHMACSHA256(stringToSign)
+		authHeader := strings.Join([]string{"SharedKey ", f.accountName, ":", signature}, "")
+		request.Header[headerAuthorization] = []string{authHeader}
+
+		response, err := next.Do(ctx, request)
+		if err != nil && response != nil && response.Response() != nil && response.Response().StatusCode == http.StatusForbidden {
+			// Service failed to authenticate request, log it
+			po.Log(pipeline.LogError, "===== HTTP Forbidden status, String-to-Sign:\n"+stringToSign+"\n===============================\n")
+		}
+		return response, err
+	})
 }
 
 // credentialMarker is a package-internal method that exists just to satisfy the Credential interface.
 func (*SharedKeyCredential) credentialMarker() {}
-
-// sharedKeyCredentialPolicy is the credential's policy object.
-type sharedKeyCredentialPolicy struct {
-	factory *SharedKeyCredential
-	next    pipeline.Policy
-	config  *pipeline.PolicyOptions
-}
-
-// Do implements the credential's policy interface.
-func (p sharedKeyCredentialPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
-	// Add a x-ms-date header if it doesn't already exist
-	if d := request.Header.Get(headerXmsDate); d == "" {
-		request.Header[headerXmsDate] = []string{time.Now().UTC().Format(http.TimeFormat)}
-	}
-	stringToSign := p.factory.buildStringToSign(request)
-	signature := p.factory.ComputeHMACSHA256(stringToSign)
-	authHeader := strings.Join([]string{"SharedKey ", p.factory.accountName, ":", signature}, "")
-	request.Header[headerAuthorization] = []string{authHeader}
-
-	response, err := p.next.Do(ctx, request)
-	if err != nil && response != nil && response.Response() != nil && response.Response().StatusCode == http.StatusForbidden {
-		// Service failed to authenticate request, log it
-		p.config.Log(pipeline.LogError, "===== HTTP Forbidden status, String-to-Sign:\n"+stringToSign+"\n===============================\n")
-	}
-	return response, err
-}
 
 // Constants ensuring that header names are correctly spelled and consistently cased.
 const (

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-storage-blob-go/2017-07-29/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
+	"bytes"
 )
 
 type ContainerURLSuite struct{}
@@ -33,7 +34,7 @@ func (s *ContainerURLSuite) TestCreateDelete(c *chk.C) {
 	c.Assert(cResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(cResp.Version(), chk.Not(chk.Equals), "")
 
-	containers, err := sa.ListContainers(context.Background(), azblob.Marker{}, azblob.ListContainersOptions{Prefix: containerPrefix})
+	containers, err := sa.ListContainersSegment(context.Background(), azblob.Marker{}, azblob.ListContainersSegmentOptions{Prefix: containerPrefix})
 	c.Assert(err, chk.IsNil)
 	c.Assert(containers.Containers, chk.HasLen, 1)
 	c.Assert(containers.Containers[0].Name, chk.Equals, containerName)
@@ -45,7 +46,7 @@ func (s *ContainerURLSuite) TestCreateDelete(c *chk.C) {
 	c.Assert(dResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
 
-	containers, err = sa.ListContainers(context.Background(), azblob.Marker{}, azblob.ListContainersOptions{Prefix: containerPrefix})
+	containers, err = sa.ListContainersSegment(context.Background(), azblob.Marker{}, azblob.ListContainersSegmentOptions{Prefix: containerPrefix})
 	c.Assert(err, chk.IsNil)
 	c.Assert(containers.Containers, chk.HasLen, 0)
 }
@@ -76,7 +77,7 @@ func (s *ContainerURLSuite) TestGetSetPermissions(c *chk.C) {
 			Permission: "rw",
 		},
 	}}
-	sResp, err := container.SetPermissions(context.Background(), azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
+	sResp, err := container.SetAccessPolicy(context.Background(), azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(sResp.Response().StatusCode, chk.Equals, 200)
 	c.Assert(sResp.Date().IsZero(), chk.Equals, false)
@@ -85,7 +86,7 @@ func (s *ContainerURLSuite) TestGetSetPermissions(c *chk.C) {
 	c.Assert(sResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(sResp.Version(), chk.Not(chk.Equals), "")
 
-	gResp, err := container.GetPermissions(context.Background(), azblob.LeaseAccessConditions{})
+	gResp, err := container.GetAccessPolicy(context.Background(), azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gResp.Response().StatusCode, chk.Equals, 200)
 	c.Assert(gResp.BlobPublicAccess(), chk.Equals, azblob.PublicAccessNone)
@@ -117,7 +118,7 @@ func (s *ContainerURLSuite) TestGetSetMetadata(c *chk.C) {
 	c.Assert(sResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(sResp.Version(), chk.Not(chk.Equals), "")
 
-	gResp, err := container.GetPropertiesAndMetadata(context.Background(), azblob.LeaseAccessConditions{})
+	gResp, err := container.GetProperties(context.Background(), azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gResp.Response().StatusCode, chk.Equals, 200)
 	c.Assert(gResp.Date().IsZero(), chk.Equals, false)
@@ -134,7 +135,7 @@ func (s *ContainerURLSuite) TestListBlobs(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	blobs, err := container.ListBlobs(context.Background(), azblob.Marker{}, azblob.ListBlobsOptions{})
+	blobs, err := container.ListBlobsFlatSegment(context.Background(), azblob.Marker{}, azblob.ListBlobsSegmentOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobs.Response().StatusCode, chk.Equals, 200)
 	c.Assert(blobs.ContentType(), chk.Not(chk.Equals), "")
@@ -151,15 +152,14 @@ func (s *ContainerURLSuite) TestListBlobs(c *chk.C) {
 
 	blob := container.NewBlockBlobURL(generateBlobName())
 
-	_, err = blob.PutBlob(context.Background(), nil, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	_, err = blob.Upload(context.Background(), bytes.NewReader(nil), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	blobs, err = container.ListBlobs(context.Background(), azblob.Marker{}, azblob.ListBlobsOptions{})
+	blobs, err = container.ListBlobsFlatSegment(context.Background(), azblob.Marker{}, azblob.ListBlobsSegmentOptions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(blobs.Blobs.BlobPrefix, chk.HasLen, 0)
 	c.Assert(blobs.Blobs.Blob, chk.HasLen, 1)
 	c.Assert(blobs.Blobs.Blob[0].Name, chk.NotNil)
-	c.Assert(blobs.Blobs.Blob[0].Snapshot.IsZero(), chk.Equals, true)
+	c.Assert(blobs.Blobs.Blob[0].Snapshot =="", chk.Equals, true)
 	c.Assert(blobs.Blobs.Blob[0].Metadata, chk.HasLen, 0)
 	c.Assert(blobs.Blobs.Blob[0].Properties, chk.NotNil)
 	c.Assert(blobs.Blobs.Blob[0].Properties.LastModified, chk.NotNil)
@@ -191,28 +191,25 @@ func (s *ContainerURLSuite) TestLeaseAcquireRelease(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	resp, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
-	leaseID := resp.LeaseID()
+	acq, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
+	leaseID := acq.LeaseID()
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
-	c.Assert(resp.Date().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
-	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.LeaseID(), chk.Equals, leaseID)
-	c.Assert(resp.LeaseTime(), chk.Equals, int32(-1))
-	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(acq.StatusCode(), chk.Equals, 201)
+	c.Assert(acq.Date().IsZero(), chk.Equals, false)
+	c.Assert(acq.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+	c.Assert(acq.LastModified().IsZero(), chk.Equals, false)
+	c.Assert(acq.LeaseID(), chk.Equals, leaseID)
+	c.Assert(acq.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(acq.Version(), chk.Not(chk.Equals), "")
 
-	resp, err = container.ReleaseLease(context.Background(), leaseID, azblob.HTTPAccessConditions{})
+	rel, err := container.ReleaseLease(context.Background(), leaseID, azblob.HTTPAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
-	c.Assert(resp.Date().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
-	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.LeaseID(), chk.Equals, "")
-	c.Assert(resp.LeaseTime(), chk.Equals, int32(-1))
-	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(rel.StatusCode(), chk.Equals, 200)
+	c.Assert(rel.Date().IsZero(), chk.Equals, false)
+	c.Assert(rel.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+	c.Assert(rel.LastModified().IsZero(), chk.Equals, false)
+	c.Assert(rel.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(rel.Version(), chk.Not(chk.Equals), "")
 }
 
 func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
@@ -220,46 +217,42 @@ func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	resp, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
-	leaseID := resp.LeaseID()
+	al, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
+	leaseID := al.LeaseID()
 	c.Assert(err, chk.IsNil)
 
 	newID := newUUID().String()
-	resp, err = container.ChangeLease(context.Background(), leaseID, newID, azblob.HTTPAccessConditions{})
-	newID = resp.LeaseID()
+	cl, err := container.ChangeLease(context.Background(), leaseID, newID, azblob.HTTPAccessConditions{})
+	newID = cl.LeaseID()
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
-	c.Assert(resp.Date().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
-	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.LeaseID(), chk.Equals, newID)
-	c.Assert(resp.LeaseTime(), chk.Equals, int32(-1))
-	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(cl.StatusCode(), chk.Equals, 200)
+	c.Assert(cl.Date().IsZero(), chk.Equals, false)
+	c.Assert(cl.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+	c.Assert(cl.LastModified().IsZero(), chk.Equals, false)
+	c.Assert(cl.LeaseID(), chk.Equals, newID)
+	c.Assert(cl.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(cl.Version(), chk.Not(chk.Equals), "")
 
-	resp, err = container.RenewLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	rl, err := container.RenewLease(context.Background(), newID, azblob.HTTPAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
-	c.Assert(resp.Date().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
-	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.LeaseID(), chk.Equals, newID)
-	c.Assert(resp.LeaseTime(), chk.Equals, int32(-1))
-	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(rl.StatusCode(), chk.Equals, 200)
+	c.Assert(rl.Date().IsZero(), chk.Equals, false)
+	c.Assert(rl.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+	c.Assert(rl.LastModified().IsZero(), chk.Equals, false)
+	c.Assert(rl.LeaseID(), chk.Equals, newID)
+	c.Assert(rl.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(rl.Version(), chk.Not(chk.Equals), "")
 
-	resp, err = container.BreakLease(context.Background(), newID, 5, azblob.HTTPAccessConditions{})
+	bl, err := container.BreakLease(context.Background(), 5, azblob.HTTPAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
-	c.Assert(resp.Date().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
-	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.LeaseID(), chk.Equals, "")
-	c.Assert(resp.LeaseTime(), chk.Not(chk.Equals), int32(-1))
-	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(bl.StatusCode(), chk.Equals, 202)
+	c.Assert(bl.Date().IsZero(), chk.Equals, false)
+	c.Assert(bl.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+	c.Assert(bl.LastModified().IsZero(), chk.Equals, false)
+	c.Assert(bl.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(bl.Version(), chk.Not(chk.Equals), "")
 
-	resp, err = container.ReleaseLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	_, err = container.ReleaseLease(context.Background(), newID, azblob.HTTPAccessConditions{})
 	c.Assert(err, chk.IsNil)
 }
 
@@ -281,7 +274,7 @@ func (s *ContainerURLSuite) TestListBlobsPaged(c *chk.C) {
 	iterations := numBlobs / maxResultsPerPage
 
 	for i := 0; i < iterations; i++ {
-		resp, err := container.ListBlobs(context.Background(), marker, azblob.ListBlobsOptions{MaxResults: maxResultsPerPage})
+		resp, err := container.ListBlobsFlatSegment(context.Background(), marker, azblob.ListBlobsSegmentOptions{MaxResults: maxResultsPerPage})
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.Blobs.Blob, chk.HasLen, maxResultsPerPage)
 
@@ -296,7 +289,7 @@ func (s *ContainerURLSuite) TestSetMetadataCondition(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 	time.Sleep(time.Second * 3)
-	currTime := time.Now()
+	currTime := time.Now().UTC()
 	rResp, err := container.SetMetadata(context.Background(), azblob.Metadata{"foo": "bar"},
 		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: currTime}})
 	c.Assert(err, chk.NotNil)
@@ -304,7 +297,7 @@ func (s *ContainerURLSuite) TestSetMetadataCondition(c *chk.C) {
 	se, ok := err.(azblob.StorageError)
 	c.Assert(ok, chk.Equals, true)
 	c.Assert(se.Response().StatusCode, chk.Equals, http.StatusPreconditionFailed)
-	gResp, err := container.GetPropertiesAndMetadata(context.Background(), azblob.LeaseAccessConditions{})
+	gResp, err := container.GetProperties(context.Background(), azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	md := gResp.NewMetadata()
 	c.Assert(md, chk.HasLen, 0)
@@ -328,7 +321,7 @@ func (s *ContainerURLSuite) TestListBlobsWithPrefix(c *chk.C) {
 		createBlockBlobWithPrefix(c, container, prefix)
 	}
 
-	blobs, err := container.ListBlobs(context.Background(), azblob.Marker{}, azblob.ListBlobsOptions{Delimiter: "/"})
+	blobs, err := container.ListBlobsHierarchySegment(context.Background(), azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobs.Blobs.BlobPrefix, chk.HasLen, 3)
 	c.Assert(blobs.Blobs.Blob, chk.HasLen, 0)

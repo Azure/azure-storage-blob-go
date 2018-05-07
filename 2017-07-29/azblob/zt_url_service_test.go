@@ -44,7 +44,7 @@ func (s *StorageAccountSuite) TestGetStatus(c *chk.C) {
 
 func (s *StorageAccountSuite) TestListContainers(c *chk.C) {
 	sa := getBSU()
-	resp, err := sa.ListContainers(context.Background(), azblob.Marker{}, azblob.ListContainersOptions{Prefix: containerPrefix})
+	resp, err := sa.ListContainersSegment(context.Background(), azblob.Marker{}, azblob.ListContainersSegmentOptions{Prefix: containerPrefix})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
@@ -62,7 +62,7 @@ func (s *StorageAccountSuite) TestListContainers(c *chk.C) {
 	_, err = container.SetMetadata(context.Background(), md, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err = sa.ListContainers(context.Background(), azblob.Marker{}, azblob.ListContainersOptions{Detail: azblob.ListContainersDetail{Metadata: true}, Prefix: containerPrefix})
+	resp, err = sa.ListContainersSegment(context.Background(), azblob.Marker{}, azblob.ListContainersSegmentOptions{Detail: azblob.ListContainersDetail{Metadata: true}, Prefix: containerPrefix})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Containers, chk.HasLen, 1)
 	c.Assert(resp.Containers[0].Name, chk.NotNil)
@@ -98,7 +98,7 @@ func (s *StorageAccountSuite) TestListContainersPaged(c *chk.C) {
 	iterations := numContainers / maxResultsPerPage
 
 	for i := 0; i < iterations; i++ {
-		resp, err := sa.ListContainers(context.Background(), marker, azblob.ListContainersOptions{MaxResults: maxResultsPerPage, Prefix: containerPrefix + pagedContainersPrefix})
+		resp, err := sa.ListContainersSegment(context.Background(), marker, azblob.ListContainersSegmentOptions{MaxResults: maxResultsPerPage, Prefix: containerPrefix + pagedContainersPrefix})
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.Containers, chk.HasLen, maxResultsPerPage)
 

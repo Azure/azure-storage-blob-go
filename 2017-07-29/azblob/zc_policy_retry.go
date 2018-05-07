@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"io/ioutil"
+	"io"
 )
 
 // RetryPolicy tells the pipeline what kind of retry policy to use. See the RetryPolicy* constants.
@@ -40,8 +42,11 @@ type RetryOptions struct {
 	TryTimeout time.Duration
 
 	// RetryDelay specifies the amount of delay to use before retrying an operation (0=default).
-	// The delay increases (exponentially or linearly) with each retry up to a maximum specified by
-	// MaxRetryDelay. If you specify 0, then you must also specify 0 for MaxRetryDelay.
+	// When RetryPolicy is specified as RetryPolicyExponential, the delay increases exponentially
+	// with each retry up to a maximum specified by MaxRetryDelay.
+	// If you specify 0, then you must also specify 0 for MaxRetryDelay.
+	// If you specify RetryDelay, then you must also specify MaxRetryDelay, and MaxRetryDelay should be
+	// equal to or greater than RetryDelay.
 	RetryDelay time.Duration
 
 	// MaxRetryDelay specifies the maximum delay allowed before retrying an operation (0=default).
@@ -52,7 +57,12 @@ type RetryOptions struct {
 	// If RetryReadsFromSecondaryHost is "" (the default) then operations are not retried against another host.
 	// NOTE: Before setting this field, make sure you understand the issues around reading stale & potentially-inconsistent
 	// data at this webpage: https://docs.microsoft.com/en-us/azure/storage/common/storage-designing-ha-apps-with-ragrs
-	RetryReadsFromSecondaryHost string
+	RetryReadsFromSecondaryHost string	// Comment this our for non-Blob SDKs
+}
+
+func (o RetryOptions) retryReadsFromSecondaryHost() string {
+	return o.RetryReadsFromSecondaryHost	// This is for the Blob SDK only
+	//return "" // This is for non-blob SDKs
 }
 
 func (o RetryOptions) defaults() RetryOptions {
@@ -117,7 +127,7 @@ func (o RetryOptions) calcDelay(try int32) time.Duration { // try is >=1; never 
 	}
 
 	// Introduce some jitter:  [0.0, 1.0) / 2 = [0.0, 0.5) + 0.8 = [0.8, 1.3)
-	delay *= time.Duration(rand.Float32()/2 + 0.8) // NOTE: We want math/rand; not crypto/rand
+	delay = time.Duration(delay.Seconds() * (rand.Float64()/2 + 0.8) * float64(time.Second)) // NOTE: We want math/rand; not crypto/rand
 	if delay > o.MaxRetryDelay {
 		delay = o.MaxRetryDelay
 	}
@@ -133,10 +143,10 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 			primaryTry := int32(0) // This indicates how many tries we've attempted against the primary DC
 
 			// We only consider retrying against a secondary if we have a read request (GET/HEAD) AND this policy has a Secondary URL it can use
-			considerSecondary := (request.Method == http.MethodGet || request.Method == http.MethodHead) && o.RetryReadsFromSecondaryHost != ""
+			considerSecondary := (request.Method == http.MethodGet || request.Method == http.MethodHead) && o.retryReadsFromSecondaryHost() != ""
 
 			// Exponential retry algorithm: ((2 ^ attempt) - 1) * delay * random(0.8, 1.2)
-			// When to retry: connection failure or an HTTP status code of 500 or greater, except 501 and 505
+			// When to retry: connection failure or temporary/timeout. NOTE: StorageError considers HTTP 500/503 as temporary & is therefore retryable
 			// If using a secondary:
 			//    Even tries go against primary; odd tries go against the secondary
 			//    For a primary wait ((2 ^ primaryTries - 1) * delay * random(0.8, 1.2)
@@ -161,14 +171,15 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 
 				// Clone the original request to ensure that each try starts with the original (unmutated) request.
 				requestCopy := request.Copy()
-				if try > 1 {
-					// For a retry, seek to the beginning of the Body stream.
-					if err = requestCopy.RewindBody(); err != nil {
-						panic(err)
-					}
+
+				// For each try, seek to the beginning of the Body stream. We do this even for the 1st try because
+				// the stream may not be at offset 0 when we first get it and we want the same behavior for the
+				// 1st try as for additional tries.
+				if err = requestCopy.RewindBody(); err != nil {
+					panic(err)
 				}
 				if !tryingPrimary {
-					requestCopy.Request.URL.Host = o.RetryReadsFromSecondaryHost
+					requestCopy.Request.URL.Host = o.retryReadsFromSecondaryHost()
 				}
 
 				// Set the server-side timeout query parameter "timeout=[seconds]"
@@ -211,7 +222,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 					action = "Retry: Secondary URL returned 404"
 				case err != nil:
 					// NOTE: Protocol Responder returns non-nil if REST API returns invalid status code for the invoked operation
-					if nerr, ok := err.(net.Error); ok && (nerr.Temporary() || nerr.Timeout()) {
+					if netErr, ok := err.(net.Error); ok && (netErr.Temporary() || netErr.Timeout()) {
 						action = "Retry: net.Error and Temporary() or Timeout()"
 					} else {
 						action = "NoRetry: unrecognized error"
@@ -233,6 +244,12 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 						_ = tryCancel // So, for now, we don't call cancel: cancel()
 					}
 					break // Don't retry
+				}
+				if response != nil && response.Response() != nil && response.Response().Body != nil {
+					// If we're going to retry and we got a previous response, then flush its body to avoid leaking its TCP connection
+					body := response.Response().Body
+					io.Copy(ioutil.Discard, body)
+					body.Close()
 				}
 				// If retrying, cancel the current per-try timeout context
 				tryCancel()
@@ -262,7 +279,7 @@ func (r *deadlineExceededReadCloser) Read(p []byte) (int, error) {
 }
 func (r *deadlineExceededReadCloser) Seek(offset int64, whence int) (int64, error) {
 	// For an HTTP request, the ReadCloser MUST also implement seek
-	// For an HTTP Repsonse, Seek MUST not be called (or this will panic)
+	// For an HTTP response, Seek MUST not be called (or this will panic)
 	o, err := r.r.(io.Seeker).Seek(offset, whence)
 	return o, improveDeadlineExceeded(err)
 }

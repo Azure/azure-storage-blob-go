@@ -22,7 +22,7 @@ func (b *BlockBlobURLSuite) TestPutGetBlocks(c *chk.C) {
 
 	blockID := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0)))
 
-	putResp, err := blob.PutBlock(context.Background(), blockID, getReaderToRandomBytes(1024), azblob.LeaseAccessConditions{})
+	putResp, err := blob.StageBlock(context.Background(), blockID, getReaderToRandomBytes(1024), azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.ContentMD5(), chk.Not(chk.Equals), "")
@@ -43,7 +43,7 @@ func (b *BlockBlobURLSuite) TestPutGetBlocks(c *chk.C) {
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 1)
 
-	listResp, err := blob.PutBlockList(context.Background(), []string{blockID}, nil, azblob.BlobHTTPHeaders{}, azblob.BlobAccessConditions{})
+	listResp, err := blob.CommitBlockList(context.Background(), []string{blockID}, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.LastModified().IsZero(), chk.Equals, false)
