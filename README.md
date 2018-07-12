@@ -1,5 +1,5 @@
 # Azure Storage Blob SDK for Go
-[![GoDoc Widget]][GoDoc]
+[![GoDoc Widget]][GoDoc] [![Build Status][Travis Widget]][Travis]
 
 The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
@@ -45,3 +45,5 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 [GoDoc]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob
 [GoDoc Widget]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob?status.svg
+[Travis Widget]: https://travis-ci.org/Azure/azure-storage-blob-go.svg?branch=master
+[Travis]: https://travis-ci.org/Azure/azure-storage-blob-go

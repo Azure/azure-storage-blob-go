@@ -1,6 +1,7 @@
-language: go
-
+language: python
+python:
+  - 3.6
+services:
+- docker
 script:
-- go get -u github.com/golang/dep/cmd/dep
-- dep ensure
-- go test ./...
+- make all
