@@ -15,7 +15,7 @@ import (
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
-// CommonResponseHeaders returns the headers common to all blob REST API responses.
+// CommonResponse returns the headers common to all blob REST API responses.
 type CommonResponse interface {
 	// ETag returns the value for header ETag.
 	ETag() ETag
@@ -147,10 +147,9 @@ func UploadFileToBlockBlob(ctx context.Context, file *os.File,
 
 ///////////////////////////////////////////////////////////////////////////////
 
-
 const BlobDefaultDownloadBlockSize = int64(4 * 1024 * 1024) // 4MB
 
-// DownloadFromAzureFileOptions identifies options used by the DownloadAzureFileToBuffer and DownloadAzureFileToFile functions.
+// DownloadFromBlobOptions identifies options used by the DownloadBlobToBuffer and DownloadBlobToFile functions.
 type DownloadFromBlobOptions struct {
 	// BlockSize specifies the block size to use for each parallel download; the default size is BlobDefaultDownloadBlockSize.
 	BlockSize int64
@@ -168,7 +167,7 @@ type DownloadFromBlobOptions struct {
 	RetryReaderOptionsPerBlock RetryReaderOptions
 }
 
-// downloadAzureFileToBuffer downloads an Azure file to a buffer with parallel.
+// downloadBlobToBuffer downloads an Azure blob to a buffer with parallel.
 func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions,
 	initialDownloadResponse *DownloadResponse) error {
@@ -211,11 +210,11 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 
 	err := doBatchTransfer(ctx, batchTransferOptions{
 		operationName: "downloadBlobToBuffer",
-		transferSize:    count,
+		transferSize:  count,
 		chunkSize:     o.BlockSize,
 		parallelism:   o.Parallelism,
 		operation: func(chunkStart int64, count int64) error {
-			dr, err := blobURL.Download(ctx, chunkStart+ offset, count, ac, false)
+			dr, err := blobURL.Download(ctx, chunkStart+offset, count, ac, false)
 			body := dr.Body(o.RetryReaderOptionsPerBlock)
 			if o.Progress != nil {
 				rangeProgress := int64(0)
@@ -241,14 +240,14 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 	return nil
 }
 
-// DownloadAzureFileToBuffer downloads an Azure file to a buffer with parallel.
+// DownloadBlobToBuffer downloads an Azure blob to a buffer with parallel.
 // Offset and count are optional, pass 0 for both to download the entire blob.
 func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	ac BlobAccessConditions, b []byte, o DownloadFromBlobOptions) error {
 	return downloadBlobToBuffer(ctx, blobURL, offset, count, ac, b, o, nil)
 }
 
-// DownloadBlobToFile downloads an Azure file to a local file.
+// DownloadBlobToFile downloads an Azure blob to a local file.
 // The file would be truncated if the size doesn't match.
 // Offset and count are optional, pass 0 for both to download the entire blob.
 func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, count int64,
@@ -262,7 +261,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 	var size int64
 
 	if count == CountToEnd {
-		// Try to get Azure file's size
+		// Try to get Azure blob's size
 		props, err := blobURL.GetProperties(ctx, ac)
 		if err != nil {
 			return err
@@ -272,7 +271,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 		size = count
 	}
 
-	// 3. Compare and try to resize local file's size if it doesn't match Azure file's size.
+	// 3. Compare and try to resize local file's size if it doesn't match Azure blob's size.
 	stat, err := file.Stat()
 	if err != nil {
 		return err
@@ -284,7 +283,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 	}
 
 	if size > 0 {
-		// 4. Set mmap and call DownloadAzureFileToBuffer.
+		// 4. Set mmap and call downloadBlobToBuffer.
 		m, err := newMMF(file, true, 0, int(size))
 		if err != nil {
 			return err
@@ -295,7 +294,6 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 		return nil
 	}
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -416,7 +414,7 @@ func (t *uploadStreamToBlockBlobOptions) end(ctx context.Context) (interface{}, 
 	}
 	// Multiple blocks staged, commit them all now
 	blockID := newUuidBlockID(t.blockIDPrefix)
-	blockIDs := make([]string, t.maxBlockNum + 1)
+	blockIDs := make([]string, t.maxBlockNum+1)
 	for bn := uint32(0); bn <= t.maxBlockNum; bn++ {
 		blockIDs[bn] = blockID.WithBlockNumber(bn).ToBase64()
 	}
