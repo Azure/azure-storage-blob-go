@@ -2,10 +2,11 @@ package azblob_test
 
 import (
 	"context"
-	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
-	chk "gopkg.in/check.v1"
 	"io/ioutil"
 	"os"
+
+	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	chk "gopkg.in/check.v1"
 )
 
 // create a test file
@@ -118,14 +119,14 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 
 	// Perform download
 	err = azblob.DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
-		azblob.BlobAccessConditions{}, destFile,
+		destFile,
 		azblob.DownloadFromBlobOptions{
 			BlockSize:   int64(blockSize),
 			Parallelism: uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
 				c.Assert(bytesTransferred > 0 && bytesTransferred <= int64(fileSize), chk.Equals, true)
-			},})
+			}})
 
 	// Assert download was successful
 	c.Assert(err, chk.Equals, nil)
@@ -133,7 +134,7 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 	// Assert downloaded data is consistent
 	var destBuffer []byte
 	if downloadCount == azblob.CountToEnd {
-		destBuffer = make([]byte, fileSize - downloadOffset)
+		destBuffer = make([]byte, fileSize-downloadOffset)
 	} else {
 		destBuffer = make([]byte, downloadCount)
 	}
@@ -145,11 +146,11 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 		c.Assert(destBuffer, chk.DeepEquals, fileData)
 	} else {
 		if downloadCount == 0 {
-			c.Assert(n, chk.Equals, fileSize - downloadOffset)
+			c.Assert(n, chk.Equals, fileSize-downloadOffset)
 			c.Assert(destBuffer, chk.DeepEquals, fileData[downloadOffset:])
 		} else {
 			c.Assert(n, chk.Equals, downloadCount)
-			c.Assert(destBuffer, chk.DeepEquals, fileData[downloadOffset: downloadOffset + downloadCount])
+			c.Assert(destBuffer, chk.DeepEquals, fileData[downloadOffset:downloadOffset+downloadCount])
 		}
 	}
 }
@@ -237,16 +238,17 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 	// Set up buffer to download the blob to
 	var destBuffer []byte
 	if downloadCount == azblob.CountToEnd {
-		destBuffer = make([]byte, blobSize - downloadOffset)
+		destBuffer = make([]byte, blobSize-downloadOffset)
 	} else {
 		destBuffer = make([]byte, downloadCount)
 	}
 
 	// Download the blob to a buffer
 	err = azblob.DownloadBlobToBuffer(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
-		azblob.BlobAccessConditions{}, destBuffer, azblob.DownloadFromBlobOptions{
-			BlockSize:   int64(blockSize),
-			Parallelism: uint16(parallelism),
+		destBuffer, azblob.DownloadFromBlobOptions{
+			AccessConditions: azblob.BlobAccessConditions{},
+			BlockSize:        int64(blockSize),
+			Parallelism:      uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
 			Progress: func(bytesTransferred int64) {
 				c.Assert(bytesTransferred > 0 && bytesTransferred <= int64(blobSize), chk.Equals, true)
@@ -261,7 +263,7 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 		if downloadCount == 0 {
 			c.Assert(destBuffer, chk.DeepEquals, bytesToUpload[downloadOffset:])
 		} else {
-			c.Assert(destBuffer, chk.DeepEquals, bytesToUpload[downloadOffset: downloadOffset + downloadCount])
+			c.Assert(destBuffer, chk.DeepEquals, bytesToUpload[downloadOffset:downloadOffset+downloadCount])
 		}
 	}
 }
