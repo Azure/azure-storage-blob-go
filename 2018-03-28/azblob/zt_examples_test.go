@@ -648,7 +648,7 @@ func ExampleBlockBlobURL() {
 		base64BlockIDs[index] = blockIDIntToBase64(index) // Some people use UUIDs for block IDs
 
 		// Upload a block to this blob specifying the Block ID and its content (up to 100MB); this block is uncommitted.
-		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), azblob.LeaseAccessConditions{})
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), azblob.LeaseAccessConditions{}, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -700,7 +700,7 @@ func ExampleAppendBlobURL() {
 	}
 
 	for i := 0; i < 5; i++ { // Append 5 blocks to the append blob
-		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), azblob.BlobAccessConditions{})
+		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), azblob.BlobAccessConditions{}, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -739,13 +739,13 @@ func ExamplePageBlobURL() {
 
 	page := [azblob.PageBlobPageBytes]byte{}
 	copy(page[:], "Page 0")
-	_, err = blobURL.UploadPages(ctx, 0*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 0*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copy(page[:], "Page 1")
-	_, err = blobURL.UploadPages(ctx, 2*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{})
+	_, err = blobURL.UploadPages(ctx, 2*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -857,7 +857,7 @@ func Example_blobSnapshots() {
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), azblob.Metadata{}, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), azblob.Metadata{}, azblob.HTTPAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -936,7 +936,7 @@ func ExampleBlobURL_startCopy() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, azblob.HTTPAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
