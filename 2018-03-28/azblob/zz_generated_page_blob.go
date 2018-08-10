@@ -211,8 +211,9 @@ func (client pageBlobClient) copyIncrementalResponder(resp pipeline.Response) (p
 
 // Create the Create operation creates a new page blob.
 //
-// contentLength is the length of the request. timeout is the timeout parameter is expressed in seconds. For more
-// information, see <a
+// contentLength is the length of the request. blobContentLength is this header specifies the maximum size for the page
+// blob, up to 1 TB. The page blob size must be aligned to a 512-byte boundary. timeout is the timeout parameter is
+// expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> blobContentType is optional. Sets the blob's content type. If specified,
 // this property is stored with the blob and returned with a read request. blobContentEncoding is optional. Sets the
@@ -231,13 +232,11 @@ func (client pageBlobClient) copyIncrementalResponder(resp pipeline.Response) (p
 // ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
 // date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
 // since the specified date/time. ifMatches is specify an ETag value to operate only on blobs with a matching value.
-// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. blobContentLength is this
-// header specifies the maximum size for the page blob, up to 1 TB. The page blob size must be aligned to a 512-byte
-// boundary. blobSequenceNumber is set for page blobs only. The sequence number is a user-controlled value that you can
-// use to track requests. The value of the sequence number must be between 0 and 2^63 - 1. requestID is provides a
-// client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
-// analytics logging is enabled.
-func (client pageBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (*PageBlobCreateResponse, error) {
+// ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. blobSequenceNumber is set
+// for page blobs only. The sequence number is a user-controlled value that you can use to track requests. The value of
+// the sequence number must be between 0 and 2^63 - 1. requestID is provides a client-generated, opaque value with a 1
+// KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client pageBlobClient) Create(ctx context.Context, contentLength int64, blobContentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobSequenceNumber *int64, requestID *string) (*PageBlobCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -247,7 +246,7 @@ func (client pageBlobClient) Create(ctx context.Context, contentLength int64, ti
 				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.createPreparer(contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, blobContentLength, blobSequenceNumber, requestID)
+	req, err := client.createPreparer(contentLength, blobContentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, blobSequenceNumber, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +258,7 @@ func (client pageBlobClient) Create(ctx context.Context, contentLength int64, ti
 }
 
 // createPreparer prepares the Create request.
-func (client pageBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobContentLength *int64, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) createPreparer(contentLength int64, blobContentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -308,9 +307,7 @@ func (client pageBlobClient) createPreparer(contentLength int64, timeout *int32,
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
-	if blobContentLength != nil {
-		req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(*blobContentLength, 10))
-	}
+	req.Header.Set("x-ms-blob-content-length", strconv.FormatInt(blobContentLength, 10))
 	if blobSequenceNumber != nil {
 		req.Header.Set("x-ms-blob-sequence-number", strconv.FormatInt(*blobSequenceNumber, 10))
 	}

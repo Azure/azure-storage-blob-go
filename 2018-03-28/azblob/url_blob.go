@@ -204,7 +204,6 @@ func leasePeriodPointer(period int32) (p *int32) {
 func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac BlobAccessConditions, dstac BlobAccessConditions) (*BlobStartCopyFromURLResponse, error) {
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.HTTPAccessConditions.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.HTTPAccessConditions.pointers()
-	srcLeaseID := srcac.LeaseAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 
 	return b.blobClient.StartCopyFromURL(ctx, source.String(), nil, metadata,
@@ -212,7 +211,7 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		dstLeaseID, srcLeaseID, nil)
+		dstLeaseID, nil)
 }
 
 // AbortCopyFromURL stops a pending copy that was previously started and leaves a destination blob with 0 length and metadata.

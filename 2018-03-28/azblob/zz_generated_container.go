@@ -7,14 +7,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // containerClient is the client for the Container methods of the Azblob service.
@@ -458,6 +457,44 @@ func (client containerClient) getAccessPolicyResponder(resp pipeline.Response) (
 		}
 	}
 	return result, nil
+}
+
+// GetAccountInfo returns the sku name and account kind
+func (client containerClient) GetAccountInfo(ctx context.Context) (*ContainerGetAccountInfoResponse, error) {
+	req, err := client.getAccountInfoPreparer()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getAccountInfoResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*ContainerGetAccountInfoResponse), err
+}
+
+// getAccountInfoPreparer prepares the GetAccountInfo request.
+func (client containerClient) getAccountInfoPreparer() (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("GET", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	params.Set("restype", "account")
+	params.Set("comp", "properties")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	return req, nil
+}
+
+// getAccountInfoResponder handles the response to the GetAccountInfo request.
+func (client containerClient) getAccountInfoResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &ContainerGetAccountInfoResponse{rawResponse: resp.Response()}, err
 }
 
 // GetProperties returns all user-defined metadata and system properties for the specified container. The data returned
