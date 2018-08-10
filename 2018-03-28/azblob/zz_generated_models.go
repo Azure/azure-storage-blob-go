@@ -1226,7 +1226,7 @@ func (bdr BlobDeleteResponse) Version() string {
 type BlobFlatListSegment struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName   xml.Name   `xml:"Blobs"`
-	BlobItems []BlobItem `xml:"BlobItems"`
+	BlobItems []BlobItem `xml:"Blob"`
 }
 
 // BlobGetAccountInfoResponse ...
@@ -1566,8 +1566,8 @@ func (bgpr BlobGetPropertiesResponse) Version() string {
 type BlobHierarchyListSegment struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName      xml.Name     `xml:"Blobs"`
-	BlobPrefixes []BlobPrefix `xml:"BlobPrefixes"`
-	BlobItems    []BlobItem   `xml:"BlobItems"`
+	BlobPrefixes []BlobPrefix `xml:"BlobPrefix"`
+	BlobItems    []BlobItem   `xml:"Blob"`
 }
 
 // BlobItem - An Azure Storage blob
