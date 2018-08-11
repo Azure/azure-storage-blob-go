@@ -314,7 +314,7 @@ func (client blockBlobClient) stageBlockResponder(resp pipeline.Response) (pipel
 // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL *string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
+func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -333,7 +333,7 @@ func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID str
 }
 
 // stageBlockFromURLPreparer prepares the StageBlockFromURL request.
-func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL *string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -346,9 +346,7 @@ func (client blockBlobClient) stageBlockFromURLPreparer(blockID string, contentL
 	params.Set("comp", "block")
 	req.URL.RawQuery = params.Encode()
 	req.Header.Set("Content-Length", strconv.FormatInt(contentLength, 10))
-	if sourceURL != nil {
-		req.Header.Set("x-ms-copy-source", *sourceURL)
-	}
+	req.Header.Set("x-ms-copy-source", sourceURL)
 	if sourceRange != nil {
 		req.Header.Set("x-ms-source-range", *sourceRange)
 	}

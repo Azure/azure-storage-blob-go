@@ -47,17 +47,17 @@ func (pb PageBlobURL) WithSnapshot(snapshot string) PageBlobURL {
 	return NewPageBlobURL(p.URL(), pb.blobClient.Pipeline())
 }
 
-// CreatePageBlob creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
+// Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*PageBlobCreateResponse, error) {
 	if sequenceNumber < 0 {
 		panic("sequenceNumber must be greater than or equal to 0")
 	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return pb.pbClient.Create(ctx, 0, nil,
+	return pb.pbClient.Create(ctx, 0, size, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(),
-		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, &size, &sequenceNumber, nil)
+		&h.ContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, &sequenceNumber, nil)
 }
 
 // UploadPages writes 1 or more pages to the page blob. The start offset and the stream size must be a multiple of 512 bytes.

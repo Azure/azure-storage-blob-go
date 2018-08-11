@@ -6,14 +6,13 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // blobClient is the client for the Blob methods of the Azblob service.
@@ -593,6 +592,44 @@ func (client blobClient) downloadResponder(resp pipeline.Response) (pipeline.Res
 	return &downloadResponse{rawResponse: resp.Response()}, err
 }
 
+// GetAccountInfo returns the sku name and account kind
+func (client blobClient) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
+	req, err := client.getAccountInfoPreparer()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getAccountInfoResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobGetAccountInfoResponse), err
+}
+
+// getAccountInfoPreparer prepares the GetAccountInfo request.
+func (client blobClient) getAccountInfoPreparer() (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("GET", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	params.Set("restype", "account")
+	params.Set("comp", "properties")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	return req, nil
+}
+
+// getAccountInfoResponder handles the response to the GetAccountInfo request.
+func (client blobClient) getAccountInfoResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlobGetAccountInfoResponse{rawResponse: resp.Response()}, err
+}
+
 // GetProperties the Get Properties operation returns all user-defined metadata, standard HTTP properties, and system
 // properties for the blob. It does not return the content of the blob.
 //
@@ -1089,10 +1126,9 @@ func (client blobClient) setTierResponder(resp pipeline.Response) (pipeline.Resp
 // operate only on a blob if it has not been modified since the specified date/time. ifMatches is specify an ETag value
 // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. leaseID is if specified, the operation only succeeds if the container's lease is active
-// and matches this ID. sourceLeaseID is specify this header to perform the operation only if the lease ID given
-// matches the active lease ID of the source blob. requestID is provides a client-generated, opaque value with a 1 KB
-// character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (*BlobStartCopyFromURLResponse, error) {
+// and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
+// recorded in the analytics logs when storage analytics logging is enabled.
+func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (*BlobStartCopyFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -1102,7 +1138,7 @@ func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string
 				chain: []constraint{{target: "metadata", name: pattern, rule: `^[a-zA-Z]+$`, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.startCopyFromURLPreparer(copySource, timeout, metadata, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatches, sourceIfNoneMatch, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, leaseID, sourceLeaseID, requestID)
+	req, err := client.startCopyFromURLPreparer(copySource, timeout, metadata, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatches, sourceIfNoneMatch, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, leaseID, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -1114,7 +1150,7 @@ func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string
 }
 
 // startCopyFromURLPreparer prepares the StartCopyFromURL request.
-func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, sourceLeaseID *string, requestID *string) (pipeline.Request, error) {
+func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatches *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, leaseID *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -1156,9 +1192,6 @@ func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *in
 	req.Header.Set("x-ms-copy-source", copySource)
 	if leaseID != nil {
 		req.Header.Set("x-ms-lease-id", *leaseID)
-	}
-	if sourceLeaseID != nil {
-		req.Header.Set("x-ms-source-lease-id", *sourceLeaseID)
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {

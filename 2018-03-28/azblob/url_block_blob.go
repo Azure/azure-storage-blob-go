@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	// BlockBlobMaxPutBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
+	// BlockBlobMaxUploadBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
 	BlockBlobMaxUploadBlobBytes = 256 * 1024 * 1024 // 256MB
 
 	// BlockBlobMaxStageBlockBytes indicates the maximum number of bytes that can be sent in a call to StageBlock.
@@ -78,8 +78,7 @@ func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, bod
 // If count is CountToEnd (0), then data is read from specified offset to the end.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/put-block-from-url.
 func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID string, sourceURL url.URL, offset int64, count int64, ac LeaseAccessConditions) (*BlockBlobStageBlockFromURLResponse, error) {
-	sourceURLStr := sourceURL.String()
-	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, &sourceURLStr, httpRange{offset: offset, count: count}.pointers(), nil, nil, ac.pointers(), nil)
+	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, ac.pointers(), nil)
 }
 
 // CommitBlockList writes a blob by specifying the list of block IDs that make up the blob.
