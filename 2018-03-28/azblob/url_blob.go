@@ -201,8 +201,8 @@ func leasePeriodPointer(period int32) (p *int32) {
 
 // StartCopyFromURL copies the data at the source URL to a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/copy-blob.
-func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac BlobAccessConditions, dstac BlobAccessConditions) (*BlobStartCopyFromURLResponse, error) {
-	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.HTTPAccessConditions.pointers()
+func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac HTTPAccessConditions, dstac BlobAccessConditions) (*BlobStartCopyFromURLResponse, error) {
+	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.HTTPAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 

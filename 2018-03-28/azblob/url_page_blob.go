@@ -64,11 +64,11 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
-func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac BlobAccessConditions) (*PageBlobUploadPagesResponse, error) {
+func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac BlobAccessConditions, transactionalMD5 []byte) (*PageBlobUploadPagesResponse, error) {
 	count := validateSeekableStreamAt0AndGetCount(body)
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.PageBlobAccessConditions.pointers()
-	return pb.pbClient.UploadPages(ctx, body, count, nil,
+	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,

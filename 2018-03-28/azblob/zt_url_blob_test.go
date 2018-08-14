@@ -137,7 +137,7 @@ func (b *BlobURLSuite) TestCopy(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	destBlob, _ := createNewBlockBlob(c, container)
-	copyResp, err := destBlob.StartCopyFromURL(context.Background(), sourceBlob.URL(), nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
+	copyResp, err := destBlob.StartCopyFromURL(context.Background(), sourceBlob.URL(), nil, azblob.HTTPAccessConditions{}, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(copyResp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(copyResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)

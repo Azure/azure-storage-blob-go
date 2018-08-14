@@ -70,8 +70,8 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 // StageBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to CommitBlockList.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block.
-func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions) (*BlockBlobStageBlockResponse, error) {
-	return bb.bbClient.StageBlock(ctx, base64BlockID, validateSeekableStreamAt0AndGetCount(body), body, nil, ac.pointers(), nil)
+func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, body io.ReadSeeker, ac LeaseAccessConditions, transactionalMD5 []byte) (*BlockBlobStageBlockResponse, error) {
+	return bb.bbClient.StageBlock(ctx, base64BlockID, validateSeekableStreamAt0AndGetCount(body), body, transactionalMD5, nil, ac.pointers(), nil)
 }
 
 // StageBlockFromURL copies the specified block from a source URL to the block blob's "staging area" to be later committed by a call to CommitBlockList.
