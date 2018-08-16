@@ -3126,6 +3126,19 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfMatchTrue(c *chk.C) {
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
 
+func (s *aztestsSuite) TestBlobGetPropsOnMissingBlob(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL := containerURL.NewBlobURL("MISSING")
+
+	_, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.NotNil)
+	serr := err.(azblob.StorageError)
+	c.Assert(serr.Response().StatusCode, chk.Equals, 404)
+	c.Assert(serr.ServiceCode(), chk.Equals, azblob.ServiceCodeBlobNotFound)
+}
+
 func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfMatchFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
