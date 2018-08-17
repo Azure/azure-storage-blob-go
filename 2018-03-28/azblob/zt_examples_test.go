@@ -32,7 +32,7 @@ func Example() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create a request pipeline that is used to process HTTP(S) requests and responses. It requires
 	// your account credentials. In more advanced scenarios, you can configure telemetry, retry policies,
@@ -278,7 +278,7 @@ func ExampleAccountSASSignatureValues() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is required to sign a SAS.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
 	sasQueryParams := azblob.AccountSASSignatureValues{
@@ -316,7 +316,7 @@ func ExampleBlobSASSignatureValues() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is required to sign a SAS.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// This is the name of the container and blob that we're creating a SAS to.
 	containerName := "mycontainer" // Container names require lowercase
@@ -364,7 +364,7 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
@@ -424,7 +424,8 @@ func ExampleBlobAccessConditions() {
 
 	// Create a BlockBlobURL object that wraps a blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/Data.txt", accountName))
-	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -477,8 +478,8 @@ func ExampleMetadata_containers() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := azblob.NewContainerURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -521,8 +522,8 @@ func ExampleMetadata_blobs() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/ReadMe.txt", accountName))
-	blobURL := azblob.NewBlockBlobURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -569,8 +570,8 @@ func ExampleBlobHTTPHeaders() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/ReadMe.txt", accountName))
-	blobURL := azblob.NewBlockBlobURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -616,8 +617,8 @@ func ExampleBlockBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyBlockBlob.txt", accountName))
-	blobURL := azblob.NewBlockBlobURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -691,7 +692,8 @@ func ExampleAppendBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyAppendBlob.txt", accountName))
-	appendBlobURL := azblob.NewAppendBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	appendBlobURL := azblob.NewAppendBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 	_, err := appendBlobURL.Create(ctx, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
@@ -727,8 +729,8 @@ func ExamplePageBlobURL() {
 
 	// Create a ContainerURL object that wraps a soon-to-be-created blob's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/MyPageBlob.txt", accountName))
-	blobURL := azblob.NewPageBlobURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewPageBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 	_, err := blobURL.Create(ctx, azblob.PageBlobPageBytes*4, 0, azblob.BlobHTTPHeaders{},
@@ -790,8 +792,8 @@ func Example_blobSnapshots() {
 
 	// Create a ContainerURL object to a container where we'll create a blob and its snapshot.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
-	containerURL := azblob.NewContainerURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	containerURL := azblob.NewContainerURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	// Create a BlockBlobURL object to a blob in the container.
 	baseBlobURL := containerURL.NewBlockBlobURL("Original.txt")
@@ -875,7 +877,7 @@ func Example_blobSnapshots() {
 func Example_progressUploadDownload() {
 	// Create a request pipeline using your Storage account's name and account key.
 	accountName, accountKey := accountInfo()
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 	p := azblob.NewPipeline(credential, azblob.PipelineOptions{})
 
 	// From the Azure portal, get your Storage account blob service URL endpoint.
@@ -930,8 +932,8 @@ func ExampleBlobURL_startCopy() {
 	// Create a ContainerURL object to a container where we'll create a blob and its snapshot.
 	// Create a BlockBlobURL object to a blob in the container.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/CopiedBlob.bin", accountName))
-	blobURL := azblob.NewBlobURL(*u,
-		azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -971,7 +973,8 @@ func ExampleUploadFileToBlockBlobAndDownloadItBack() {
 
 	// Create a BlockBlobURL object to a blob in the container (we assume the container already exists).
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlockBlob.bin", accountName))
-	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -1015,7 +1018,8 @@ func ExampleBlobUrl_Download() {
 
 	// Create a BlobURL object to a blob in the container (we assume the container & blob already exist).
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlob.bin", accountName))
-	blobURL := azblob.NewBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blobURL := azblob.NewBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
@@ -1052,7 +1056,8 @@ func ExampleUploadStreamToBlockBlob() {
 
 	// Create a BlockBlobURL object to a blob in the container (we assume the container already exists).
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer/BigBlockBlob.bin", accountName))
-	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(azblob.NewSharedKeyCredential(accountName, accountKey), azblob.PipelineOptions{}))
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
+	blockBlobURL := azblob.NewBlockBlobURL(*u, azblob.NewPipeline(credential, azblob.PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
 
@@ -1082,7 +1087,7 @@ func ExampleLeaseContainer() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
@@ -1151,7 +1156,7 @@ func ExampleListBlobsHierarchy() {
 	accountName, accountKey := accountInfo()
 
 	// Use your Storage account's name and key to create a credential object; this is used to access your account.
-	credential := azblob.NewSharedKeyCredential(accountName, accountKey)
+	credential, _ := azblob.NewSharedKeyCredential(accountName, accountKey)
 
 	// Create an ContainerURL object that wraps the container's URL and a default pipeline.
 	u, _ := url.Parse(fmt.Sprintf("https://%s.blob.core.windows.net/mycontainer", accountName))
