@@ -221,10 +221,6 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 	return azblob.NewSharedKeyCredential(accountName, accountKey)
 }
 
-func getCredential() (*azblob.SharedKeyCredential, error) {
-	return getGenericCredential("")
-}
-
 func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
 	credential, err := getGenericCredential(accountType)
 	if err != nil {
@@ -561,7 +557,10 @@ func (s *aztestsSuite) TestCreateBlobURLWithSnapshotAndSAS(c *chk.C) {
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
 	currentTime := time.Now().UTC()
-	credential, _ := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	sasQueryParams := azblob.AccountSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,
 		ExpiryTime:    currentTime.Add(48 * time.Hour),
@@ -1246,7 +1245,10 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessContainer(c *chk.C
 
 func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 	bsu := getBSU()
-	credential, _ := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	containerURL, containerName := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	_, blobName := createNewBlockBlob(c, containerURL)
@@ -1261,7 +1263,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 			Permission: azblob.AccessPolicyPermission{List: true}.String(),
 		},
 	}}
-	_, err := containerURL.SetAccessPolicy(ctx, azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
+	_, err = containerURL.SetAccessPolicy(ctx, azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05",
@@ -1784,7 +1786,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
 
 	// Create sas values for the source blob
-	credential, _ := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05", StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: containerName, BlobName: blobName}
@@ -1830,7 +1835,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	// Generate SAS on the source
 	serviceSASValues := azblob.BlobSASSignatureValues{ExpiryTime: time.Now().Add(time.Hour).UTC(),
 		Permissions: azblob.BlobSASPermissions{Read: true, Write: true, Create: true}.String(), ContainerName: containerName, BlobName: blobName}
-	credential, _ := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	queryParams := serviceSASValues.NewSASQueryParameters(credential)
 
 	// Create destination container
@@ -1845,7 +1853,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	copyBlobURL, copyBlobName := getBlockBlobURL(c, copyContainerURL)
 
 	// Generate Sas for the destination
-	credential, _ = azblob.NewSharedKeyCredential(os.Getenv("SECONDARY_ACCOUNT_NAME"), os.Getenv("SECONDARY_ACCOUNT_KEY"))
+	credential, err = getGenericCredential("SECONDARY_")
+	if err != nil {
+		c.Fatal("Invalid secondary credential")
+	}
 	copyServiceSASvalues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: copyContainerName, BlobName: copyBlobName}
