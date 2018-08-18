@@ -7,9 +7,10 @@ import (
 	"io/ioutil"
 	"time"
 
+	"crypto/md5"
+
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
-	"crypto/md5"
 )
 
 type BlockBlobURLSuite struct{}
@@ -72,9 +73,9 @@ func (b *BlockBlobURLSuite) TestStageGetBlocks(c *chk.C) {
 
 func (b *BlockBlobURLSuite) TestStageBlockFromURL(c *chk.C) {
 	bsu := getBSU()
-	credential, err := getCredential()
+	credential, err := getGenericCredential("")
 	if err != nil {
-		c.Skip(err.Error())
+		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)

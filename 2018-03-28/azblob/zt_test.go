@@ -42,10 +42,10 @@ func (s *aztestsSuite) TestRetryPolicyRetryReadsFromSecondaryHostField(c *chk.C)
 }
 
 const (
-	containerPrefix          = "go"
-	blobPrefix               = "gotestblob"
-	blockBlobDefaultData     = "GoBlockBlobData"
-	validationErrorSubstring = "validation failed"
+	containerPrefix             = "go"
+	blobPrefix                  = "gotestblob"
+	blockBlobDefaultData        = "GoBlockBlobData"
+	validationErrorSubstring    = "validation failed"
 	invalidHeaderErrorSubstring = "invalid header field" // error thrown by the http client
 )
 
@@ -218,11 +218,7 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 	if accountName == "" || accountKey == "" {
 		return nil, errors.New(accountNameEnvVar + " and/or " + accountKeyEnvVar + " environment variables not specified.")
 	}
-	return azblob.NewSharedKeyCredential(accountName, accountKey), nil
-}
-
-func getCredential() (*azblob.SharedKeyCredential, error) {
-	return getGenericCredential("")
+	return azblob.NewSharedKeyCredential(accountName, accountKey)
 }
 
 func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
@@ -561,7 +557,10 @@ func (s *aztestsSuite) TestCreateBlobURLWithSnapshotAndSAS(c *chk.C) {
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
 	currentTime := time.Now().UTC()
-	credential := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	sasQueryParams := azblob.AccountSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,
 		ExpiryTime:    currentTime.Add(48 * time.Hour),
@@ -1246,7 +1245,10 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessContainer(c *chk.C
 
 func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 	bsu := getBSU()
-	credentials := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	containerURL, containerName := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	_, blobName := createNewBlockBlob(c, containerURL)
@@ -1261,12 +1263,12 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 			Permission: azblob.AccessPolicyPermission{List: true}.String(),
 		},
 	}}
-	_, err := containerURL.SetAccessPolicy(ctx, azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
+	_, err = containerURL.SetAccessPolicy(ctx, azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05",
 		Identifier: "0000", ContainerName: containerName}
-	queryParams := serviceSASValues.NewSASQueryParameters(credentials)
+	queryParams := serviceSASValues.NewSASQueryParameters(credential)
 	sasURL := bsu.URL()
 	sasURL.RawQuery = queryParams.Encode()
 	sasPipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
@@ -1784,11 +1786,14 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
 
 	// Create sas values for the source blob
-	credentials := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05", StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: containerName, BlobName: blobName}
-	queryParams := serviceSASValues.NewSASQueryParameters(credentials)
+	queryParams := serviceSASValues.NewSASQueryParameters(credential)
 
 	// Create URLs to the destination blob with sas parameters
 	sasURL := blobURL.URL()
@@ -1830,8 +1835,11 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	// Generate SAS on the source
 	serviceSASValues := azblob.BlobSASSignatureValues{ExpiryTime: time.Now().Add(time.Hour).UTC(),
 		Permissions: azblob.BlobSASPermissions{Read: true, Write: true, Create: true}.String(), ContainerName: containerName, BlobName: blobName}
-	credentials := azblob.NewSharedKeyCredential(os.Getenv("ACCOUNT_NAME"), os.Getenv("ACCOUNT_KEY"))
-	queryParams := serviceSASValues.NewSASQueryParameters(credentials)
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	queryParams := serviceSASValues.NewSASQueryParameters(credential)
 
 	// Create destination container
 	bsu2, err := getAlternateBSU()
@@ -1845,11 +1853,14 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	copyBlobURL, copyBlobName := getBlockBlobURL(c, copyContainerURL)
 
 	// Generate Sas for the destination
-	credentials = azblob.NewSharedKeyCredential(os.Getenv("SECONDARY_ACCOUNT_NAME"), os.Getenv("SECONDARY_ACCOUNT_KEY"))
+	credential, err = getGenericCredential("SECONDARY_")
+	if err != nil {
+		c.Fatal("Invalid secondary credential")
+	}
 	copyServiceSASvalues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: copyContainerName, BlobName: copyBlobName}
-	copyQueryParams := copyServiceSASvalues.NewSASQueryParameters(credentials)
+	copyQueryParams := copyServiceSASvalues.NewSASQueryParameters(credential)
 
 	// Generate anonymous URL to destination with SAS
 	anonURL := bsu2.URL()
