@@ -412,7 +412,7 @@ func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, 
 		return nil
 	}
 	// Else, upload a staged block...
-	AtomicMorphUint32(&t.maxBlockNum, func(startVal uint32) (val uint32, morphResult interface{}) {
+	atomicMorphUint32(&t.maxBlockNum, func(startVal uint32) (val uint32, morphResult interface{}) {
 		// Atomically remember (in t.numBlocks) the maximum block num we've ever seen
 		if startVal < num {
 			return num, nil
