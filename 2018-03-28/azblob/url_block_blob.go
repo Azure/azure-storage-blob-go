@@ -59,7 +59,7 @@ func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*BlockBlobUploadResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return bb.bbClient.Upload(ctx, body, validateSeekableStreamAt0AndGetCount(body), nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(),
@@ -89,7 +89,7 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
 func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
 	metadata Metadata, ac BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error) {
-	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,

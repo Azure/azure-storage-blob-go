@@ -65,7 +65,7 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
-// AppendBlobAccessConditions identifies append blob-specific access conditions which you optionally set.
+// AppendPositionAccessConditions identifies append blob-specific access conditions which you optionally set.
 type AppendBlobAccessConditions struct {
 	// IfAppendPositionEqual ensures that the AppendBlock operation succeeds
 	// only if the append position is equal to a value.

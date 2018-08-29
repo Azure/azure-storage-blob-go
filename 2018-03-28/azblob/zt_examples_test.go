@@ -466,24 +466,24 @@ func ExampleBlobAccessConditions() {
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
 
 	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
 	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), azblob.BlobHTTPHeaders{}, azblob.Metadata{},
-		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfMatch: upload.ETag()}})
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: upload.ETag()}})
 	showResult(upload, err)
 
 	// Download content if it has changed since the version identified by ETag (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: upload.ETag()}}, false))
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false))
 
 	// Upload content if the blob doesn't already exist (fails):
 	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), azblob.BlobHTTPHeaders{}, azblob.Metadata{},
-		azblob.BlobAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfNoneMatch: azblob.ETagAny}}))
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: azblob.ETagAny}}))
 }
 
 // This examples shows how to create a container with metadata and then how to read & update the metadata.
@@ -732,7 +732,7 @@ func ExampleAppendBlobURL() {
 	}
 
 	for i := 0; i < 5; i++ { // Append 5 blocks to the append blob
-		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), azblob.BlobAccessConditions{}, nil)
+		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), azblob.AppendBlobAccessConditions{}, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -774,13 +774,13 @@ func ExamplePageBlobURL() {
 
 	page := [azblob.PageBlobPageBytes]byte{}
 	copy(page[:], "Page 0")
-	_, err = blobURL.UploadPages(ctx, 0*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{}, nil)
+	_, err = blobURL.UploadPages(ctx, 0*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.PageBlobAccessConditions{}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copy(page[:], "Page 1")
-	_, err = blobURL.UploadPages(ctx, 2*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.BlobAccessConditions{}, nil)
+	_, err = blobURL.UploadPages(ctx, 2*azblob.PageBlobPageBytes, bytes.NewReader(page[:]), azblob.PageBlobAccessConditions{}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -793,7 +793,7 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	_, err = blobURL.ClearPages(ctx, 0*azblob.PageBlobPageBytes, 1*azblob.PageBlobPageBytes, azblob.BlobAccessConditions{})
+	_, err = blobURL.ClearPages(ctx, 0*azblob.PageBlobPageBytes, 1*azblob.PageBlobPageBytes, azblob.PageBlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -895,7 +895,7 @@ func Example_blobSnapshots() {
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), azblob.Metadata{}, azblob.HTTPAccessConditions{}, azblob.BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), azblob.Metadata{}, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -980,7 +980,7 @@ func ExampleBlobURL_startCopy() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, azblob.HTTPAccessConditions{}, azblob.BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1152,7 +1152,7 @@ func ExampleLeaseContainer() {
 
 	// Now acquire a lease on the container.
 	// You can choose to pass an empty string for proposed ID so that the service automatically assigns one for you.
-	acquireLeaseResponse, err := containerURL.AcquireLease(ctx, "", 60, azblob.HTTPAccessConditions{})
+	acquireLeaseResponse, err := containerURL.AcquireLease(ctx, "", 60, azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1166,14 +1166,14 @@ func ExampleLeaseContainer() {
 	fmt.Println("The container cannot be deleted while there is an active lease")
 
 	// We can release the lease now and the container can be deleted.
-	_, err = containerURL.ReleaseLease(ctx, acquireLeaseResponse.LeaseID(), azblob.HTTPAccessConditions{})
+	_, err = containerURL.ReleaseLease(ctx, acquireLeaseResponse.LeaseID(), azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease on the container is now released")
 
 	// Acquire a lease again to perform other operations.
-	acquireLeaseResponse, err = containerURL.AcquireLease(ctx, "", 60, azblob.HTTPAccessConditions{})
+	acquireLeaseResponse, err = containerURL.AcquireLease(ctx, "", 60, azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1183,21 +1183,21 @@ func ExampleLeaseContainer() {
 	// A lease ID can be any valid GUID string format.
 	newLeaseID := uuid{}
 	newLeaseID[0] = 1
-	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), azblob.HTTPAccessConditions{})
+	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease ID was changed to", changeLeaseResponse.LeaseID())
 
 	// The lease can be renewed.
-	renewLeaseResponse, err := containerURL.RenewLease(ctx, changeLeaseResponse.LeaseID(), azblob.HTTPAccessConditions{})
+	renewLeaseResponse, err := containerURL.RenewLease(ctx, changeLeaseResponse.LeaseID(), azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("The lease was renewed with the same ID", renewLeaseResponse.LeaseID())
 
 	// Finally, the lease can be broken and we could prevent others from acquiring a lease for a period of time
-	_, err = containerURL.BreakLease(ctx, 60, azblob.HTTPAccessConditions{})
+	_, err = containerURL.BreakLease(ctx, 60, azblob.ModifiedAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
