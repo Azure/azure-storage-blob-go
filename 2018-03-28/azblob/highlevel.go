@@ -44,6 +44,7 @@ type UploadToBlockBlobOptions struct {
 	BlockSize int64
 
 	// Progress is a function that is invoked periodically as bytes are sent to the BlockBlobURL.
+	// Note that the progress reporting is not always increasing; it can go down when retrying a request.
 	Progress pipeline.ProgressReceiver
 
 	// BlobHTTPHeaders indicates the HTTP headers to be associated with the blob.

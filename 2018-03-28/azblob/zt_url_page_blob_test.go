@@ -3,9 +3,10 @@ package azblob_test
 import (
 	"context"
 
+	"crypto/md5"
+
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
-	"crypto/md5"
 )
 
 type PageBlobURLSuite struct{}
@@ -20,7 +21,7 @@ func (b *PageBlobURLSuite) TestPutGetPages(c *chk.C) {
 	blob, _ := createNewPageBlob(c, container)
 
 	pageRange := azblob.PageRange{Start: 0, End: 1023}
-	putResp, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{}, nil)
+	putResp, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.PageBlobAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
@@ -50,13 +51,13 @@ func (b *PageBlobURLSuite) TestClearDiffPages(c *chk.C) {
 	defer delContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
-	_, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{}, nil)
+	_, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(2048), azblob.PageBlobAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 
 	snapshotResp, err := blob.CreateSnapshot(context.Background(), nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blob.UploadPages(context.Background(), 2048, getReaderToRandomBytes(2048), azblob.BlobAccessConditions{}, nil)
+	_, err = blob.UploadPages(context.Background(), 2048, getReaderToRandomBytes(2048), azblob.PageBlobAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 
 	pageList, err := blob.GetPageRangesDiff(context.Background(), 0, 4096, snapshotResp.Snapshot(), azblob.BlobAccessConditions{})
@@ -65,7 +66,7 @@ func (b *PageBlobURLSuite) TestClearDiffPages(c *chk.C) {
 	c.Assert(pageList.PageRange[0].Start, chk.Equals, int64(2048))
 	c.Assert(pageList.PageRange[0].End, chk.Equals, int64(4095))
 
-	clearResp, err := blob.ClearPages(context.Background(), 2048, 2048, azblob.BlobAccessConditions{})
+	clearResp, err := blob.ClearPages(context.Background(), 2048, 2048, azblob.PageBlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(clearResp.Response().StatusCode, chk.Equals, 201)
 
@@ -82,7 +83,7 @@ func (b *PageBlobURLSuite) TestIncrementalCopy(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	srcBlob, _ := createNewPageBlob(c, container)
-	_, err = srcBlob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.BlobAccessConditions{}, nil)
+	_, err = srcBlob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), azblob.PageBlobAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 	snapshotResp, err := srcBlob.CreateSnapshot(context.Background(), nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -152,7 +153,7 @@ func (b *PageBlobURLSuite) TestPutPagesWithMD5(c *chk.C) {
 	// put page with valid MD5
 	readerToBody, body := getRandomDataAndReader(1024)
 	md5Value := md5.Sum(body)
-	putResp, err := blob.UploadPages(context.Background(), 0, readerToBody, azblob.BlobAccessConditions{}, md5Value[:])
+	putResp, err := blob.UploadPages(context.Background(), 0, readerToBody, azblob.PageBlobAccessConditions{}, md5Value[:])
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
@@ -166,6 +167,6 @@ func (b *PageBlobURLSuite) TestPutPagesWithMD5(c *chk.C) {
 	// put page with bad MD5
 	readerToBody, body = getRandomDataAndReader(1024)
 	_, badMD5 := getRandomDataAndReader(16)
-	putResp, err = blob.UploadPages(context.Background(), 0, readerToBody, azblob.BlobAccessConditions{}, badMD5[:])
+	putResp, err = blob.UploadPages(context.Background(), 0, readerToBody, azblob.PageBlobAccessConditions{}, badMD5[:])
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }

@@ -101,7 +101,7 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-page-ranges.
 func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count int64, prevSnapshot string, ac BlobAccessConditions) (*PageList, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.HTTPAccessConditions.pointers()
-	return pb.pbClient.GetPageRangesDiff(ctx, nil, nil,	&prevSnapshot,
+	return pb.pbClient.GetPageRangesDiff(ctx, nil, nil, &prevSnapshot,
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
@@ -170,7 +170,7 @@ func (pr PageRange) pointers() *string {
 	return &asString
 }
 
-// PageBlobAccessConditions identifies page blob-specific access conditions which you optionally set.
+// SequenceNumberAccessConditions identifies page blob-specific access conditions which you optionally set.
 type PageBlobAccessConditions struct {
 	// IfSequenceNumberLessThan ensures that the page blob operation succeeds
 	// only if the blob's sequence number is less than a value.

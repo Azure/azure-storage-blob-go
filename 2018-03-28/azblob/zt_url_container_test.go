@@ -191,7 +191,7 @@ func (s *ContainerURLSuite) TestLeaseAcquireRelease(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	acq, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
+	acq, err := container.AcquireLease(context.Background(), "", 15, azblob.ModifiedAccessConditions{})
 	leaseID := acq.LeaseID()
 	c.Assert(err, chk.IsNil)
 	c.Assert(acq.StatusCode(), chk.Equals, 201)
@@ -202,7 +202,7 @@ func (s *ContainerURLSuite) TestLeaseAcquireRelease(c *chk.C) {
 	c.Assert(acq.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(acq.Version(), chk.Not(chk.Equals), "")
 
-	rel, err := container.ReleaseLease(context.Background(), leaseID, azblob.HTTPAccessConditions{})
+	rel, err := container.ReleaseLease(context.Background(), leaseID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(rel.StatusCode(), chk.Equals, 200)
 	c.Assert(rel.Date().IsZero(), chk.Equals, false)
@@ -217,12 +217,12 @@ func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	al, err := container.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
+	al, err := container.AcquireLease(context.Background(), "", 15, azblob.ModifiedAccessConditions{})
 	leaseID := al.LeaseID()
 	c.Assert(err, chk.IsNil)
 
 	newID := newUUID().String()
-	cl, err := container.ChangeLease(context.Background(), leaseID, newID, azblob.HTTPAccessConditions{})
+	cl, err := container.ChangeLease(context.Background(), leaseID, newID, azblob.ModifiedAccessConditions{})
 	newID = cl.LeaseID()
 	c.Assert(err, chk.IsNil)
 	c.Assert(cl.StatusCode(), chk.Equals, 200)
@@ -233,7 +233,7 @@ func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(cl.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(cl.Version(), chk.Not(chk.Equals), "")
 
-	rl, err := container.RenewLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	rl, err := container.RenewLease(context.Background(), newID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(rl.StatusCode(), chk.Equals, 200)
 	c.Assert(rl.Date().IsZero(), chk.Equals, false)
@@ -243,7 +243,7 @@ func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(rl.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(rl.Version(), chk.Not(chk.Equals), "")
 
-	bl, err := container.BreakLease(context.Background(), 5, azblob.HTTPAccessConditions{})
+	bl, err := container.BreakLease(context.Background(), 5, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(bl.StatusCode(), chk.Equals, 202)
 	c.Assert(bl.Date().IsZero(), chk.Equals, false)
@@ -252,7 +252,7 @@ func (s *ContainerURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(bl.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(bl.Version(), chk.Not(chk.Equals), "")
 
-	_, err = container.ReleaseLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	_, err = container.ReleaseLease(context.Background(), newID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 }
 
@@ -291,7 +291,7 @@ func (s *ContainerURLSuite) TestSetMetadataCondition(c *chk.C) {
 	time.Sleep(time.Second * 3)
 	currTime := time.Now().UTC()
 	rResp, err := container.SetMetadata(context.Background(), azblob.Metadata{"foo": "bar"},
-		azblob.ContainerAccessConditions{HTTPAccessConditions: azblob.HTTPAccessConditions{IfModifiedSince: currTime}})
+		azblob.ContainerAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currTime}})
 	c.Assert(err, chk.NotNil)
 	c.Assert(rResp, chk.IsNil)
 	se, ok := err.(azblob.StorageError)
