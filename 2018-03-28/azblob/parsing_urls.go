@@ -54,8 +54,8 @@ func isIPEndpointStyle(host string) bool {
 // query parameters remain in the UnparsedParams field. This method overwrites all fields in the BlobURLParts object.
 func NewBlobURLParts(u url.URL) BlobURLParts {
 	up := BlobURLParts{
-		Scheme:              u.Scheme,
-		Host:                u.Host,
+		Scheme: u.Scheme,
+		Host:   u.Host,
 	}
 
 	// Find the container & blob names (if any)
