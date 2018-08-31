@@ -8,8 +8,8 @@ import (
 	"net"
 	"net/http"
 
-	chk "gopkg.in/check.v1"
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	chk "gopkg.in/check.v1"
 )
 
 // Testings for RetryReader
@@ -183,7 +183,9 @@ func (r *aztestsSuite) TestRetryReaderNewRetryReaderDefaultNegativePanic(c *chk.
 	startResponse := http.Response{}
 
 	// Check getter
-	c.Assert(func() { _ = azblob.NewRetryReader(context.Background(), &startResponse, azblob.HTTPGetterInfo{}, azblob.RetryReaderOptions{}, nil) }, chk.Panics, "getter must not be nil")
+	c.Assert(func() {
+		_ = azblob.NewRetryReader(context.Background(), &startResponse, azblob.HTTPGetterInfo{}, azblob.RetryReaderOptions{}, nil)
+	}, chk.Panics, "getter must not be nil")
 
 	getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) { return nil, nil }
 	// Check info.Count

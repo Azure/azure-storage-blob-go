@@ -5,15 +5,15 @@ import (
 
 	"crypto/md5"
 
+	"bytes"
+	"fmt"
+	"strings"
+
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 
-type AppendBlobURLSuite struct{}
-
-var _ = chk.Suite(&AppendBlobURLSuite{})
-
-func (b *AppendBlobURLSuite) TestAppendBlock(c *chk.C) {
+func (b *aztestsSuite) TestAppendBlock(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -42,7 +42,7 @@ func (b *AppendBlobURLSuite) TestAppendBlock(c *chk.C) {
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(2))
 }
 
-func (b *AppendBlobURLSuite) TestAppendBlockWithMD5(c *chk.C) {
+func (b *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -73,4 +73,405 @@ func (b *AppendBlobURLSuite) TestAppendBlockWithMD5(c *chk.C) {
 	_, badMD5 := getRandomDataAndReader(16)
 	appendResp, err = blob.AppendBlock(context.Background(), readerToBody, azblob.AppendBlobAccessConditions{}, badMD5[:])
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := getAppendBlobURL(c, containerURL)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+
+	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendMetadataEmpty(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := getAppendBlobURL(c, containerURL)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+
+	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendMetadataInvalid(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := getAppendBlobURL(c, containerURL)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, azblob.Metadata{"In valid!": "bar"}, azblob.BlobAccessConditions{})
+	fmt.Println(err.Error())
+	c.Assert(strings.Contains(err.Error(), invalidHeaderErrorSubstring), chk.Equals, true)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendHTTPHeaders(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := getAppendBlobURL(c, containerURL)
+
+	_, err := blobURL.Create(ctx, basicHeaders, nil, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+
+	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	h := resp.NewHTTPHeaders()
+	c.Assert(h, chk.DeepEquals, basicHeaders)
+}
+
+func validateAppendBlobPut(c *chk.C, blobURL azblob.AppendBlobURL) {
+	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(-10)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currentTime}})
+	c.Assert(err, chk.IsNil)
+
+	validateAppendBlobPut(c, blobURL)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(10)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currentTime}})
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(10)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+	c.Assert(err, chk.IsNil)
+
+	validateAppendBlobPut(c, blobURL)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(-10)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfMatchTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	resp, _ := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: resp.ETag()}})
+	c.Assert(err, chk.IsNil)
+
+	validateAppendBlobPut(c, blobURL)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfMatchFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: azblob.ETag("garbage")}})
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: azblob.ETag("garbage")}})
+	c.Assert(err, chk.IsNil)
+
+	validateAppendBlobPut(c, blobURL)
+}
+
+func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	resp, _ := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+
+	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, basicMetadata,
+		azblob.BlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockNilBody(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, bytes.NewReader(nil), azblob.AppendBlobAccessConditions{}, nil)
+	c.Assert(err, chk.NotNil)
+	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockEmptyBody(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(""), azblob.AppendBlobAccessConditions{}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockNonExistantBlob(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := getAppendBlobURL(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), azblob.AppendBlobAccessConditions{}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeBlobNotFound)
+}
+
+func validateBlockAppended(c *chk.C, blobURL azblob.AppendBlobURL, expectedSize int) {
+	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.ContentLength(), chk.Equals, int64(expectedSize))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(-10)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(10)
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(10)
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	currentTime := getRelativeTimeGMT(-10)
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfMatchTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	resp, _ := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: resp.ETag()}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfMatchFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: azblob.ETag("garbage")}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: azblob.ETag("garbage")}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	resp, _ := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNegOne(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfAppendPositionEqual: -1}}, nil) // This will cause the library to set the value of the header to 0
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchZero(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), azblob.AppendBlobAccessConditions{}, nil) // The position will not match, but the condition should be ignored
+	c.Assert(err, chk.IsNil)
+	_, err = blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfAppendPositionEqual: 0}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, 2*len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNonZero(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), azblob.AppendBlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	_, err = blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfAppendPositionEqual: int64(len(blockBlobDefaultData))}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData)*2)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNegOne(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), azblob.AppendBlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	_, err = blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfAppendPositionEqual: -1}}, nil) // This will cause the library to set the value of the header to 0
+	validateStorageError(c, err, azblob.ServiceCodeAppendPositionConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNonZero(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfAppendPositionEqual: 12}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeAppendPositionConditionNotMet)
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeTrue(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) + 1)}}, nil)
+	c.Assert(err, chk.IsNil)
+
+	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeFalse(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	blobURL, _ := createNewAppendBlob(c, containerURL)
+
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
+		azblob.AppendBlobAccessConditions{AppendPositionAccessConditions: azblob.AppendPositionAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) - 1)}}, nil)
+	validateStorageError(c, err, azblob.ServiceCodeMaxBlobSizeConditionNotMet)
 }
