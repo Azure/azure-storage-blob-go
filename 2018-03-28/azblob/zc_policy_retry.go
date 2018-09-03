@@ -333,8 +333,9 @@ func isNotRetriable(errToParse net.Error) bool {
 		return true
 	}
 
-	// If it's invalid header field name error thrown by http module, then it is NOT retriable.
-	if strings.Contains(genericErr.Error(), "invalid header field name") {
+	// If it's invalid header field name/value error thrown by http module, then it is NOT retriable.
+	// This could happen when metadata's key or value is invalid. (RoundTrip in transport.go)
+	if strings.Contains(genericErr.Error(), "invalid header field") {
 		return true
 	}
 
