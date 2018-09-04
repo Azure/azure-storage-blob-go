@@ -372,7 +372,8 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 	result, err := uploadStream(ctx, reader,
 		UploadStreamOptions{BufferSize: o.BufferSize, MaxBuffers: o.MaxBuffers},
 		&uploadStreamToBlockBlobOptions{b: blockBlobURL, o: o, blockIDPrefix: newUUID()})
-	return result.(CommonResponse), err
+	commonResponse, _ := result.(CommonResponse)
+	return commonResponse, err
 }
 
 type uploadStreamToBlockBlobOptions struct {
@@ -471,6 +472,7 @@ func uploadStream(ctx context.Context, reader io.Reader, o UploadStreamOptions, 
 
 	// This goroutine grabs a buffer, reads from the stream into the buffer,
 	// and inserts the buffer into the outgoing channel to be uploaded
+	var readErr error
 	for c := uint32(0); true; c++ { // Iterate once per chunk
 		var buffer []byte
 		if numBuffers < o.MaxBuffers {
@@ -487,22 +489,33 @@ func uploadStream(ctx context.Context, reader io.Reader, o UploadStreamOptions, 
 			// We are at max buffers, block until we get to reuse one
 			buffer = <-incoming
 		}
-		n, err := io.ReadFull(reader, buffer)
-		if err != nil {
+		var n int
+		n, readErr = io.ReadFull(reader, buffer)
+		if readErr != nil {
+			if readErr != io.EOF && readErr != io.ErrUnexpectedEOF {
+				break
+			}
 			buffer = buffer[:n] // Make slice match the # of read bytes
 		}
+
 		if len(buffer) > 0 {
 			// Buffer not empty, upload it
 			wg.Add(1) // We're posting a buffer to be sent
 			outgoing <- OutgoingMsg{chunkNum: c, buffer: buffer}
 		}
-		if err != nil { // The reader is done, no more outgoing buffers
+		if readErr != nil { // The reader is done, no more outgoing buffers
+			readErr = nil
 			break
 		}
 	}
 	// NOTE: Don't close the incoming channel because the outgoing goroutines post buffers into it when they are done
 	close(outgoing) // Make all the outgoing goroutines terminate when this channel is empty
 	wg.Wait()       // Wait for all pending outgoing messages to complete
+	// Report the error from io.ReadFull if there is one
+	if readErr != nil {
+		return nil, readErr
+	}
 	// After all blocks uploaded, commit them to the blob & return the result
-	return t.end(ctx)
+	result, err := t.end(ctx)
+	return result, err
 }
