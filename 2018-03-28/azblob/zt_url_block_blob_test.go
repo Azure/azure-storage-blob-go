@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"crypto/md5"
+
 	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
@@ -24,7 +26,7 @@ func (b *BlockBlobURLSuite) TestStageGetBlocks(c *chk.C) {
 
 	blockID := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0)))
 
-	putResp, err := blob.StageBlock(context.Background(), blockID, getReaderToRandomBytes(1024), azblob.LeaseAccessConditions{})
+	putResp, err := blob.StageBlock(context.Background(), blockID, getReaderToRandomBytes(1024), azblob.LeaseAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.ContentMD5(), chk.Not(chk.Equals), "")
@@ -71,9 +73,9 @@ func (b *BlockBlobURLSuite) TestStageGetBlocks(c *chk.C) {
 
 func (b *BlockBlobURLSuite) TestStageBlockFromURL(c *chk.C) {
 	bsu := getBSU()
-	credential, err := getCredential()
+	credential, err := getGenericCredential("")
 	if err != nil {
-		c.Skip(err.Error())
+		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -138,4 +140,30 @@ func (b *BlockBlobURLSuite) TestStageBlockFromURL(c *chk.C) {
 	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
 	c.Assert(destData, chk.DeepEquals, sourceData)
+}
+
+func (b *BlockBlobURLSuite) TestStageBlockWithMD5(c *chk.C) {
+	bsu := getBSU()
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	blob := container.NewBlockBlobURL(generateBlobName())
+	blockID := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0)))
+
+	// test put block with valid MD5 value
+	readerToBody, body := getRandomDataAndReader(1024)
+	md5Value := md5.Sum(body)
+	putResp, err := blob.StageBlock(context.Background(), blockID, readerToBody, azblob.LeaseAccessConditions{}, md5Value[:])
+	c.Assert(err, chk.IsNil)
+	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
+	c.Assert(putResp.ContentMD5(), chk.DeepEquals, md5Value[:])
+	c.Assert(putResp.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(putResp.Date().IsZero(), chk.Equals, false)
+
+	// test put block with bad MD5 value
+	readerToBody, body = getRandomDataAndReader(1024)
+	_, badMD5 := getRandomDataAndReader(16)
+	putResp, err = blob.StageBlock(context.Background(), blockID, readerToBody, azblob.LeaseAccessConditions{}, badMD5[:])
+	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }

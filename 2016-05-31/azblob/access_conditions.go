@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-// HTTPAccessConditions identifies standard HTTP access conditions which you optionally set.
+// ModifiedAccessConditions identifies standard HTTP access conditions which you optionally set.
 type HTTPAccessConditions struct {
 	IfModifiedSince   time.Time
 	IfUnmodifiedSince time.Time

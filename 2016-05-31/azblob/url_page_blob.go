@@ -160,7 +160,7 @@ func (pr PageRange) pointers() *string {
 	return &asString
 }
 
-// PageBlobAccessConditions identifies page blob-specific access conditions which you optionally set.
+// SequenceNumberAccessConditions identifies page blob-specific access conditions which you optionally set.
 type PageBlobAccessConditions struct {
 	// IfSequenceNumberLessThan ensures that the page blob operation succeeds
 	// only if the blob's sequence number is less than a value.

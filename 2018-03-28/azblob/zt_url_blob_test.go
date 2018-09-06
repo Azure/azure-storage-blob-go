@@ -137,7 +137,7 @@ func (b *BlobURLSuite) TestCopy(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	destBlob, _ := createNewBlockBlob(c, container)
-	copyResp, err := destBlob.StartCopyFromURL(context.Background(), sourceBlob.URL(), nil, azblob.BlobAccessConditions{}, azblob.BlobAccessConditions{})
+	copyResp, err := destBlob.StartCopyFromURL(context.Background(), sourceBlob.URL(), nil, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(copyResp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(copyResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
@@ -222,7 +222,7 @@ func (b *BlobURLSuite) TestLeaseAcquireRelease(c *chk.C) {
 
 	blob, _ := createNewBlockBlob(c, container)
 
-	acq, err := blob.AcquireLease(context.Background(), "", 15, azblob.HTTPAccessConditions{})
+	acq, err := blob.AcquireLease(context.Background(), "", 15, azblob.ModifiedAccessConditions{})
 	leaseID := acq.LeaseID() // FIX
 	c.Assert(err, chk.IsNil)
 	c.Assert(acq.StatusCode(), chk.Equals, 201)
@@ -233,7 +233,7 @@ func (b *BlobURLSuite) TestLeaseAcquireRelease(c *chk.C) {
 	c.Assert(acq.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(acq.Version(), chk.Not(chk.Equals), "")
 
-	rel, err := blob.ReleaseLease(context.Background(), leaseID, azblob.HTTPAccessConditions{})
+	rel, err := blob.ReleaseLease(context.Background(), leaseID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(rel.StatusCode(), chk.Equals, 200)
 	c.Assert(rel.Date().IsZero(), chk.Equals, false)
@@ -250,11 +250,11 @@ func (b *BlobURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 
 	blob, _ := createNewBlockBlob(c, container)
 
-	acq, err := blob.AcquireLease(context.Background(), newUUID().String(), 15, azblob.HTTPAccessConditions{})
+	acq, err := blob.AcquireLease(context.Background(), newUUID().String(), 15, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	leaseID := acq.LeaseID()
 
-	chg, err := blob.ChangeLease(context.Background(), leaseID, newUUID().String(), azblob.HTTPAccessConditions{})
+	chg, err := blob.ChangeLease(context.Background(), leaseID, newUUID().String(), azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	newID := chg.LeaseID()
 	c.Assert(chg.StatusCode(), chk.Equals, 200)
@@ -264,7 +264,7 @@ func (b *BlobURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(chg.LeaseID(), chk.Equals, newID)
 	c.Assert(chg.Version(), chk.Not(chk.Equals), "")
 
-	renew, err := blob.RenewLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	renew, err := blob.RenewLease(context.Background(), newID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(renew.StatusCode(), chk.Equals, 200)
 	c.Assert(renew.Date().IsZero(), chk.Equals, false)
@@ -274,7 +274,7 @@ func (b *BlobURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(renew.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(renew.Version(), chk.Not(chk.Equals), "")
 
-	brk, err := blob.BreakLease(context.Background(), 5, azblob.HTTPAccessConditions{})
+	brk, err := blob.BreakLease(context.Background(), 5, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(brk.StatusCode(), chk.Equals, 202)
 	c.Assert(brk.Date().IsZero(), chk.Equals, false)
@@ -284,7 +284,7 @@ func (b *BlobURLSuite) TestLeaseRenewChangeBreak(c *chk.C) {
 	c.Assert(brk.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(brk.Version(), chk.Not(chk.Equals), "")
 
-	_, err = blob.ReleaseLease(context.Background(), newID, azblob.HTTPAccessConditions{})
+	_, err = blob.ReleaseLease(context.Background(), newID, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 }
 
