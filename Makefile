@@ -24,10 +24,10 @@ dep: docker-build #
 setup: clean docker-build dep ## setup environment for development
 
 test: setup ## run go tests
-	$(call with_docker,go test -race -short -cover -v ./2018-03-28/azblob)
+	$(call with_docker,go test -race -short -cover -v ./azblob)
 
 build: setup ## build binaries for the project
-	$(call with_docker,gox -osarch="$(GOX_ARCH)" ./2018-03-28/azblob)
+	$(call with_docker,gox -osarch="$(GOX_ARCH)" ./azblob)
 
 all: setup test build
 
