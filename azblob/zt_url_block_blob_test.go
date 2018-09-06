@@ -12,7 +12,7 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 

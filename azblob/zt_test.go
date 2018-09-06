@@ -19,7 +19,7 @@ import (
 	"math/rand"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/2018-03-28/azblob"
+	"github.com/Azure/azure-storage-blob-go/azblob"
 )
 
 // For testing docs, see: https://labix.org/gocheck
