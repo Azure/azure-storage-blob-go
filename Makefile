@@ -1,6 +1,5 @@
 PROJECT_NAME = azure-storage-blob-go
 WORK_DIR = /go/src/github.com/Azure/${PROJECT_NAME}
-GOX_ARCH = linux/amd64 windows/amd64 darwin/amd64
 
 define with_docker
 	WORK_DIR=$(WORK_DIR) docker-compose run --rm $(PROJECT_NAME) $(1)
@@ -18,18 +17,17 @@ docker-build: docker-compose
 docker-clean: docker-compose
 	WORK_DIR=$(WORK_DIR) docker-compose down
 
-dep: docker-build #
-	$(call with_docker,dep ensure -v)
-
-setup: clean docker-build dep ## setup environment for development
+setup: clean docker-build
 
 test: setup ## run go tests
 	$(call with_docker,go test -race -short -cover -v ./azblob)
 
 build: setup ## build binaries for the project
-	$(call with_docker,gox -osarch="$(GOX_ARCH)" ./azblob)
+	GOOS=linux $(call with_docker,go build ./azblob,-e GOOS)
+	GOOS=darwin $(call with_docker,go build ./azblob,-e GOOS)
+	GOOS=windows $(call with_docker,go build ./azblob,-e GOOS)
 
-all: setup test build
+all: setup build
 
 clean: docker-clean ## clean environment and binaries
 	rm -rf bin
