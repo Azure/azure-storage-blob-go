@@ -1,7 +1,9 @@
-language: python
-python:
-  - 3.6
-services:
-- docker
+language: go
+go:
+- "1.11"
 script:
-- make all
+- export GO111MODULE=on
+- GOOS=linux go build ./azblob
+- GOOS=darwin go build ./azblob
+- GOOS=windows go build ./azblob
+- go test -race -short -cover -v ./azblob
