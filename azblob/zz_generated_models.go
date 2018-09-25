@@ -6,6 +6,7 @@ package azblob
 import (
 	"encoding/base64"
 	"encoding/xml"
+	"errors"
 	"io"
 	"net/http"
 	"reflect"
@@ -84,6 +85,12 @@ func joinConst(s interface{}, sep string) string {
 		ss = append(ss, v.Index(i).String())
 	}
 	return strings.Join(ss, sep)
+}
+
+func validateError(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 // AccessTierType enumerates the values for access tier type.
@@ -637,18 +644,12 @@ type AccessPolicy struct {
 
 // MarshalXML implements the xml.Marshaler interface for AccessPolicy.
 func (ap AccessPolicy) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
-		panic("size mismatch between AccessPolicy and accessPolicy")
-	}
 	ap2 := (*accessPolicy)(unsafe.Pointer(&ap))
 	return e.EncodeElement(*ap2, start)
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface for AccessPolicy.
 func (ap *AccessPolicy) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
-		panic("size mismatch between AccessPolicy and accessPolicy")
-	}
 	ap2 := (*accessPolicy)(unsafe.Pointer(ap))
 	return d.DecodeElement(ap2, &start)
 }
@@ -686,7 +687,7 @@ func (ababr AppendBlobAppendBlockResponse) BlobCommittedBlockCount() int32 {
 	}
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return int32(i)
 }
@@ -699,7 +700,7 @@ func (ababr AppendBlobAppendBlockResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -712,7 +713,7 @@ func (ababr AppendBlobAppendBlockResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -735,7 +736,7 @@ func (ababr AppendBlobAppendBlockResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -778,7 +779,7 @@ func (abcr AppendBlobCreateResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -791,7 +792,7 @@ func (abcr AppendBlobCreateResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -819,7 +820,7 @@ func (abcr AppendBlobCreateResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -862,7 +863,7 @@ func (bacfur BlobAbortCopyFromURLResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -910,7 +911,7 @@ func (balr BlobAcquireLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -933,7 +934,7 @@ func (balr BlobAcquireLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -981,7 +982,7 @@ func (bblr BlobBreakLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1004,7 +1005,7 @@ func (bblr BlobBreakLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1017,7 +1018,7 @@ func (bblr BlobBreakLeaseResponse) LeaseTime() int32 {
 	}
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return int32(i)
 }
@@ -1060,7 +1061,7 @@ func (bclr BlobChangeLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1083,7 +1084,7 @@ func (bclr BlobChangeLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1131,7 +1132,7 @@ func (bcsr BlobCreateSnapshotResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1154,7 +1155,7 @@ func (bcsr BlobCreateSnapshotResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1202,7 +1203,7 @@ func (bdr BlobDeleteResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1262,7 +1263,7 @@ func (bgair BlobGetAccountInfoResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1338,7 +1339,7 @@ func (bgpr BlobGetPropertiesResponse) AccessTierChangeTime() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1361,7 +1362,7 @@ func (bgpr BlobGetPropertiesResponse) BlobCommittedBlockCount() int32 {
 	}
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return int32(i)
 }
@@ -1374,7 +1375,7 @@ func (bgpr BlobGetPropertiesResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -1412,7 +1413,7 @@ func (bgpr BlobGetPropertiesResponse) ContentLength() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -1425,7 +1426,7 @@ func (bgpr BlobGetPropertiesResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -1443,7 +1444,7 @@ func (bgpr BlobGetPropertiesResponse) CopyCompletionTime() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1481,7 +1482,7 @@ func (bgpr BlobGetPropertiesResponse) CreationTime() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1494,7 +1495,7 @@ func (bgpr BlobGetPropertiesResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1532,7 +1533,7 @@ func (bgpr BlobGetPropertiesResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1632,18 +1633,12 @@ type BlobProperties struct {
 
 // MarshalXML implements the xml.Marshaler interface for BlobProperties.
 func (bp BlobProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
-		panic("size mismatch between BlobProperties and blobProperties")
-	}
 	bp2 := (*blobProperties)(unsafe.Pointer(&bp))
 	return e.EncodeElement(*bp2, start)
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface for BlobProperties.
 func (bp *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
-		panic("size mismatch between BlobProperties and blobProperties")
-	}
 	bp2 := (*blobProperties)(unsafe.Pointer(bp))
 	return d.DecodeElement(bp2, &start)
 }
@@ -1676,7 +1671,7 @@ func (brlr BlobReleaseLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1699,7 +1694,7 @@ func (brlr BlobReleaseLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1742,7 +1737,7 @@ func (brlr BlobRenewLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1765,7 +1760,7 @@ func (brlr BlobRenewLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1813,7 +1808,7 @@ func (bshhr BlobSetHTTPHeadersResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -1826,7 +1821,7 @@ func (bshhr BlobSetHTTPHeadersResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1849,7 +1844,7 @@ func (bshhr BlobSetHTTPHeadersResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1892,7 +1887,7 @@ func (bsmr BlobSetMetadataResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -1920,7 +1915,7 @@ func (bsmr BlobSetMetadataResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2008,7 +2003,7 @@ func (bscfur BlobStartCopyFromURLResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2031,7 +2026,7 @@ func (bscfur BlobStartCopyFromURLResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2074,7 +2069,7 @@ func (bur BlobUndeleteResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2130,7 +2125,7 @@ func (bbcblr BlockBlobCommitBlockListResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -2143,7 +2138,7 @@ func (bbcblr BlockBlobCommitBlockListResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2171,7 +2166,7 @@ func (bbcblr BlockBlobCommitBlockListResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2214,7 +2209,7 @@ func (bbsbfur BlockBlobStageBlockFromURLResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -2227,7 +2222,7 @@ func (bbsbfur BlockBlobStageBlockFromURLResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2280,7 +2275,7 @@ func (bbsbr BlockBlobStageBlockResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -2293,7 +2288,7 @@ func (bbsbr BlockBlobStageBlockResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2346,7 +2341,7 @@ func (bbur BlockBlobUploadResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -2359,7 +2354,7 @@ func (bbur BlockBlobUploadResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2387,7 +2382,7 @@ func (bbur BlockBlobUploadResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2432,7 +2427,7 @@ func (bl BlockList) BlobContentLength() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -2450,7 +2445,7 @@ func (bl BlockList) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2473,7 +2468,7 @@ func (bl BlockList) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2531,7 +2526,7 @@ func (calr ContainerAcquireLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2554,7 +2549,7 @@ func (calr ContainerAcquireLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2602,7 +2597,7 @@ func (cblr ContainerBreakLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2625,7 +2620,7 @@ func (cblr ContainerBreakLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2638,7 +2633,7 @@ func (cblr ContainerBreakLeaseResponse) LeaseTime() int32 {
 	}
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return int32(i)
 }
@@ -2681,7 +2676,7 @@ func (cclr ContainerChangeLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2704,7 +2699,7 @@ func (cclr ContainerChangeLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2752,7 +2747,7 @@ func (ccr ContainerCreateResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2775,7 +2770,7 @@ func (ccr ContainerCreateResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2818,7 +2813,7 @@ func (cdr ContainerDeleteResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2871,7 +2866,7 @@ func (cgair ContainerGetAccountInfoResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2942,7 +2937,7 @@ func (cgpr ContainerGetPropertiesResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -2975,7 +2970,7 @@ func (cgpr ContainerGetPropertiesResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3032,18 +3027,12 @@ type ContainerProperties struct {
 
 // MarshalXML implements the xml.Marshaler interface for ContainerProperties.
 func (cp ContainerProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
-		panic("size mismatch between ContainerProperties and containerProperties")
-	}
 	cp2 := (*containerProperties)(unsafe.Pointer(&cp))
 	return e.EncodeElement(*cp2, start)
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface for ContainerProperties.
 func (cp *ContainerProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
-		panic("size mismatch between ContainerProperties and containerProperties")
-	}
 	cp2 := (*containerProperties)(unsafe.Pointer(cp))
 	return d.DecodeElement(cp2, &start)
 }
@@ -3076,7 +3065,7 @@ func (crlr ContainerReleaseLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3099,7 +3088,7 @@ func (crlr ContainerReleaseLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3142,7 +3131,7 @@ func (crlr ContainerRenewLeaseResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3165,7 +3154,7 @@ func (crlr ContainerRenewLeaseResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3213,7 +3202,7 @@ func (csapr ContainerSetAccessPolicyResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3236,7 +3225,7 @@ func (csapr ContainerSetAccessPolicyResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3279,7 +3268,7 @@ func (csmr ContainerSetMetadataResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3302,7 +3291,7 @@ func (csmr ContainerSetMetadataResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3334,7 +3323,7 @@ type CorsRule struct {
 	MaxAgeInSeconds int32 `xml:"MaxAgeInSeconds"`
 }
 
-// downloadResponse ...
+// downloadResponse - Wraps the response from the blobClient.Download method.
 type downloadResponse struct {
 	rawResponse *http.Response
 }
@@ -3385,7 +3374,7 @@ func (dr downloadResponse) BlobCommittedBlockCount() int32 {
 	}
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return int32(i)
 }
@@ -3398,7 +3387,7 @@ func (dr downloadResponse) BlobContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -3411,7 +3400,7 @@ func (dr downloadResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -3449,7 +3438,7 @@ func (dr downloadResponse) ContentLength() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -3462,7 +3451,7 @@ func (dr downloadResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -3485,7 +3474,7 @@ func (dr downloadResponse) CopyCompletionTime() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3523,7 +3512,7 @@ func (dr downloadResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3551,7 +3540,7 @@ func (dr downloadResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3591,18 +3580,12 @@ type GeoReplication struct {
 
 // MarshalXML implements the xml.Marshaler interface for GeoReplication.
 func (gr GeoReplication) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if reflect.TypeOf((*GeoReplication)(nil)).Elem().Size() != reflect.TypeOf((*geoReplication)(nil)).Elem().Size() {
-		panic("size mismatch between GeoReplication and geoReplication")
-	}
 	gr2 := (*geoReplication)(unsafe.Pointer(&gr))
 	return e.EncodeElement(*gr2, start)
 }
 
 // UnmarshalXML implements the xml.Unmarshaler interface for GeoReplication.
 func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	if reflect.TypeOf((*GeoReplication)(nil)).Elem().Size() != reflect.TypeOf((*geoReplication)(nil)).Elem().Size() {
-		panic("size mismatch between GeoReplication and geoReplication")
-	}
 	gr2 := (*geoReplication)(unsafe.Pointer(gr))
 	return d.DecodeElement(gr2, &start)
 }
@@ -3650,7 +3633,7 @@ func (lbfsr ListBlobsFlatSegmentResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3713,7 +3696,7 @@ func (lbhsr ListBlobsHierarchySegmentResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3828,7 +3811,7 @@ func (pbcpr PageBlobClearPagesResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -3841,7 +3824,7 @@ func (pbcpr PageBlobClearPagesResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -3854,7 +3837,7 @@ func (pbcpr PageBlobClearPagesResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3877,7 +3860,7 @@ func (pbcpr PageBlobClearPagesResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3930,7 +3913,7 @@ func (pbcir PageBlobCopyIncrementalResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3953,7 +3936,7 @@ func (pbcir PageBlobCopyIncrementalResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -3996,7 +3979,7 @@ func (pbcr PageBlobCreateResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -4009,7 +3992,7 @@ func (pbcr PageBlobCreateResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4037,7 +4020,7 @@ func (pbcr PageBlobCreateResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4080,7 +4063,7 @@ func (pbrr PageBlobResizeResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -4093,7 +4076,7 @@ func (pbrr PageBlobResizeResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4116,7 +4099,7 @@ func (pbrr PageBlobResizeResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4159,7 +4142,7 @@ func (pbusnr PageBlobUpdateSequenceNumberResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -4172,7 +4155,7 @@ func (pbusnr PageBlobUpdateSequenceNumberResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4195,7 +4178,7 @@ func (pbusnr PageBlobUpdateSequenceNumberResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4238,7 +4221,7 @@ func (pbupr PageBlobUploadPagesResponse) BlobSequenceNumber() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -4251,7 +4234,7 @@ func (pbupr PageBlobUploadPagesResponse) ContentMD5() []byte {
 	}
 	b, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		panic(err)
+		b = nil
 	}
 	return b
 }
@@ -4264,7 +4247,7 @@ func (pbupr PageBlobUploadPagesResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4292,7 +4275,7 @@ func (pbupr PageBlobUploadPagesResponse) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4337,7 +4320,7 @@ func (pl PageList) BlobContentLength() int64 {
 	}
 	i, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		panic(err)
+		i = 0
 	}
 	return i
 }
@@ -4350,7 +4333,7 @@ func (pl PageList) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4373,7 +4356,7 @@ func (pl PageList) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4435,7 +4418,7 @@ func (sgair ServiceGetAccountInfoResponse) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4502,7 +4485,7 @@ type SignedIdentifier struct {
 	AccessPolicy AccessPolicy `xml:"AccessPolicy"`
 }
 
-// SignedIdentifiers ...
+// SignedIdentifiers - Wraps the response from the containerClient.GetAccessPolicy method.
 type SignedIdentifiers struct {
 	rawResponse *http.Response
 	Items       []SignedIdentifier `xml:"SignedIdentifier"`
@@ -4536,7 +4519,7 @@ func (si SignedIdentifiers) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4559,7 +4542,7 @@ func (si SignedIdentifiers) LastModified() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4657,7 +4640,7 @@ func (sss StorageServiceStats) Date() time.Time {
 	}
 	t, err := time.Parse(time.RFC1123, s)
 	if err != nil {
-		panic(err)
+		t = time.Time{}
 	}
 	return t
 }
@@ -4675,6 +4658,21 @@ func (sss StorageServiceStats) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (sss StorageServiceStats) Version() string {
 	return sss.rawResponse.Header.Get("x-ms-version")
+}
+
+func init() {
+	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between AccessPolicy and accessPolicy"))
+	}
+	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between BlobProperties and blobProperties"))
+	}
+	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between ContainerProperties and containerProperties"))
+	}
+	if reflect.TypeOf((*GeoReplication)(nil)).Elem().Size() != reflect.TypeOf((*geoReplication)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between GeoReplication and geoReplication"))
+	}
 }
 
 const (
