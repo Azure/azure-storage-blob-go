@@ -178,10 +178,10 @@ func (client containerClient) breakLeaseResponder(resp pipeline.Response) (pipel
 // ChangeLease [Update] establishes and manages a lock on a container for delete operations. The lock duration can be
 // 15 to 60 seconds, or can be infinite
 //
-// leaseID is if specified, the operation only succeeds if the container's lease is active and matches this ID.
-// proposedLeaseID is proposed lease ID, in a GUID string format. The Blob service returns 400 (Invalid request) if the
-// proposed lease ID is not in the correct format. See Guid Constructor (String) for a list of valid GUID string
-// formats. timeout is the timeout parameter is expressed in seconds. For more information, see <a
+// leaseID is specifies the current lease ID on the resource. proposedLeaseID is proposed lease ID, in a GUID string
+// format. The Blob service returns 400 (Invalid request) if the proposed lease ID is not in the correct format. See
+// Guid Constructor (String) for a list of valid GUID string formats. timeout is the timeout parameter is expressed in
+// seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> ifModifiedSince is specify this header value to operate only on a blob if
 // it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only
@@ -320,7 +320,7 @@ func (client containerClient) createResponder(resp pipeline.Response) (pipeline.
 //
 // timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. ifModifiedSince is specify this header value to operate only on a blob if it
 // has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a
 // blob if it has not been modified since the specified date/time. requestID is provides a client-generated, opaque
@@ -387,7 +387,7 @@ func (client containerClient) deleteResponder(resp pipeline.Response) (pipeline.
 //
 // timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client containerClient) GetAccessPolicy(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*SignedIdentifiers, error) {
@@ -444,7 +444,7 @@ func (client containerClient) getAccessPolicyResponder(resp pipeline.Response) (
 	defer resp.Response().Body.Close()
 	b, err := ioutil.ReadAll(resp.Response().Body)
 	if err != nil {
-		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+		return result, err
 	}
 	if len(b) > 0 {
 		b = removeBOM(b)
@@ -499,7 +499,7 @@ func (client containerClient) getAccountInfoResponder(resp pipeline.Response) (p
 //
 // timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client containerClient) GetProperties(ctx context.Context, timeout *int32, leaseID *string, requestID *string) (*ContainerGetPropertiesResponse, error) {
@@ -635,7 +635,7 @@ func (client containerClient) listBlobFlatSegmentResponder(resp pipeline.Respons
 	defer resp.Response().Body.Close()
 	b, err := ioutil.ReadAll(resp.Response().Body)
 	if err != nil {
-		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+		return result, err
 	}
 	if len(b) > 0 {
 		b = removeBOM(b)
@@ -733,7 +733,7 @@ func (client containerClient) listBlobHierarchySegmentResponder(resp pipeline.Re
 	defer resp.Response().Body.Close()
 	b, err := ioutil.ReadAll(resp.Response().Body)
 	if err != nil {
-		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+		return result, err
 	}
 	if len(b) > 0 {
 		b = removeBOM(b)
@@ -748,8 +748,8 @@ func (client containerClient) listBlobHierarchySegmentResponder(resp pipeline.Re
 // ReleaseLease [Update] establishes and manages a lock on a container for delete operations. The lock duration can be
 // 15 to 60 seconds, or can be infinite
 //
-// leaseID is if specified, the operation only succeeds if the container's lease is active and matches this ID. timeout
-// is the timeout parameter is expressed in seconds. For more information, see <a
+// leaseID is specifies the current lease ID on the resource. timeout is the timeout parameter is expressed in seconds.
+// For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> ifModifiedSince is specify this header value to operate only on a blob if
 // it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only
@@ -816,8 +816,8 @@ func (client containerClient) releaseLeaseResponder(resp pipeline.Response) (pip
 // RenewLease [Update] establishes and manages a lock on a container for delete operations. The lock duration can be 15
 // to 60 seconds, or can be infinite
 //
-// leaseID is if specified, the operation only succeeds if the container's lease is active and matches this ID. timeout
-// is the timeout parameter is expressed in seconds. For more information, see <a
+// leaseID is specifies the current lease ID on the resource. timeout is the timeout parameter is expressed in seconds.
+// For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
 // Timeouts for Blob Service Operations.</a> ifModifiedSince is specify this header value to operate only on a blob if
 // it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to operate only
@@ -887,7 +887,7 @@ func (client containerClient) renewLeaseResponder(resp pipeline.Response) (pipel
 // containerACL is the acls for the container timeout is the timeout parameter is expressed in seconds. For more
 // information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. access is specifies whether data in the container may be accessed publicly and
 // the level of access ifModifiedSince is specify this header value to operate only on a blob if it has been modified
 // since the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has
@@ -967,7 +967,7 @@ func (client containerClient) setAccessPolicyResponder(resp pipeline.Response) (
 //
 // timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. metadata is optional. Specifies a user-defined name-value pair associated with
 // the blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to
 // the destination blob. If one or more name-value pairs are specified, the destination blob is created with the

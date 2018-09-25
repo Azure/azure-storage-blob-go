@@ -145,7 +145,7 @@ func (pb PageBlobURL) StartCopyIncremental(ctx context.Context, source url.URL, 
 	qp := source.Query()
 	qp.Set("snapshot", snapshot)
 	source.RawQuery = qp.Encode()
-	return pb.pbClient.CopyIncremental(ctx, source.String(), nil, nil,
+	return pb.pbClient.CopyIncremental(ctx, source.String(), nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 

@@ -48,22 +48,22 @@ func newBlockBlobClient(url url.URL, p pipeline.Pipeline) blockBlobClient {
 // destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
 // metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
 // metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and
-// Metadata for more information. leaseID is if specified, the operation only succeeds if the container's lease is
+// Metadata for more information. leaseID is if specified, the operation only succeeds if the resource's lease is
 // active and matches this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header.
 // ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
 // date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
-// since the specified date/time. ifMatches is specify an ETag value to operate only on blobs with a matching value.
+// since the specified date/time. ifMatch is specify an ETag value to operate only on blobs with a matching value.
 // ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobCommitBlockListResponse, error) {
+func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobCommitBlockListResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockL
 }
 
 // commitBlockListPreparer prepares the CommitBlockList request.
-func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -118,8 +118,8 @@ func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, ti
 	if ifUnmodifiedSince != nil {
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
-	if ifMatches != nil {
-		req.Header.Set("If-Match", string(*ifMatches))
+	if ifMatch != nil {
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
@@ -160,7 +160,7 @@ func (client blockBlobClient) commitBlockListResponder(resp pipeline.Response) (
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/creating-a-snapshot-of-a-blob">Creating
 // a Snapshot of a Blob.</a> timeout is the timeout parameter is expressed in seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client blockBlobClient) GetBlockList(ctx context.Context, listType BlockListType, snapshot *string, timeout *int32, leaseID *string, requestID *string) (*BlockList, error) {
@@ -220,7 +220,7 @@ func (client blockBlobClient) getBlockListResponder(resp pipeline.Response) (pip
 	defer resp.Response().Body.Close()
 	b, err := ioutil.ReadAll(resp.Response().Body)
 	if err != nil {
-		return result, NewResponseError(err, resp.Response(), "failed to read response body")
+		return result, err
 	}
 	if len(b) > 0 {
 		b = removeBOM(b)
@@ -241,7 +241,7 @@ func (client blockBlobClient) getBlockListResponder(resp pipeline.Response) (pip
 // transactional md5 for the body, to be validated by the service. timeout is the timeout parameter is expressed in
 // seconds. For more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client blockBlobClient) StageBlock(ctx context.Context, blockID string, contentLength int64, body io.ReadSeeker, transactionalContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockResponse, error) {
@@ -307,12 +307,12 @@ func (client blockBlobClient) stageBlockResponder(resp pipeline.Response) (pipel
 //
 // blockID is a valid Base64 string value that identifies the block. Prior to encoding, the string must be less than or
 // equal to 64 bytes in size. For a given blob, the length of the value specified for the blockid parameter must be the
-// same size for each block. contentLength is the length of the request. sourceURL is specifiy an URL to the copy
-// source. sourceRange is bytes of source data in the specified range. sourceContentMD5 is specify the md5 calculated
-// for the range of bytes that must be read from the copy source. timeout is the timeout parameter is expressed in
-// seconds. For more information, see <a
+// same size for each block. contentLength is the length of the request. sourceURL is specify a URL to the copy source.
+// sourceRange is bytes of source data in the specified range. sourceContentMD5 is specify the md5 calculated for the
+// range of bytes that must be read from the copy source. timeout is the timeout parameter is expressed in seconds. For
+// more information, see <a
 // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the container's
+// Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
 // lease is active and matches this ID. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
 func (client blockBlobClient) StageBlockFromURL(ctx context.Context, blockID string, contentLength int64, sourceURL string, sourceRange *string, sourceContentMD5 []byte, timeout *int32, leaseID *string, requestID *string) (*BlockBlobStageBlockFromURLResponse, error) {
@@ -396,15 +396,15 @@ func (client blockBlobClient) stageBlockFromURLResponder(resp pipeline.Response)
 // destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified
 // metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19,
 // metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and
-// Metadata for more information. leaseID is if specified, the operation only succeeds if the container's lease is
+// Metadata for more information. leaseID is if specified, the operation only succeeds if the resource's lease is
 // active and matches this ID. blobContentDisposition is optional. Sets the blob's Content-Disposition header.
 // ifModifiedSince is specify this header value to operate only on a blob if it has been modified since the specified
 // date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified
-// since the specified date/time. ifMatches is specify an ETag value to operate only on blobs with a matching value.
+// since the specified date/time. ifMatch is specify an ETag value to operate only on blobs with a matching value.
 // ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobUploadResponse, error) {
+func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*BlockBlobUploadResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -413,7 +413,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPreparer(body, contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatches, ifNoneMatch, requestID)
+	req, err := client.uploadPreparer(body, contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +425,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 }
 
 // uploadPreparer prepares the Upload request.
-func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatches *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -468,8 +468,8 @@ func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength i
 	if ifUnmodifiedSince != nil {
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
-	if ifMatches != nil {
-		req.Header.Set("If-Match", string(*ifMatches))
+	if ifMatch != nil {
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
 		req.Header.Set("If-None-Match", string(*ifNoneMatch))

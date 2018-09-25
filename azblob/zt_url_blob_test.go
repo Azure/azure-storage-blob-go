@@ -1794,7 +1794,7 @@ func (s *aztestsSuite) TestBlobsUndelete(c *chk.C) {
 }
 
 func setAndCheckBlobTier(c *chk.C, containerURL azblob.ContainerURL, blobURL azblob.BlobURL, tier azblob.AccessTierType) {
-	_, err := blobURL.SetTier(ctx, tier)
+	_, err := blobURL.SetTier(ctx, tier, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -1855,7 +1855,7 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTierInferred, chk.IsNil) // AccessTier element only returned on ListBlobs if it is explicitly set
 
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierP4)
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierP4, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err = blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -1877,9 +1877,9 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierArchive)
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierArchive, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierCool)
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierCool, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -1896,9 +1896,9 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 
 	blobURL, _ = createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierArchive)
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierArchive, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierHot)
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierHot, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err = blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
@@ -1920,6 +1920,6 @@ func (s *aztestsSuite) TestBlobTierInvalidValue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, azblob.AccessTierType("garbage"))
+	_, err = blobURL.SetTier(ctx, azblob.AccessTierType("garbage"), azblob.LeaseAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
 }
