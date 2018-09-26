@@ -2,7 +2,6 @@ package azblob_test
 
 import (
 	"context"
-
 	"strings"
 	"time"
 
@@ -115,15 +114,9 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsNegative(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 
 	defer deleteContainer(c, containerURL)
-	// The library should panic if MaxResults < -1
-	defer func() {
-		recover()
-	}()
-
-	bsu.ListContainersSegment(ctx,
+	_, err := bsu.ListContainersSegment(ctx,
 		azblob.Marker{}, *(&azblob.ListContainersSegmentOptions{Prefix: containerPrefix, MaxResults: -2}))
-
-	c.Fail() // If the list call doesn't panic, we fail
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestAccountListContainersMaxResultsZero(c *chk.C) {

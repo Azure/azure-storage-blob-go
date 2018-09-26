@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 
 	"bytes"
-	"fmt"
 	"strings"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
@@ -110,7 +109,6 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataInvalid(c *chk.C) {
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.Create(ctx, azblob.BlobHTTPHeaders{}, azblob.Metadata{"In valid!": "bar"}, azblob.BlobAccessConditions{})
-	fmt.Println(err.Error())
 	c.Assert(strings.Contains(err.Error(), invalidHeaderErrorSubstring), chk.Equals, true)
 }
 

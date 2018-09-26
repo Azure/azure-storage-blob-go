@@ -287,13 +287,16 @@ func ExampleAccountSASSignatureValues() {
 	}
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
-	sasQueryParams := azblob.AccountSASSignatureValues{
+	sasQueryParams, err := azblob.AccountSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		Permissions:   azblob.AccountSASPermissions{Read: true, List: true}.String(),
 		Services:      azblob.AccountSASServices{Blob: true}.String(),
 		ResourceTypes: azblob.AccountSASResourceTypes{Container: true, Object: true}.String(),
 	}.NewSASQueryParameters(credential)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	qp := sasQueryParams.Encode()
 	urlToSendToSomeone := fmt.Sprintf("https://%s.blob.core.windows.net?%s", accountName, qp)
@@ -332,7 +335,7 @@ func ExampleBlobSASSignatureValues() {
 	blobName := "HelloWorld.txt"   // Blob names can be mixed case
 
 	// Set the desired SAS signature values and sign them with the shared key credentials to get the SAS query parameters.
-	sasQueryParams := azblob.BlobSASSignatureValues{
+	sasQueryParams, err := azblob.BlobSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: containerName,
@@ -342,6 +345,9 @@ func ExampleBlobSASSignatureValues() {
 		// ContainerSASPermissions and make sure the BlobName field is "" (the default).
 		Permissions: azblob.BlobSASPermissions{Add: true, Read: true, Write: true}.String(),
 	}.NewSASQueryParameters(credential)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Create the URL of the resource you wish to access and append the SAS query parameters.
 	// Since this is a blob SAS, the URL is to the Azure storage blob.
@@ -1181,7 +1187,7 @@ func ExampleLeaseContainer() {
 
 	// We can change the ID of an existing lease.
 	// A lease ID can be any valid GUID string format.
-	newLeaseID := uuid{}
+	newLeaseID := newUUID()
 	newLeaseID[0] = 1
 	changeLeaseResponse, err := containerURL.ChangeLease(ctx, acquireLeaseResponse.LeaseID(), newLeaseID.String(), azblob.ModifiedAccessConditions{})
 	if err != nil {

@@ -509,15 +509,8 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsNegative(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 
 	defer deleteContainer(c, containerURL)
-
-	// If ListBlobs panics, as it should, this function will be called and recover from the panic, allowing the test to pass
-	defer func() {
-		recover()
-	}()
-	containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{MaxResults: -2})
-
-	// We will only reach this if we did not panic
-	c.Fail()
+	_, err := containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{MaxResults: -2})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsZero(c *chk.C) {
@@ -726,7 +719,11 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05",
 		Identifier: "0000", ContainerName: containerName}
-	queryParams := serviceSASValues.NewSASQueryParameters(credential)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
 	sasURL := bsu.URL()
 	sasURL.RawQuery = queryParams.Encode()
 	sasPipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})

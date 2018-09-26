@@ -93,13 +93,16 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	// Get source blob URL with SAS for StageFromURL.
 	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
 
-	srcBlobParts.SAS = azblob.BlobSASSignatureValues{
+	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
 	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 

@@ -14,9 +14,6 @@ type BlobURL struct {
 
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	blobClient := newBlobClient(url, p)
 	return BlobURL{blobClient: blobClient}
 }
@@ -34,9 +31,6 @@ func (b BlobURL) String() string {
 
 // WithPipeline creates a new BlobURL object identical to the source but with the specified request policy pipeline.
 func (b BlobURL) WithPipeline(p pipeline.Pipeline) BlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	return NewBlobURL(b.blobClient.URL(), p)
 }
 

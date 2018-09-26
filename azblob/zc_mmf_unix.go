@@ -22,6 +22,6 @@ func (m *mmf) unmap() {
 	err := syscall.Munmap(*m)
 	*m = nil
 	if err != nil {
-		panic(err)
+		sanityCheckFailed("if we are unable to unmap the memory-mapped file, there is serious concern for memory corruption")
 	}
 }

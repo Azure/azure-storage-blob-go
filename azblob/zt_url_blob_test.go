@@ -32,10 +32,7 @@ const (
 func newUUID() (u uuid) {
 	u = uuid{}
 	// Set all bits to randomly (or pseudo-randomly) chosen values.
-	_, err := rand.Read(u[:])
-	if err != nil {
-		panic("ran.Read failed")
-	}
+	rand.Read(u[:])
 	u[8] = (u[8] | reservedRFC4122) & 0x7F // u.setVariant(ReservedRFC4122)
 
 	var version byte = 4
@@ -71,13 +68,16 @@ func (s *aztestsSuite) TestCreateBlobURLWithSnapshotAndSAS(c *chk.C) {
 	if err != nil {
 		c.Fatal("Invalid credential")
 	}
-	sasQueryParams := azblob.AccountSASSignatureValues{
+	sasQueryParams, err := azblob.AccountSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,
 		ExpiryTime:    currentTime.Add(48 * time.Hour),
 		Permissions:   azblob.AccountSASPermissions{Read: true, List: true}.String(),
 		Services:      azblob.AccountSASServices{Blob: true}.String(),
 		ResourceTypes: azblob.AccountSASResourceTypes{Container: true, Object: true}.String(),
 	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	parts := azblob.NewBlobURLParts(blobURL.URL())
 	parts.SAS = sasQueryParams
@@ -260,7 +260,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05", StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: containerName, BlobName: blobName}
-	queryParams := serviceSASValues.NewSASQueryParameters(credential)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	// Create URLs to the destination blob with sas parameters
 	sasURL := blobURL.URL()
@@ -306,7 +309,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	if err != nil {
 		c.Fatal("Invalid credential")
 	}
-	queryParams := serviceSASValues.NewSASQueryParameters(credential)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	// Create destination container
 	bsu2, err := getAlternateBSU()
@@ -327,7 +333,10 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	copyServiceSASvalues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: copyContainerName, BlobName: copyBlobName}
-	copyQueryParams := copyServiceSASvalues.NewSASQueryParameters(credential)
+	copyQueryParams, err := copyServiceSASvalues.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	// Generate anonymous URL to destination with SAS
 	anonURL := bsu2.URL()
@@ -894,13 +903,8 @@ func (s *aztestsSuite) TestBlobDownloadDataNegativeOffset(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	defer func() { // The library should fail if it seems numeric parameters that are guaranteed invalid
-		recover()
-	}()
-
-	blobURL.Download(ctx, -1, 0, azblob.BlobAccessConditions{}, false)
-
-	c.Fail()
+	_, err := blobURL.Download(ctx, -1, 0, azblob.BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
 }
 
 func (s *aztestsSuite) TestBlobDownloadDataOffsetOutOfRange(c *chk.C) {
@@ -919,13 +923,8 @@ func (s *aztestsSuite) TestBlobDownloadDataCountNegative(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	defer func() { // The library should panic if it sees numeric parameters that are guaranteed invalid
-		recover()
-	}()
-
-	dl, _ := blobURL.Download(ctx, 0, -2, azblob.BlobAccessConditions{}, false)
-	dl.Body(azblob.RetryReaderOptions{}).Close()
-	c.Fail()
+	_, err := blobURL.Download(ctx, 0, -2, azblob.BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
 }
 
 func (s *aztestsSuite) TestBlobDownloadDataCountZero(c *chk.C) {

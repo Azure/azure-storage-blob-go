@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -22,17 +23,17 @@ type AccountSASSignatureValues struct {
 
 // NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
 // the proper SAS query parameters.
-func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) SASQueryParameters {
+func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	// https://docs.microsoft.com/en-us/rest/api/storageservices/Constructing-an-Account-SAS
 	if v.ExpiryTime.IsZero() || v.Permissions == "" || v.ResourceTypes == "" || v.Services == "" {
-		panic("Account SAS is missing at least one of these: ExpiryTime, Permissions, Service, or ResourceType")
+		return SASQueryParameters{}, errors.New("account SAS is missing at least one of these: ExpiryTime, Permissions, Service, or ResourceType")
 	}
 	if v.Version == "" {
 		v.Version = SASVersion
 	}
 	perms := &AccountSASPermissions{}
 	if err := perms.Parse(v.Permissions); err != nil {
-		panic(err)
+		return SASQueryParameters{}, err
 	}
 	v.Permissions = perms.String()
 
@@ -68,7 +69,7 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 		// Calculated SAS signature
 		signature: signature,
 	}
-	return p
+	return p, nil
 }
 
 // The AccountSASPermissions type simplifies creating the permissions string for an Azure Storage Account SAS.

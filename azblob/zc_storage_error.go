@@ -109,3 +109,9 @@ func (e *storageError) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err
 	}
 	return nil
 }
+
+// Make it clear that a panic occurred due to sanity checks failing
+// This means the user should correct the programming errors
+func sanityCheckFailed(msg string) {
+	panic("Sanity check failed: " + msg)
+}
