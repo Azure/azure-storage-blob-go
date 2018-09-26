@@ -90,12 +90,6 @@ type AppendPositionAccessConditions struct {
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
 func (ac AppendPositionAccessConditions) pointers() (iape *int64, imsltoe *int64) {
-	if ac.IfAppendPositionEqual < -1 {
-		panic("IfAppendPositionEqual can't be less than -1")
-	}
-	if ac.IfMaxSizeLessThanOrEqual < -1 {
-		panic("IfMaxSizeLessThanOrEqual can't be less than -1")
-	}
 	var zero int64 // defaults to 0
 	switch ac.IfAppendPositionEqual {
 	case -1:

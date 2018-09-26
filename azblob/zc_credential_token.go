@@ -127,7 +127,8 @@ func (f *tokenCredential) stopRefresh() {
 func (f *tokenCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 		if request.URL.Scheme != "https" {
-			panic("Token credentials require a URL using the https protocol scheme.")
+			// HTTPS must be used, otherwise the tokens are at the risk of being exposed
+			sanityCheckFailed("token credentials require a URL using the https protocol scheme.")
 		}
 		request.Header[headerAuthorization] = []string{"Bearer " + f.Token()}
 		return next.Do(ctx, request)

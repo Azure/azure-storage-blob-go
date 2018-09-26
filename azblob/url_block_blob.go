@@ -30,9 +30,6 @@ type BlockBlobURL struct {
 
 // NewBlockBlobURL creates a BlockBlobURL object using the specified URL and request policy pipeline.
 func NewBlockBlobURL(url url.URL, p pipeline.Pipeline) BlockBlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	blobClient := newBlobClient(url, p)
 	bbClient := newBlockBlobClient(url, p)
 	return BlockBlobURL{BlobURL: BlobURL{blobClient: blobClient}, bbClient: bbClient}

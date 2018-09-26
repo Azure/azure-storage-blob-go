@@ -2,7 +2,6 @@ package azblob_test
 
 import (
 	"context"
-
 	"crypto/md5"
 
 	"bytes"
@@ -187,14 +186,8 @@ func (s *aztestsSuite) TestBlobCreatePageSequenceInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	// Negative sequenceNumber should cause a panic
-	defer func() {
-		recover()
-	}()
-
-	blobURL.Create(ctx, azblob.PageBlobPageBytes, -1, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
-	c.Fail()
-
+	_, err := blobURL.Create(ctx, azblob.PageBlobPageBytes, -1, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobCreatePageMetadataNonEmpty(c *chk.C) {
@@ -370,12 +363,8 @@ func (s *aztestsSuite) TestBlobPutPagesInvalidRange(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	defer func() { // The library should panic if the page range is invalid in any way
-		recover()
-	}()
-
-	blobURL.UploadPages(ctx, 0, strings.NewReader(blockBlobDefaultData), azblob.PageBlobAccessConditions{}, nil)
-	c.Fail()
+	_, err := blobURL.UploadPages(ctx, 0, strings.NewReader(blockBlobDefaultData), azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobPutPagesNilBody(c *chk.C) {
@@ -384,13 +373,8 @@ func (s *aztestsSuite) TestBlobPutPagesNilBody(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	// A page range that starts and ends at 0 should panic
-	defer func() {
-		recover()
-	}()
-
-	blobURL.UploadPages(ctx, 0, nil, azblob.PageBlobAccessConditions{}, nil)
-	c.Fail()
+	_, err := blobURL.UploadPages(ctx, 0, nil, azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobPutPagesEmptyBody(c *chk.C) {
@@ -399,13 +383,8 @@ func (s *aztestsSuite) TestBlobPutPagesEmptyBody(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	// A page range that starts and ends at 0 should panic
-	defer func() {
-		recover()
-	}()
-
-	blobURL.UploadPages(ctx, 0, bytes.NewReader([]byte{}), azblob.PageBlobAccessConditions{}, nil)
-	c.Fail()
+	_, err := blobURL.UploadPages(ctx, 0, bytes.NewReader([]byte{}), azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobPutPagesNonExistantBlob(c *chk.C) {
@@ -667,13 +646,8 @@ func (s *aztestsSuite) TestBlobClearPagesInvalidRange(c *chk.C) {
 	containerURL, blobURL := setupClearPagesTest(c)
 	defer deleteContainer(c, containerURL)
 
-	// A misaligned page range will panic (End is set to n*512 instead of (n*512)-1 as is required)
-	defer func() {
-		recover()
-	}()
-
-	blobURL.ClearPages(ctx, 0, azblob.PageBlobPageBytes+1, azblob.PageBlobAccessConditions{})
-	c.Fail()
+	_, err := blobURL.ClearPages(ctx, 0, azblob.PageBlobPageBytes+1, azblob.PageBlobAccessConditions{})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobClearPagesIfModifiedSinceTrue(c *chk.C) {
@@ -907,12 +881,8 @@ func (s *aztestsSuite) TestBlobGetPageRangesInvalidRange(c *chk.C) {
 	containerURL, blobURL := setupGetPageRangesTest(c)
 	defer deleteContainer(c, containerURL)
 
-	defer func() { // Invalid blob range should panic
-		recover()
-	}()
-
-	blobURL.GetPageRanges(ctx, -2, 500, azblob.BlobAccessConditions{})
-	c.Fail()
+	_, err := blobURL.GetPageRanges(ctx, -2, 500, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
 }
 
 func (s *aztestsSuite) TestBlobGetPageRangesNonContiguousRanges(c *chk.C) {
@@ -1070,13 +1040,8 @@ func (s *aztestsSuite) TestBlobDiffPageRangesNonExistantSnapshot(c *chk.C) {
 func (s *aztestsSuite) TestBlobDiffPageRangeInvalidRange(c *chk.C) {
 	containerURL, blobURL, snapshot := setupDiffPageRangesTest(c)
 	defer deleteContainer(c, containerURL)
-
-	defer func() { // Invalid page range should panic
-		recover()
-	}()
-
-	blobURL.GetPageRangesDiff(ctx, -22, 14, snapshot, azblob.BlobAccessConditions{})
-	c.Fail()
+	_, err := blobURL.GetPageRangesDiff(ctx, -22, 14, snapshot, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
 }
 
 func (s *aztestsSuite) TestBlobDiffPageRangeIfModifiedSinceTrue(c *chk.C) {
@@ -1186,12 +1151,8 @@ func (s *aztestsSuite) TestBlobResizeInvalidSizeNegative(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	defer func() { // Negative size should panic
-		recover()
-	}()
-
-	blobURL.Resize(ctx, -4, azblob.BlobAccessConditions{})
-	c.Fail()
+	_, err := blobURL.Resize(ctx, -4, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestBlobResizeInvalidSizeMisaligned(c *chk.C) {
@@ -1200,12 +1161,8 @@ func (s *aztestsSuite) TestBlobResizeInvalidSizeMisaligned(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	defer func() { // Invalid size should panic
-		recover()
-	}()
-
-	blobURL.Resize(ctx, 12, azblob.BlobAccessConditions{})
-	c.Fail()
+	_, err := blobURL.Resize(ctx, 12, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func validateResize(c *chk.C, blobURL azblob.PageBlobURL) {

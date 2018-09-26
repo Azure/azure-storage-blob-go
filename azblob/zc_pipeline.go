@@ -21,10 +21,6 @@ type PipelineOptions struct {
 
 // NewPipeline creates a Pipeline using the specified credentials and options.
 func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
-	if c == nil {
-		panic("c can't be nil")
-	}
-
 	// Closest to API goes first; closest to the wire goes last
 	f := []pipeline.Factory{
 		NewTelemetryPolicyFactory(o.Telemetry),
