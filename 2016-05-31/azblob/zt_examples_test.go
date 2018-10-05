@@ -143,7 +143,9 @@ func ExampleNewPipeline() {
 				// This method is not called for filtered-out severities.
 				logger.Output(2, m) // This example uses Go's standard logger
 			},
-			MinimumLevelToLog: func() pipeline.LogLevel { return pipeline.LogInfo }, // Log all events from informational to more severe
+			ShouldLog: func(level pipeline.LogLevel) bool {
+				return level <= pipeline.LogInfo // Log all events from informational to more severe
+			},
 		},
 	}
 
