@@ -376,11 +376,14 @@ func (t *uploadStreamToBlockBlobOptions) start(ctx context.Context) (interface{}
 }
 
 func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, buffer []byte) error {
-	if num == 0 && len(buffer) < t.o.BufferSize {
+	if num == 0 {
+		t.firstBlock = buffer
+
 		// If whole payload fits in 1 block, don't stage it; End will upload it with 1 I/O operation
 		// If the payload is exactly the same size as the buffer, there may be more content coming in.
-		t.firstBlock = buffer
-		return nil
+		if len(buffer) < t.o.BufferSize {
+			return nil
+		}
 	}
 	// Else, upload a staged block...
 	atomicMorphUint32(&t.maxBlockNum, func(startVal uint32) (val uint32, morphResult interface{}) {
@@ -396,7 +399,9 @@ func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, 
 }
 
 func (t *uploadStreamToBlockBlobOptions) end(ctx context.Context) (interface{}, error) {
-	if t.maxBlockNum == 0 {
+	// If the first block had the exact same size as the buffer
+	// we would have staged it as a block thinking that there might be more data coming
+	if t.maxBlockNum == 0 && len(t.firstBlock) != t.o.BufferSize {
 		// If whole payload fits in 1 block (block #0), upload it with 1 I/O operation
 		return t.b.Upload(ctx, bytes.NewReader(t.firstBlock),
 			t.o.BlobHTTPHeaders, t.o.Metadata, t.o.AccessConditions)
