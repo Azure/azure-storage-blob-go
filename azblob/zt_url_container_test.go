@@ -274,21 +274,12 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	// that will be ignored by the service
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-
 	defer deleteContainer(c, containerURL)
 
-	// SetMetadata will panic with invalid accessConditions. This will allow the test to clean
-	// up and pass if it does.
-	defer func() {
-		recover()
-	}()
-
 	invalidEtag := azblob.ETag("invalid")
-	containerURL.SetMetadata(ctx, basicMetadata,
+	_, err := containerURL.SetMetadata(ctx, basicMetadata,
 		azblob.ContainerAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: invalidEtag}})
-
-	// We will only reach this if the api call fails to panic.
-	c.Fail()
+	c.Assert(err, chk.Not(chk.Equals), nil)
 }
 
 func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {
@@ -340,15 +331,8 @@ func (s *aztestsSuite) TestContainerListBlobsWithSnapshots(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 
-	// If ListBlobs panics, as it should, this function will be called and recover from the panic, allowing the test to pass
-	defer func() {
-		recover()
-	}()
-
-	containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true}})
-
-	// We will only reach this if we did not panic
-	c.Fail()
+	_, err := containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true}})
+	c.Assert(err, chk.Not(chk.Equals), nil)
 }
 
 func (s *aztestsSuite) TestContainerListBlobsInvalidDelimiter(c *chk.C) {

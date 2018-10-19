@@ -3,6 +3,7 @@ package azblob
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -86,7 +87,7 @@ func (c ContainerURL) Create(ctx context.Context, metadata Metadata, publicAcces
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-container.
 func (c ContainerURL) Delete(ctx context.Context, ac ContainerAccessConditions) (*ContainerDeleteResponse, error) {
 	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
-		sanityCheckFailed("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
+		return nil, errors.New("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
 
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.ModifiedAccessConditions.pointers()
@@ -106,7 +107,7 @@ func (c ContainerURL) GetProperties(ctx context.Context, ac LeaseAccessCondition
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-container-metadata.
 func (c ContainerURL) SetMetadata(ctx context.Context, metadata Metadata, ac ContainerAccessConditions) (*ContainerSetMetadataResponse, error) {
 	if !ac.IfUnmodifiedSince.IsZero() || ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
-		sanityCheckFailed("the IfUnmodifiedSince, IfMatch, and IfNoneMatch must have their default values because they are ignored by the blob service")
+		return nil, errors.New("the IfUnmodifiedSince, IfMatch, and IfNoneMatch must have their default values because they are ignored by the blob service")
 	}
 	ifModifiedSince, _, _, _ := ac.ModifiedAccessConditions.pointers()
 	return c.client.SetMetadata(ctx, nil, ac.LeaseAccessConditions.pointers(), metadata, ifModifiedSince, nil)
@@ -178,7 +179,7 @@ func (p *AccessPolicyPermission) Parse(s string) error {
 func (c ContainerURL) SetAccessPolicy(ctx context.Context, accessType PublicAccessType, si []SignedIdentifier,
 	ac ContainerAccessConditions) (*ContainerSetAccessPolicyResponse, error) {
 	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
-		sanityCheckFailed("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
+		return nil, errors.New("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.ModifiedAccessConditions.pointers()
 	return c.client.SetAccessPolicy(ctx, si, nil, ac.LeaseAccessConditions.pointers(),
@@ -238,7 +239,7 @@ func (c ContainerURL) ListBlobsFlatSegment(ctx context.Context, marker Marker, o
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/list-blobs.
 func (c ContainerURL) ListBlobsHierarchySegment(ctx context.Context, marker Marker, delimiter string, o ListBlobsSegmentOptions) (*ListBlobsHierarchySegmentResponse, error) {
 	if o.Details.Snapshots {
-		sanityCheckFailed("snapshots are not supported in this listing operation")
+		return nil, errors.New("snapshots are not supported in this listing operation")
 	}
 	prefix, include, maxResults := o.pointers()
 	return c.client.ListBlobHierarchySegment(ctx, delimiter, prefix, marker.val, maxResults, include, nil, nil)

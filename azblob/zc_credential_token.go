@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"context"
+	"errors"
 	"sync/atomic"
 
 	"runtime"
@@ -128,7 +129,7 @@ func (f *tokenCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) 
 	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 		if request.URL.Scheme != "https" {
 			// HTTPS must be used, otherwise the tokens are at the risk of being exposed
-			sanityCheckFailed("token credentials require a URL using the https protocol scheme.")
+			return nil, errors.New("token credentials require a URL using the https protocol scheme")
 		}
 		request.Header[headerAuthorization] = []string{"Bearer " + f.Token()}
 		return next.Do(ctx, request)

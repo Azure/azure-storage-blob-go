@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"math/rand"
@@ -169,7 +170,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 				// 1st try as for additional tries.
 				err = requestCopy.RewindBody()
 				if err != nil {
-					sanityCheckFailed("we must be able to seek on the Body Stream, otherwise retries would cause data corruption.")
+					return nil, errors.New("we must be able to seek on the Body Stream, otherwise retries would cause data corruption")
 				}
 
 				if !tryingPrimary {
@@ -257,7 +258,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 							// as for client, the response should not be nil if request is sent and the operations is executed successfully.
 							// Another option, is that execute the cancel function when response or response.Response() is nil,
 							// as in this case, current per-try has nothing to do in future.
-							sanityCheckFailed("invalid state, response should not be nil when the operation is executed successfully")
+							return nil, errors.New("invalid state, response should not be nil when the operation is executed successfully")
 						}
 						response.Response().Body = &contextCancelReadCloser{cf: tryCancel, body: response.Response().Body}
 					}
