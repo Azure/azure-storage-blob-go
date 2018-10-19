@@ -71,6 +71,13 @@ func (s *aztestsSuite) TestUploadStreamToBlockBlobSingleIO(c *chk.C) {
 	performUploadStreamToBlockBlobTest(c, blobSize, bufferSize, maxBuffers)
 }
 
+func (s *aztestsSuite) TestUploadStreamToBlockBlobSingleIOEdgeCase(c *chk.C) {
+	blobSize := 8 * 1024
+	bufferSize := 8 * 1024
+	maxBuffers := 3
+	performUploadStreamToBlockBlobTest(c, blobSize, bufferSize, maxBuffers)
+}
+
 func (s *aztestsSuite) TestUploadStreamToBlockBlobEmpty(c *chk.C) {
 	blobSize := 0
 	bufferSize := 8 * 1024
