@@ -33,6 +33,6 @@ func (m *mmf) unmap() {
 	*m = mmf{}
 	err := syscall.UnmapViewOfFile(addr)
 	if err != nil {
-		sanityCheckFailed("if we are unable to unmap the memory-mapped file, there is serious concern for memory corruption")
+		panic("if we are unable to unmap the memory-mapped file, there is serious concern for memory corruption")
 	}
 }

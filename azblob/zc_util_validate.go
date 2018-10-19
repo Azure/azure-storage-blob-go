@@ -1,6 +1,7 @@
 package azblob
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -28,29 +29,36 @@ func (r httpRange) pointers() *string {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func validateSeekableStreamAt0AndGetCount(body io.ReadSeeker) int64 {
+func validateSeekableStreamAt0AndGetCount(body io.ReadSeeker) (int64, error) {
 	if body == nil { // nil body's are "logically" seekable to 0 and are 0 bytes long
-		return 0
+		return 0, nil
 	}
-	validateSeekableStreamAt0(body)
+
+	err := validateSeekableStreamAt0(body)
+	if err != nil {
+		return 0, err
+	}
+
 	count, err := body.Seek(0, io.SeekEnd)
 	if err != nil {
-		sanityCheckFailed("body stream must be seekable")
+		return 0, errors.New("body stream must be seekable")
 	}
 
 	body.Seek(0, io.SeekStart)
-	return count
+	return count, nil
 }
 
-func validateSeekableStreamAt0(body io.ReadSeeker) {
+// return an error if body is not a valid seekable stream at 0
+func validateSeekableStreamAt0(body io.ReadSeeker) error {
 	if body == nil { // nil body's are "logically" seekable to 0
-		return
+		return nil
 	}
 	if pos, err := body.Seek(0, io.SeekCurrent); pos != 0 || err != nil {
 		// Help detect programmer error
 		if err != nil {
-			sanityCheckFailed("body stream must be seekable")
+			return errors.New("body stream must be seekable")
 		}
-		sanityCheckFailed("body stream must be set to position 0")
+		return errors.New("body stream must be set to position 0")
 	}
+	return nil
 }

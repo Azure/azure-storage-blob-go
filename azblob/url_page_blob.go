@@ -59,7 +59,10 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
 func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac PageBlobAccessConditions, transactionalMD5 []byte) (*PageBlobUploadPagesResponse, error) {
-	count := validateSeekableStreamAt0AndGetCount(body)
+	count, err := validateSeekableStreamAt0AndGetCount(body)
+	if err != nil {
+		return nil, err
+	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil,

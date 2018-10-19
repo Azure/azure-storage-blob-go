@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"net/http"
 	"net/url"
 	"sort"
@@ -45,7 +46,10 @@ func (f *SharedKeyCredential) New(next pipeline.Policy, po *pipeline.PolicyOptio
 		if d := request.Header.Get(headerXmsDate); d == "" {
 			request.Header[headerXmsDate] = []string{time.Now().UTC().Format(http.TimeFormat)}
 		}
-		stringToSign := f.buildStringToSign(request)
+		stringToSign, err := f.buildStringToSign(request)
+		if err != nil {
+			return nil, err
+		}
 		signature := f.ComputeHMACSHA256(stringToSign)
 		authHeader := strings.Join([]string{"SharedKey ", f.accountName, ":", signature}, "")
 		request.Header[headerAuthorization] = []string{authHeader}
@@ -90,12 +94,17 @@ func (f *SharedKeyCredential) ComputeHMACSHA256(message string) (base64String st
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-func (f *SharedKeyCredential) buildStringToSign(request pipeline.Request) string {
+func (f *SharedKeyCredential) buildStringToSign(request pipeline.Request) (string, error) {
 	// https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
 	headers := request.Header
 	contentLength := headers.Get(headerContentLength)
 	if contentLength == "0" {
 		contentLength = ""
+	}
+
+	canonicalizedResource, err := f.buildCanonicalizedResource(request.URL)
+	if err != nil {
+		return "", err
 	}
 
 	stringToSign := strings.Join([]string{
@@ -112,9 +121,9 @@ func (f *SharedKeyCredential) buildStringToSign(request pipeline.Request) string
 		headers.Get(headerIfUnmodifiedSince),
 		headers.Get(headerRange),
 		buildCanonicalizedHeader(headers),
-		f.buildCanonicalizedResource(request.URL),
+		canonicalizedResource,
 	}, "\n")
-	return stringToSign
+	return stringToSign, nil
 }
 
 func buildCanonicalizedHeader(headers http.Header) string {
@@ -146,7 +155,7 @@ func buildCanonicalizedHeader(headers http.Header) string {
 	return string(ch.Bytes())
 }
 
-func (f *SharedKeyCredential) buildCanonicalizedResource(u *url.URL) string {
+func (f *SharedKeyCredential) buildCanonicalizedResource(u *url.URL) (string, error) {
 	// https://docs.microsoft.com/en-us/rest/api/storageservices/authentication-for-the-azure-storage-services
 	cr := bytes.NewBufferString("/")
 	cr.WriteString(f.accountName)
@@ -164,7 +173,7 @@ func (f *SharedKeyCredential) buildCanonicalizedResource(u *url.URL) string {
 	// params is a map[string][]string; param name is key; params values is []string
 	params, err := url.ParseQuery(u.RawQuery) // Returns URL decoded values
 	if err != nil {
-		sanityCheckFailed("parsing query parameters must succeed, otherwise there might be serious problems in the SDK/generated code")
+		return "", errors.New("parsing query parameters must succeed, otherwise there might be serious problems in the SDK/generated code")
 	}
 
 	if len(params) > 0 { // There is at least 1 query parameter
@@ -183,5 +192,5 @@ func (f *SharedKeyCredential) buildCanonicalizedResource(u *url.URL) string {
 			cr.WriteString("\n" + paramName + ":" + strings.Join(paramValues, ","))
 		}
 	}
-	return string(cr.Bytes())
+	return string(cr.Bytes()), nil
 }
