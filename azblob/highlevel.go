@@ -407,8 +407,9 @@ func (t *uploadStreamToBlockBlobOptions) start(ctx context.Context) (interface{}
 }
 
 func (t *uploadStreamToBlockBlobOptions) chunk(ctx context.Context, num uint32, buffer []byte) error {
-	if num == 0 && len(buffer) <= t.o.BufferSize {
+	if num == 0 && len(buffer) < t.o.BufferSize {
 		// If whole payload fits in 1 block, don't stage it; End will upload it with 1 I/O operation
+		// If the payload is exactly the same size as the buffer, there may be more content coming in.
 		t.firstBlock = buffer
 		return nil
 	}
