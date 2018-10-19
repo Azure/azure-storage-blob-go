@@ -55,15 +55,6 @@ type retryReader struct {
 // NewRetryReader creates a retry reader.
 func NewRetryReader(ctx context.Context, initialResponse *http.Response,
 	info HTTPGetterInfo, o RetryReaderOptions, getter HTTPGetter) io.ReadCloser {
-	if getter == nil {
-		panic("getter must not be nil")
-	}
-	if info.Count < 0 {
-		panic("info.Count must be >= 0")
-	}
-	if o.MaxRetryRequests < 0 {
-		panic("o.MaxRetryRequests must be >= 0")
-	}
 	return &retryReader{ctx: ctx, getter: getter, info: info, countWasBounded: info.Count != CountToEnd, response: initialResponse, o: o}
 }
 

@@ -274,21 +274,12 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	// that will be ignored by the service
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-
 	defer deleteContainer(c, containerURL)
 
-	// SetMetadata will panic with invalid accessConditions. This will allow the test to clean
-	// up and pass if it does.
-	defer func() {
-		recover()
-	}()
-
 	invalidEtag := azblob.ETag("invalid")
-	containerURL.SetMetadata(ctx, basicMetadata,
+	_, err := containerURL.SetMetadata(ctx, basicMetadata,
 		azblob.ContainerAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfMatch: invalidEtag}})
-
-	// We will only reach this if the api call fails to panic.
-	c.Fail()
+	c.Assert(err, chk.Not(chk.Equals), nil)
 }
 
 func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {
@@ -340,15 +331,8 @@ func (s *aztestsSuite) TestContainerListBlobsWithSnapshots(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 
-	// If ListBlobs panics, as it should, this function will be called and recover from the panic, allowing the test to pass
-	defer func() {
-		recover()
-	}()
-
-	containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true}})
-
-	// We will only reach this if we did not panic
-	c.Fail()
+	_, err := containerURL.ListBlobsHierarchySegment(ctx, azblob.Marker{}, "/", azblob.ListBlobsSegmentOptions{Details: azblob.BlobListingDetails{Snapshots: true}})
+	c.Assert(err, chk.Not(chk.Equals), nil)
 }
 
 func (s *aztestsSuite) TestContainerListBlobsInvalidDelimiter(c *chk.C) {
@@ -509,15 +493,8 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsNegative(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 
 	defer deleteContainer(c, containerURL)
-
-	// If ListBlobs panics, as it should, this function will be called and recover from the panic, allowing the test to pass
-	defer func() {
-		recover()
-	}()
-	containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{MaxResults: -2})
-
-	// We will only reach this if we did not panic
-	c.Fail()
+	_, err := containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{MaxResults: -2})
+	c.Assert(err, chk.Not(chk.IsNil))
 }
 
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsZero(c *chk.C) {
@@ -726,7 +703,11 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 
 	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05",
 		Identifier: "0000", ContainerName: containerName}
-	queryParams := serviceSASValues.NewSASQueryParameters(credential)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
 	sasURL := bsu.URL()
 	sasURL.RawQuery = queryParams.Encode()
 	sasPipeline := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})

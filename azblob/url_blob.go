@@ -14,9 +14,6 @@ type BlobURL struct {
 
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	blobClient := newBlobClient(url, p)
 	return BlobURL{blobClient: blobClient}
 }
@@ -34,9 +31,6 @@ func (b BlobURL) String() string {
 
 // WithPipeline creates a new BlobURL object identical to the source but with the specified request policy pipeline.
 func (b BlobURL) WithPipeline(p pipeline.Pipeline) BlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	return NewBlobURL(b.blobClient.URL(), p)
 }
 
@@ -108,8 +102,8 @@ func (b BlobURL) Undelete(ctx context.Context) (*BlobUndeleteResponse, error) {
 // bandwidth of the blob. A block blob's tier determines Hot/Cool/Archive storage type. This operation
 // does not update the blob's ETag.
 // For detailed information about block blob level tiering see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers.
-func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType) (*BlobSetTierResponse, error) {
-	return b.blobClient.SetTier(ctx, tier, nil, nil)
+func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions) (*BlobSetTierResponse, error) {
+	return b.blobClient.SetTier(ctx, tier, nil, nil, lac.pointers())
 }
 
 // GetBlobProperties returns the blob's properties.

@@ -3,7 +3,6 @@ package azblob
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -63,12 +62,6 @@ type UploadToBlockBlobOptions struct {
 // UploadBufferToBlockBlob uploads a buffer in blocks to a block blob.
 func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions) (CommonResponse, error) {
-
-	// Validate parameters and set defaults
-	if o.BlockSize < 0 || o.BlockSize > BlockBlobMaxUploadBlobBytes {
-		panic(fmt.Sprintf("BlockSize option must be > 0 and <= %d", BlockBlobMaxUploadBlobBytes))
-	}
-
 	bufferSize := int64(len(b))
 	if o.BlockSize == 0 {
 		// If bufferSize > (BlockBlobMaxStageBlockBytes * BlockBlobMaxBlocks), then error
@@ -97,9 +90,6 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)
-	if numBlocks > BlockBlobMaxBlocks {
-		panic(fmt.Sprintf("The buffer's size is too big or the BlockSize is too small; the number of blocks must be <= %d", BlockBlobMaxBlocks))
-	}
 
 	blockIDList := make([]string, numBlocks) // Base-64 encoded block IDs
 	progress := int64(0)
@@ -187,20 +177,8 @@ type DownloadFromBlobOptions struct {
 // downloadBlobToBuffer downloads an Azure blob to a buffer with parallel.
 func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	b []byte, o DownloadFromBlobOptions, initialDownloadResponse *DownloadResponse) error {
-	// Validate parameters, and set defaults.
-	if o.BlockSize < 0 {
-		panic("BlockSize option must be >= 0")
-	}
 	if o.BlockSize == 0 {
 		o.BlockSize = BlobDefaultDownloadBlockSize
-	}
-
-	if offset < 0 {
-		panic("offset option must be >= 0")
-	}
-
-	if count < 0 {
-		panic("count option must be >= 0")
 	}
 
 	if count == CountToEnd { // If size not specified, calculate it
@@ -214,10 +192,6 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 			}
 			count = dr.ContentLength() - offset
 		}
-	}
-
-	if int64(len(b)) < count {
-		panic(fmt.Errorf("the buffer's size should be equal to or larger than the request count of bytes: %d", count))
 	}
 
 	// Prepare and do parallel download.
@@ -268,12 +242,7 @@ func DownloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 // Offset and count are optional, pass 0 for both to download the entire blob.
 func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, count int64,
 	file *os.File, o DownloadFromBlobOptions) error {
-	// 1. Validate parameters.
-	if file == nil {
-		panic("file must not be nil")
-	}
-
-	// 2. Calculate the size of the destination file
+	// 1. Calculate the size of the destination file
 	var size int64
 
 	if count == CountToEnd {
@@ -287,7 +256,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 		size = count
 	}
 
-	// 3. Compare and try to resize local file's size if it doesn't match Azure blob's size.
+	// 2. Compare and try to resize local file's size if it doesn't match Azure blob's size.
 	stat, err := file.Stat()
 	if err != nil {
 		return err
@@ -299,7 +268,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 	}
 
 	if size > 0 {
-		// 4. Set mmap and call downloadBlobToBuffer.
+		// 3. Set mmap and call downloadBlobToBuffer.
 		m, err := newMMF(file, true, 0, int(size))
 		if err != nil {
 			return err

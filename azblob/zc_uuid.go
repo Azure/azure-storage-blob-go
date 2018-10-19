@@ -21,10 +21,7 @@ type uuid [16]byte
 func newUUID() (u uuid) {
 	u = uuid{}
 	// Set all bits to randomly (or pseudo-randomly) chosen values.
-	_, err := rand.Read(u[:])
-	if err != nil {
-		panic("ran.Read failed")
-	}
+	rand.Read(u[:])
 	u[8] = (u[8] | reservedRFC4122) & 0x7F // u.setVariant(ReservedRFC4122)
 
 	var version byte = 4

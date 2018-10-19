@@ -28,17 +28,13 @@ type BlobSASSignatureValues struct {
 
 // NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
 // the proper SAS query parameters.
-func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) SASQueryParameters {
-	if sharedKeyCredential == nil {
-		panic("sharedKeyCredential can't be nil")
-	}
-
+func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
 	if v.BlobName == "" {
 		// Make sure the permission characters are in the correct order
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
-			panic(err)
+			return SASQueryParameters{}, err
 		}
 		v.Permissions = perms.String()
 	} else {
@@ -46,7 +42,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		// Make sure the permission characters are in the correct order
 		perms := &BlobSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
-			panic(err)
+			return SASQueryParameters{}, err
 		}
 		v.Permissions = perms.String()
 	}
@@ -89,7 +85,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		// Calculated SAS signature
 		signature: signature,
 	}
-	return p
+	return p, nil
 }
 
 // getCanonicalName computes the canonical name for a container or blob resource for SAS signing.

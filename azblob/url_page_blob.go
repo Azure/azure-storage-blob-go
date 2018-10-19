@@ -26,9 +26,6 @@ type PageBlobURL struct {
 
 // NewPageBlobURL creates a PageBlobURL object using the specified URL and request policy pipeline.
 func NewPageBlobURL(url url.URL, p pipeline.Pipeline) PageBlobURL {
-	if p == nil {
-		panic("p can't be nil")
-	}
 	blobClient := newBlobClient(url, p)
 	pbClient := newPageBlobClient(url, p)
 	return PageBlobURL{BlobURL: BlobURL{blobClient: blobClient}, pbClient: pbClient}
@@ -50,9 +47,6 @@ func (pb PageBlobURL) WithSnapshot(snapshot string) PageBlobURL {
 // Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*PageBlobCreateResponse, error) {
-	if sequenceNumber < 0 {
-		panic("sequenceNumber must be greater than or equal to 0")
-	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Create(ctx, 0, size, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
@@ -65,7 +59,10 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page.
 func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.ReadSeeker, ac PageBlobAccessConditions, transactionalMD5 []byte) (*PageBlobUploadPagesResponse, error) {
-	count := validateSeekableStreamAt0AndGetCount(body)
+	count, err := validateSeekableStreamAt0AndGetCount(body)
+	if err != nil {
+		return nil, err
+	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := ac.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil,
@@ -111,9 +108,6 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count
 // Resize resizes the page blob to the specified size (which must be a multiple of 512).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-blob-properties.
 func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessConditions) (*PageBlobResizeResponse, error) {
-	if size%PageBlobPageBytes != 0 {
-		panic("Size must be a multiple of PageBlobPageBytes (512)")
-	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Resize(ctx, size, nil, ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
@@ -122,9 +116,6 @@ func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessCondi
 // SetSequenceNumber sets the page blob's sequence number.
 func (pb PageBlobURL) UpdateSequenceNumber(ctx context.Context, action SequenceNumberActionType, sequenceNumber int64,
 	ac BlobAccessConditions) (*PageBlobUpdateSequenceNumberResponse, error) {
-	if sequenceNumber < 0 {
-		panic("sequenceNumber must be greater than or equal to 0")
-	}
 	sn := &sequenceNumber
 	if action == SequenceNumberActionIncrement {
 		sn = nil
@@ -145,26 +136,11 @@ func (pb PageBlobURL) StartCopyIncremental(ctx context.Context, source url.URL, 
 	qp := source.Query()
 	qp.Set("snapshot", snapshot)
 	source.RawQuery = qp.Encode()
-	return pb.pbClient.CopyIncremental(ctx, source.String(), nil, nil,
+	return pb.pbClient.CopyIncremental(ctx, source.String(), nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
 func (pr PageRange) pointers() *string {
-	if pr.Start < 0 {
-		panic("PageRange's Start value must be greater than or equal to 0")
-	}
-	if pr.End <= 0 {
-		panic("PageRange's End value must be greater than 0")
-	}
-	if pr.Start%PageBlobPageBytes != 0 {
-		panic("PageRange's Start value must be a multiple of 512")
-	}
-	if pr.End%PageBlobPageBytes != (PageBlobPageBytes - 1) {
-		panic("PageRange's End value must be 1 less than a multiple of 512")
-	}
-	if pr.End <= pr.Start {
-		panic("PageRange's End value must be after the start")
-	}
 	endOffset := strconv.FormatInt(int64(pr.End), 10)
 	asString := fmt.Sprintf("bytes=%v-%s", pr.Start, endOffset)
 	return &asString
@@ -202,16 +178,6 @@ type SequenceNumberAccessConditions struct {
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
 func (ac SequenceNumberAccessConditions) pointers() (snltoe *int64, snlt *int64, sne *int64) {
-	if ac.IfSequenceNumberLessThan < -1 {
-		panic("Ifsequencenumberlessthan can't be less than -1")
-	}
-	if ac.IfSequenceNumberLessThanOrEqual < -1 {
-		panic("IfSequenceNumberLessThanOrEqual can't be less than -1")
-	}
-	if ac.IfSequenceNumberEqual < -1 {
-		panic("IfSequenceNumberEqual can't be less than -1")
-	}
-
 	var zero int64 // Defaults to 0
 	switch ac.IfSequenceNumberLessThan {
 	case -1:
