@@ -14,9 +14,29 @@ This repository contains the open source Blob SDK for Go.
 
 ## Getting Started
 * If you don't already have it, install [the Go distribution](https://golang.org/dl/)
-* Go get the SDK:
+* Get the SDK, with any method you prefer:
+    * Go Get: ```go get github.com/Azure/azure-storage-blob-go/azblob```
+    * Dep: add ```github.com/Azure/azure-storage-blob-go``` to Gopkg.toml:
+        ```
+        [[constraint]]
+          version = "0.3.0"
+          name = "github.com/Azure/azure-storage-blob-go"
+        ```
+    * Module: simply import the SDK and Go will download it for you
+* Use the SDK:
+```import "github.com/Azure/azure-storage-blob-go/azblob"```
 
-```go get github.com/Azure/azure-storage-blob-go/2016-05-31/azblob```
+## Version Table
+* If you are looking to use a specific version of the Storage Service, please refer to the following table: 
+
+| Service Version | Corresponding SDK Version | Import Path                                              |
+|-----------------|---------------------------|----------------------------------------------------------|
+| 2016-05-31      | 0.2.0                     | github.com/Azure/azure-storage-blob-go/2016-05-31/azblob |
+| 2017-07-29      | 0.2.0                     | github.com/Azure/azure-storage-blob-go/2017-07-29/azblob |
+| 2018-03-28      | 0.3.0                     | github.com/Azure/azure-storage-blob-go/azblob            |
+
+Note: the directory structure of the SDK has changed dramatically since 0.3.0. The different Service Versions are no longer sub-directories;
+the latest `azblob` is directly under the root directory. In the future, each new Service Version will be introduced with a new major semantic version.
 		
 ## SDK Architecture
 
