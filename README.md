@@ -3,7 +3,7 @@
 
 The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
-This repository contains the open source Blob SDK for Go.
+This repository contains the open source Blob SDK for Go. The [File SDK][File SDK] and [Queue SDK][Queue SDK] are also available.
 
 ## Features
 * Blob Storage
@@ -45,7 +45,7 @@ the latest `azblob` is directly under the root directory. In the future, each ne
 	* The high-level APIs provide convenience abstractions such as uploading a large stream to a block blob (using multiple PutBlock requests).
 
 ## Code Samples
-* [Blob Storage Examples](https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob#pkg-examples)
+* [Blob Storage Examples](https://godoc.org/github.com/Azure/azure-storage-blob-go/azblob#pkg-examples)
 
 ## License
 This project is licensed under MIT.
@@ -63,7 +63,9 @@ This project has adopted the [Microsoft Open Source Code of Conduct](https://ope
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-[GoDoc]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob
-[GoDoc Widget]: https://godoc.org/github.com/Azure/azure-storage-blob-go/2016-05-31/azblob?status.svg
+[GoDoc]: https://godoc.org/github.com/Azure/azure-storage-blob-go/azblob
+[GoDoc Widget]: https://godoc.org/github.com/Azure/azure-storage-blob-go/azblob?status.svg
 [Travis Widget]: https://travis-ci.org/Azure/azure-storage-blob-go.svg?branch=master
 [Travis]: https://travis-ci.org/Azure/azure-storage-blob-go
+[File SDK]: https://github.com/Azure/azure-storage-file-go
+[Queue SDK]: https://github.com/Azure/azure-storage-queue-go
