@@ -36,6 +36,9 @@ type RetryReaderOptions struct {
 	MaxRetryRequests   int
 	doInjectError      bool
 	doInjectErrorRound int
+
+	// Is called, if non-nil, after any failure to read. Expected usage is diagnostic logging.
+	NotifyFailedRead  func(failureCount int, lastError error, willRetry bool)
 }
 
 // retryReader implements io.ReaderCloser methods.
@@ -93,15 +96,21 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 		s.response = nil // Our stream is no longer good
 
 		// Check the retry count and error code, and decide whether to retry.
-		if try >= s.o.MaxRetryRequests {
-			return n, err // All retries exhausted
+		retriesExhausted := try >= s.o.MaxRetryRequests
+		_, isNetError := err.(net.Error)
+		willRetry := isNetError && !retriesExhausted
+
+		// Notify, for logging purposes, of any failures
+		if s.o.NotifyFailedRead != nil {
+			failureCount := try + 1 // because try is zero-based
+			s.o.NotifyFailedRead(failureCount, err, willRetry)
 		}
 
-		if _, ok := err.(net.Error); ok {
+		if willRetry {
 			continue
 			// Loop around and try to get and read from new stream.
 		}
-		return n, err // Not retryable, just return
+		return n, err // Not retryable, or retries exhaused, so just return
 	}
 }
 
