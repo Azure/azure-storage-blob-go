@@ -296,6 +296,12 @@ func (rc *contextCancelReadCloser) Close() error {
 	return err
 }
 
+func (rc *contextCancelReadCloser) CancelRequest() {
+	if rc.cf != nil {
+		rc.cf()
+	}
+}
+
 // isNotRetriable checks if the provided net.Error isn't retriable.
 func isNotRetriable(errToParse net.Error) bool {
 	// No error, so this is NOT retriable.
