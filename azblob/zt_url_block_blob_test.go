@@ -144,6 +144,60 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, sourceData)
 }
 
+func (b *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
+	bsu := getBSU()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 8 * 1024 * 1024 // 8MB
+	r, _ := getRandomDataAndReader(testSize)
+	ctx := context.Background() // Use default Background context
+	blob := container.NewBlockBlobURL(generateBlobName())
+
+	uploadResp, err := blob.Upload(ctx, r, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
+
+	// Get blob URL with SAS.
+	blobParts := azblob.NewBlobURLParts(blob.URL())
+
+	cacheControlVal := "cache-control-override"
+	contentDispositionVal := "content-disposition-override"
+	contentEncodingVal := "content-encoding-override"
+	contentLanguageVal := "content-language-override"
+	contentTypeVal := "content-type-override"
+
+	blobParts.SAS, err = azblob.BlobSASSignatureValues{
+		Protocol:           azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:         time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+		ContainerName:      blobParts.ContainerName,
+		BlobName:           blobParts.BlobName,
+		Permissions:        azblob.BlobSASPermissions{Read: true}.String(),
+		CacheControl:       cacheControlVal,
+		ContentDisposition: contentDispositionVal,
+		ContentEncoding:    contentEncodingVal,
+		ContentLanguage:    contentLanguageVal,
+		ContentType:        contentTypeVal,
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	blobURL := azblob.NewBlobURL(blobParts.URL(), azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{}))
+
+	gResp, err := blobURL.GetProperties(ctx, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(gResp.CacheControl(), chk.Equals, cacheControlVal)
+	c.Assert(gResp.ContentDisposition(), chk.Equals, contentDispositionVal)
+	c.Assert(gResp.ContentEncoding(), chk.Equals, contentEncodingVal)
+	c.Assert(gResp.ContentLanguage(), chk.Equals, contentLanguageVal)
+	c.Assert(gResp.ContentType(), chk.Equals, contentTypeVal)
+}
+
 func (b *aztestsSuite) TestStageBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
