@@ -61,20 +61,20 @@ func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 	// Test twice, the second time using the optional "logging"/notification callback for failed tries
 	// We must test both with and without the callback, since be testing without
 	// we are testing that it is, indeed, optional to provide the callback
-	for _, logThisRun := range []bool { false, true} {
+	for _, logThisRun := range []bool{false, true} {
 
 		// Extra setup for testing notification of failures (i.e. of unsuccessful tries)
 		failureMethodNumCalls := 0
 		failureWillRetryCount := 0
 		failureLastReportedFailureCount := -1
 		var failureLastReportedError error = nil
-		failureMethod := func(failureCount int, lastError error, willRetry bool) {
-			failureMethodNumCalls++;
+		failureMethod := func(failureCount int, lastError error, offset int64, willRetry bool) {
+			failureMethodNumCalls++
 			if willRetry {
 				failureWillRetryCount++
 			}
-			failureLastReportedFailureCount = failureCount;
-			failureLastReportedError = lastError;
+			failureLastReportedFailureCount = failureCount
+			failureLastReportedError = lastError
 		}
 
 		// Main test setup
@@ -99,7 +99,7 @@ func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 
 		rrOptions := azblob.RetryReaderOptions{MaxRetryRequests: 1}
 		if logThisRun {
-			rrOptions.NotifyFailedRead = failureMethod;
+			rrOptions.NotifyFailedRead = failureMethod
 		}
 		retryReader := azblob.NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
 
@@ -113,9 +113,9 @@ func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 		if logThisRun {
 			// We only expect one failed try in this test
 			// And the notification method is not called for successes
-			c.Assert(failureMethodNumCalls, chk.Equals, 1)             // this is the number of calls we counted
-			c.Assert(failureWillRetryCount, chk.Equals, 1)             // the sole failure was retried
-			c.Assert(failureLastReportedFailureCount, chk.Equals, 1)   // this is the number of failures reported by the notification method
+			c.Assert(failureMethodNumCalls, chk.Equals, 1)           // this is the number of calls we counted
+			c.Assert(failureWillRetryCount, chk.Equals, 1)           // the sole failure was retried
+			c.Assert(failureLastReportedFailureCount, chk.Equals, 1) // this is the number of failures reported by the notification method
 			c.Assert(failureLastReportedError, chk.NotNil)
 		}
 		// should return EOF
@@ -132,13 +132,13 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 	failureWillRetryCount := 0
 	failureLastReportedFailureCount := -1
 	var failureLastReportedError error = nil
-	failureMethod := func(failureCount int, lastError error, willRetry bool) {
-		failureMethodNumCalls++;
+	failureMethod := func(failureCount int, lastError error, offset int64, willRetry bool) {
+		failureMethodNumCalls++
 		if willRetry {
 			failureWillRetryCount++
 		}
-		failureLastReportedFailureCount = failureCount;
-		failureLastReportedError = lastError;
+		failureLastReportedFailureCount = failureCount
+		failureLastReportedError = lastError
 	}
 
 	// Main test setup
@@ -174,9 +174,9 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 	// Check that we recieved the right notification callbacks
 	// We only expect two failed tries in this test, but only one
 	// of the would have had willRetry = true
-	c.Assert(failureMethodNumCalls, chk.Equals, 2)             // this is the number of calls we counted
-	c.Assert(failureWillRetryCount, chk.Equals, 1)             // only the first failure was retried
-	c.Assert(failureLastReportedFailureCount, chk.Equals, 2)   // this is the number of failures reported by the notification method
+	c.Assert(failureMethodNumCalls, chk.Equals, 2)           // this is the number of calls we counted
+	c.Assert(failureWillRetryCount, chk.Equals, 1)           // only the first failure was retried
+	c.Assert(failureLastReportedFailureCount, chk.Equals, 2) // this is the number of failures reported by the notification method
 	c.Assert(failureLastReportedError, chk.NotNil)
 }
 
