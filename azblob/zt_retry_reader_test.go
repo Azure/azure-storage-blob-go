@@ -68,7 +68,7 @@ func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 		failureWillRetryCount := 0
 		failureLastReportedFailureCount := -1
 		var failureLastReportedError error = nil
-		failureMethod := func(failureCount int, lastError error, offset int64, willRetry bool) {
+		failureMethod := func(failureCount int, lastError error, offset int64, count int64, willRetry bool) {
 			failureMethodNumCalls++
 			if willRetry {
 				failureWillRetryCount++
@@ -132,7 +132,7 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 	failureWillRetryCount := 0
 	failureLastReportedFailureCount := -1
 	var failureLastReportedError error = nil
-	failureMethod := func(failureCount int, lastError error, offset int64, willRetry bool) {
+	failureMethod := func(failureCount int, lastError error, offset int64, count int64, willRetry bool) {
 		failureMethodNumCalls++
 		if willRetry {
 			failureWillRetryCount++
