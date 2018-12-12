@@ -29,6 +29,9 @@ type HTTPGetterInfo struct {
 	ETag ETag
 }
 
+// FailedReadNotifier is a function type that represents the notification function called when a read fails
+type FailedReadNotifier func(failureCount int, lastError error, offset int64, count int64, willRetry bool)
+
 // RetryReaderOptions contains properties which can help to decide when to do retry.
 type RetryReaderOptions struct {
 	// MaxRetryRequests specifies the maximum number of HTTP GET requests that will be made
@@ -39,7 +42,7 @@ type RetryReaderOptions struct {
 	doInjectErrorRound int
 
 	// Is called, if non-nil, after any failure to read. Expected usage is diagnostic logging.
-	NotifyFailedRead  func(failureCount int, lastError error, offset int64, willRetry bool)
+	NotifyFailedRead  FailedReadNotifier
 }
 
 // retryReader implements io.ReaderCloser methods.
@@ -123,7 +126,7 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 		// Notify, for logging purposes, of any failures
 		if s.o.NotifyFailedRead != nil {
 			failureCount := try + 1 // because try is zero-based
-			s.o.NotifyFailedRead(failureCount, err, s.info.Offset, willRetry)
+			s.o.NotifyFailedRead(failureCount, err, s.info.Offset, s.info.Count, willRetry)
 		}
 
 		if willRetry {
