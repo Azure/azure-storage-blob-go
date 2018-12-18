@@ -3,10 +3,12 @@ package azblob_test
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	chk "gopkg.in/check.v1"
@@ -23,11 +25,16 @@ type perByteReader struct {
 	doInjectErrorByteIndex int
 	doInjectTimes          int
 	injectedError          error
+
+	// sleepDuraion and cancelChannel are only use in "forced cancellation" tests
+	sleepDuration		   time.Duration
+	cancelChannel          chan struct{}
 }
 
 func newPerByteReader(byteCount int) *perByteReader {
 	perByteReader := perByteReader{
 		byteCount: byteCount,
+		cancelChannel: make(chan struct{}, 100),
 	}
 
 	perByteReader.RandomBytes = make([]byte, byteCount)
@@ -45,10 +52,22 @@ func (r *perByteReader) Read(b []byte) (n int, err error) {
 	if r.currentByteIndex < r.byteCount {
 		n = copy(b, r.RandomBytes[r.currentByteIndex:r.currentByteIndex+1])
 		r.currentByteIndex += n
-		return
+
+		// simulate a delay, which may be successful or, if cancelled from another go-routine, may return an
+		// error
+		select {
+		case <- r.cancelChannel:
+			return n, errors.New("simulated forced cancellation")
+			case <- time.After(r.sleepDuration):
+				return n, nil
+		}
 	}
 
 	return 0, io.EOF
+}
+
+func (r *perByteReader) CancelRequest(){
+	r.cancelChannel <- struct{}{}
 }
 
 func (r *perByteReader) Close() error {
@@ -238,6 +257,55 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
 	dest := make([]byte, 1)
 	_, err := retryReader.Read(dest)
 	c.Assert(err, chk.Equals, body.injectedError)
+}
+
+// Test the case where we programmatically force a retry to happen, via the forceRetryFunc.
+// Unlike the retries orchestrated elsewhere in this test file, which simulate network failures for the
+// purposes of unit testing, here we are testing the cancellation mechanism that is exposed to
+// consumers of the API, to allow programmatic forcing of retries (e.g. if the consumer deems
+// the read to be taking too long, they may force a retry in the hope of better performance next time).
+func (r *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
+	// use the notification callback, so we know that the retry really did happen
+	failureMethodNumCalls := 0
+	failureMethod := func(failureCount int, lastError error, offset int64, count int64, willRetry bool) {
+		failureMethodNumCalls++
+	}
+
+	// Main test setup
+	byteCount := 10  // so multiple passes through read loop will be required
+	body := newPerByteReader(byteCount)
+	body.sleepDuration = 100 * time.Millisecond
+	getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+		r := http.Response{}
+		body.currentByteIndex = int(info.Offset)
+		r.Body = body
+
+		return &r, nil
+	}
+
+	httpGetterInfo := azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
+	initResponse, err := getter(context.Background(), httpGetterInfo)
+	c.Assert(err, chk.IsNil)
+
+	rrOptions := azblob.RetryReaderOptions{MaxRetryRequests: 2}
+	rrOptions.NotifyFailedRead = failureMethod
+	retryReader := azblob.NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
+	forcedCancelFunc := azblob.GetForceRetryFuncOrNil(retryReader)
+
+	// set up timed cancellation from separate goroutine
+	go func() {
+		time.Sleep(body.sleepDuration * 5)
+		forcedCancelFunc()
+	}()
+
+	// do the read (should fail, due to forced cancellation, and succeed through retry)
+	output := make([]byte, byteCount)
+	n, err := io.ReadFull(retryReader, output)
+	c.Assert(n, chk.Equals, byteCount)
+	c.Assert(err, chk.IsNil)
+	c.Assert(output, chk.DeepEquals, body.RandomBytes)
+	c.Assert(failureMethodNumCalls, chk.Equals, 1)           // assert that the cancellation did indeed happen
+
 }
 
 // End testings for RetryReader
