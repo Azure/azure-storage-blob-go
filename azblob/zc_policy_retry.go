@@ -296,12 +296,6 @@ func (rc *contextCancelReadCloser) Close() error {
 	return err
 }
 
-func (rc *contextCancelReadCloser) CancelRequest() {
-	if rc.cf != nil {
-		rc.cf()  // cancel func will be called again by Close when body is closed, but cancel funcs are idempotent, so that's OK.
-	}
-}
-
 // isNotRetriable checks if the provided net.Error isn't retriable.
 func isNotRetriable(errToParse net.Error) bool {
 	// No error, so this is NOT retriable.

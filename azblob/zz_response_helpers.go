@@ -76,13 +76,6 @@ func (r *DownloadResponse) Body(o RetryReaderOptions) io.ReadCloser {
 	)
 }
 
-// Same as Body, but also returns a function that can be used to force retry
-// The returned function will be nil if retry cannot be forced for this body read
-func (r *DownloadResponse) BodyWithForceableRetry(o RetryReaderOptions) (rr io.ReadCloser, forceRetry func()){
-	rr = r.Body(o)
-	return rr, rr.(*retryReader).getForceRetryFuncOrNil()
-}
-
 // Response returns the raw HTTP response object.
 func (r DownloadResponse) Response() *http.Response {
 	return r.r.Response()

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -41,8 +42,19 @@ type RetryReaderOptions struct {
 	doInjectError      bool
 	doInjectErrorRound int
 
-	// Is called, if non-nil, after any failure to read. Expected usage is diagnostic logging.
+	// NotifyFailedRead is called, if non-nil, after any failure to read. Expected usage is diagnostic logging.
 	NotifyFailedRead  FailedReadNotifier
+
+	// TreatEarlyCloseAsError can be set to true to prevent retries after "read on closed response body". By default,
+	// retryReader has the following special behaviour: closing the response body before it is all read is treated as a
+	// retryable error. This is to allow callers to force a retry by closing the body from another goroutine (e.g. if the =
+	// read is too slow, caller may want to force a retry in the hope that the retry will be quicker).  If
+	// TreatEarlyCloseAsError is true, then retryReader's special behaviour is suppressed, and "read on closed body" is instead
+	// treated as a fatal (non-retryable) error.
+	// Note that setting TreatEarlyCloseAsError only guarantees that Closing will produce a fatal error if the Close happens
+	// from the same "thread" (goroutine) as Read.  Concurrent Close calls from other goroutines may instead produce network errors
+	// which will be retried.
+	TreatEarlyCloseAsError bool
 }
 
 // retryReader implements io.ReaderCloser methods.
@@ -52,20 +64,14 @@ type RetryReaderOptions struct {
 // through reading from the new response.
 type retryReader struct {
 	ctx             context.Context
-	response        *http.Response
 	info            HTTPGetterInfo
 	countWasBounded bool
 	o               RetryReaderOptions
 	getter          HTTPGetter
 
-	// forced re-read handling (which is the only thread-safe part of this type)
-	rrLock      *sync.Mutex
-	rrCanceller RequestCanceller
-	rrForced    bool               // necessary because forced retries are done with cancellation, and cancellations would not normally be classified as retryable
-}
-
-type RequestCanceller interface {
-	CancelRequest()
+	// we support Close-ing during Reads (from other goroutines), so we protect the shared state, which is response
+	responseMu       *sync.Mutex
+	response         *http.Response
 }
 
 // NewRetryReader creates a retry reader.
@@ -77,9 +83,15 @@ func NewRetryReader(ctx context.Context, initialResponse *http.Response,
 		info: info,
 		countWasBounded: info.Count != CountToEnd,
 		response:    initialResponse,
-		rrCanceller: getCancellableRequestBody(initialResponse),
-		rrLock:      &sync.Mutex{},
+		responseMu:  &sync.Mutex{},
 		o:           o}
+}
+
+
+func (s *retryReader) setResponse(r *http.Response){
+	s.responseMu.Lock()
+	defer s.responseMu.Unlock()
+	s.response = r
 }
 
 
@@ -91,16 +103,19 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 			return 0, io.EOF
 		}
 
-		if s.response == nil { // We don't have a response stream to read from, try to get one.
-			response, err := s.getter(s.ctx, s.info)
+		s.responseMu.Lock()
+		resp := s.response
+		s.responseMu.Unlock()
+		if resp == nil { // We don't have a response stream to read from, try to get one.
+			newResponse, err := s.getter(s.ctx, s.info)
 			if err != nil {
 				return 0, err
 			}
 			// Successful GET; this is the network stream we'll read from.
-			s.response = response
-			s.setCanceller(getCancellableRequestBody(response))
+			s.setResponse(newResponse)
+			resp = newResponse
 		}
-		n, err := s.response.Body.Read(p) // Read from the stream (this will return non-nil err if forceRetry is called, from another goroutine, while it is running)
+		n, err := resp.Body.Read(p) // Read from the stream (this will return non-nil err if forceRetry is called, from another goroutine, while it is running)
 
 		// Injection mechanism for testing.
 		if s.o.doInjectError && try == s.o.doInjectErrorRound {
@@ -115,13 +130,13 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 			}
 			return n, err // Return the return to the caller
 		}
-		s.Close()        // Error, close stream
-		s.response = nil // Our stream is no longer good
+		s.Close()             // Error, close stream
+		s.setResponse(nil) // Our stream is no longer good
 
 		// Check the retry count and error code, and decide whether to retry.
 		retriesExhausted := try >= s.o.MaxRetryRequests
 		_, isNetError := err.(net.Error)
-		willRetry := (isNetError || s.wasForcedRetry()) && !retriesExhausted
+		willRetry := (isNetError || s.wasRetryableEarlyClose(err)) && !retriesExhausted
 
 		// Notify, for logging purposes, of any failures
 		if s.o.NotifyFailedRead != nil {
@@ -137,63 +152,32 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 	}
 }
 
+// By default, we allow early Closing, from another concurrent goroutine, to be used to force a retry
+// Is this safe, to close early from another goroutine?  Early close ultimately ends up calling
+// net.Conn.Close, and that is documented as "Any blocked Read or Write operations will be unblocked and return errors"
+// which is exactly the behaviour we want.
+// NOTE: that if caller has forced an early Close from a separate goroutine (separate from the Read)
+// then there are two different types of error that may happen - either the one one we check for here,
+// or a net.Error (due to closure of connection). Which one happens depends on timing. We only need this routine
+// to check for one, since the other is a net.Error, which our main Read retry loop is already handing.
+func (s *retryReader) wasRetryableEarlyClose(err error) bool{
+	if s.o.TreatEarlyCloseAsError {
+		return false  // user wants all early closes to be errors, and so not retryable
+	}
+	// unfortunately, http.errReadOnClosedResBody is private, so the best we can do here is to check for its text
+	return strings.HasSuffix(err.Error(), ReadOnClosedBodyMessage)
+}
+
+const ReadOnClosedBodyMessage = "read on closed response body"
+
 func (s *retryReader) Close() error {
+	s.responseMu.Lock()
+	defer s.responseMu.Unlock()
 	if s.response != nil && s.response.Body != nil {
 		return s.response.Body.Close()
 	}
 	return nil
 }
 
-// Returns a function that can be used to force a retry within (and transparently to) an call to Read
-func (s *retryReader) getForceRetryFuncOrNil() func(){
-	s.rrLock.Lock()
-	defer s.rrLock.Unlock()
-
-	if s.rrCanceller == nil {
-		return nil            // cancellation is currently impossible, and we'll assume it will remain so
-	} else {
-		return s.forceRetry   // cancellation is possible at present, and well assume it will remain so (even after any use of s.getter)
-	}
-}
-
-// Allows forced triggering of the re-read behavior, by cancelling the existing request.
-// Can be called mid-read by another go-routine, to cancel and force retryReader to commence a retry cycle.
-// Only works with request pipelines where the request offers us a cancellation method
-// in the form of a body that implements BodyReadCanceller.
-// Why do it that way? Because the alternative would be to generate a new per-request cancellable context
-// on each try. That's not impossible.  But... it's complicated by the fact that sometimes we make our
-// own HTTP requests (on retries) and sometimes we don't (on the initial request) AND it does have messier handling
-// of needing to clean up (cancel) those contexts after use, whereas exactly that functionality is already built
-// into our request pipeline using NewRetryPolicyFactory. It's already creating a per-request context, saving the
-// CancelFunc, and cleaning it up automatically when the body is closed. So here we are leveraging that existing
-// functionality
-func (s *retryReader) forceRetry() {
-	s.rrLock.Lock()
-	defer s.rrLock.Unlock()
-	if s.rrCanceller != nil {
-		s.rrForced = true
-		s.rrCanceller.CancelRequest()
-	}
-}
-
-func (s *retryReader) setCanceller(canceller RequestCanceller){
-	s.rrLock.Lock()
-	defer s.rrLock.Unlock()
-	s.rrCanceller = canceller
-	s.rrForced = false
-}
-
-func (s *retryReader) wasForcedRetry() bool {
-	s.rrLock.Lock()
-	defer s.rrLock.Unlock()
-	return s.rrForced
-}
-
-func getCancellableRequestBody(r *http.Response) RequestCanceller {
-	if c, ok := r.Body.(RequestCanceller); ok {
-		return c
-	}
-	return nil
-}
 
 
