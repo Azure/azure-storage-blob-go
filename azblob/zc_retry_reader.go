@@ -43,7 +43,7 @@ type RetryReaderOptions struct {
 	doInjectErrorRound int
 
 	// NotifyFailedRead is called, if non-nil, after any failure to read. Expected usage is diagnostic logging.
-	NotifyFailedRead  FailedReadNotifier
+	NotifyFailedRead FailedReadNotifier
 
 	// TreatEarlyCloseAsError can be set to true to prevent retries after "read on closed response body". By default,
 	// retryReader has the following special behaviour: closing the response body before it is all read is treated as a
@@ -70,30 +70,28 @@ type retryReader struct {
 	getter          HTTPGetter
 
 	// we support Close-ing during Reads (from other goroutines), so we protect the shared state, which is response
-	responseMu       *sync.Mutex
-	response         *http.Response
+	responseMu *sync.Mutex
+	response   *http.Response
 }
 
 // NewRetryReader creates a retry reader.
 func NewRetryReader(ctx context.Context, initialResponse *http.Response,
 	info HTTPGetterInfo, o RetryReaderOptions, getter HTTPGetter) io.ReadCloser {
 	return &retryReader{
-		ctx: ctx,
-		getter: getter,
-		info: info,
+		ctx:             ctx,
+		getter:          getter,
+		info:            info,
 		countWasBounded: info.Count != CountToEnd,
-		response:    initialResponse,
-		responseMu:  &sync.Mutex{},
-		o:           o}
+		response:        initialResponse,
+		responseMu:      &sync.Mutex{},
+		o:               o}
 }
 
-
-func (s *retryReader) setResponse(r *http.Response){
+func (s *retryReader) setResponse(r *http.Response) {
 	s.responseMu.Lock()
 	defer s.responseMu.Unlock()
 	s.response = r
 }
-
 
 func (s *retryReader) Read(p []byte) (n int, err error) {
 	for try := 0; ; try++ {
@@ -130,7 +128,7 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 			}
 			return n, err // Return the return to the caller
 		}
-		s.Close()             // Error, close stream
+		s.Close()          // Error, close stream
 		s.setResponse(nil) // Our stream is no longer good
 
 		// Check the retry count and error code, and decide whether to retry.
@@ -160,9 +158,9 @@ func (s *retryReader) Read(p []byte) (n int, err error) {
 // then there are two different types of error that may happen - either the one one we check for here,
 // or a net.Error (due to closure of connection). Which one happens depends on timing. We only need this routine
 // to check for one, since the other is a net.Error, which our main Read retry loop is already handing.
-func (s *retryReader) wasRetryableEarlyClose(err error) bool{
+func (s *retryReader) wasRetryableEarlyClose(err error) bool {
 	if s.o.TreatEarlyCloseAsError {
-		return false  // user wants all early closes to be errors, and so not retryable
+		return false // user wants all early closes to be errors, and so not retryable
 	}
 	// unfortunately, http.errReadOnClosedResBody is private, so the best we can do here is to check for its text
 	return strings.HasSuffix(err.Error(), ReadOnClosedBodyMessage)
@@ -178,6 +176,3 @@ func (s *retryReader) Close() error {
 	}
 	return nil
 }
-
-
-

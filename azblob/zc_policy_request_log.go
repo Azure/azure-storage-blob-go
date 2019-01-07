@@ -109,7 +109,7 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 	})
 }
 
-// redactSigQueryParam redacts the 'sig' query parameter in URL's raw query to protect secret.
+// RedactSigQueryParam redacts the 'sig' query parameter in URL's raw query to protect secret.
 func RedactSigQueryParam(rawQuery string) (bool, string) {
 	rawQuery = strings.ToLower(rawQuery) // lowercase the string so we can look for ?sig= and &sig=
 	sigFound := strings.Contains(rawQuery, "?sig=")
