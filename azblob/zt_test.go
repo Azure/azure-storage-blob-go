@@ -187,11 +187,21 @@ func createNewPageBlob(c *chk.C, container azblob.ContainerURL) (blob azblob.Pag
 	blob, name = getPageBlobURL(c, container)
 
 	resp, err := blob.Create(ctx, azblob.PageBlobPageBytes*10, 0, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	return
+}
+
+func createNewPageBlobWithSize(c *chk.C, container azblob.ContainerURL, sizeInBytes int64) (blob azblob.PageBlobURL, name string) {
+	blob, name = getPageBlobURL(c, container)
+
+	resp, err := blob.Create(ctx, sizeInBytes, 0, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
 }
+
 func createBlockBlobWithPrefix(c *chk.C, container azblob.ContainerURL, prefix string) (blob azblob.BlockBlobURL, name string) {
 	name = prefix + generateName(blobPrefix)
 	blob = container.NewBlockBlobURL(name)
