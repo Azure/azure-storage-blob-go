@@ -35,8 +35,9 @@ func NewPipeline(c Credential, o PipelineOptions) pipeline.Pipeline {
 		f = append(f, c)
 	}
 	f = append(f,
-		pipeline.MethodFactoryMarker(), // indicates at what stage in the pipeline the method factory is invoked
-		NewRequestLogPolicyFactory(o.RequestLog))
+		NewRequestLogPolicyFactory(o.RequestLog),
+		pipeline.MethodFactoryMarker()) // indicates at what stage in the pipeline the method factory is invoked
+
 
 	return pipeline.NewPipeline(f, pipeline.Options{HTTPSender: nil, Log: o.Log})
 }
