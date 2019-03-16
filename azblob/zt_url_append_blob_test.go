@@ -74,6 +74,156 @@ func (b *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 
+// func (b *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
+// 	bsu := getBSU()
+// 	credential, err := getGenericCredential("")
+// 	if err != nil {
+// 		c.Fatal("Invalid credential")
+// 	}
+// 	container, _ := createNewContainer(c, bsu)
+// 	defer delContainer(c, container)
+
+// 	testSize := 4 * 1024 * 1024 // 4MB
+// 	r, sourceData := getRandomDataAndReader(testSize)
+// 	ctx := context.Background() // Use default Background context
+// 	srcBlob := container.NewAppendBlobURL(generateName("appendsrc"))
+// 	destBlob := container.NewAppendBlobURL(generateName("appenddest"))
+
+// 	// Prepare source blob for copy.
+// 	cResp1, err := srcBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(cResp1.StatusCode(), chk.Equals, 201)
+// 	appendResp, err := srcBlob.AppendBlock(context.Background(), r, azblob.AppendBlobAccessConditions{}, nil)
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
+// 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
+// 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
+// 	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+// 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
+// 	c.Assert(appendResp.ContentMD5(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.Version(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.Date().IsZero(), chk.Equals, false)
+
+// 	// Get source blob URL with SAS for AppendBlockFromURL.
+// 	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
+
+// 	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
+// 		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+// 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+// 		ContainerName: srcBlobParts.ContainerName,
+// 		BlobName:      srcBlobParts.BlobName,
+// 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
+// 		Version:       "2018-03-28",
+// 	}.NewSASQueryParameters(credential)
+// 	if err != nil {
+// 		c.Fatal(err)
+// 	}
+
+// 	srcBlobURLWithSAS := srcBlobParts.URL()
+
+// 	// Append block from URL.
+// 	cResp2, err := destBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
+// 	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, nil)
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
+// 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
+// 	c.Assert(appendFromURLResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
+// 	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+// 	c.Assert(appendFromURLResp.LastModified().IsZero(), chk.Equals, false)
+// 	c.Assert(appendFromURLResp.ContentMD5(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendFromURLResp.RequestID(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendFromURLResp.Version(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendFromURLResp.Date().IsZero(), chk.Equals, false)
+
+// 	// Check data integrity through downloading.
+// 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+// 	c.Assert(err, chk.IsNil)
+// 	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(destData, chk.DeepEquals, sourceData)
+// }
+
+// func (b *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
+// 	bsu := getBSU()
+// 	credential, err := getGenericCredential("")
+// 	if err != nil {
+// 		c.Fatal("Invalid credential")
+// 	}
+// 	container, _ := createNewContainer(c, bsu)
+// 	defer delContainer(c, container)
+
+// 	testSize := 4 * 1024 * 1024 // 4MB
+// 	r, sourceData := getRandomDataAndReader(testSize)
+// 	md5Value := md5.Sum(sourceData)
+// 	ctx := context.Background() // Use default Background context
+// 	srcBlob := container.NewAppendBlobURL(generateName("appendsrc"))
+// 	destBlob := container.NewAppendBlobURL(generateName("appenddest"))
+
+// 	// Prepare source blob for copy.
+// 	cResp1, err := srcBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(cResp1.StatusCode(), chk.Equals, 201)
+// 	appendResp, err := srcBlob.AppendBlock(context.Background(), r, azblob.AppendBlobAccessConditions{}, nil)
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
+// 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
+// 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
+// 	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+// 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
+// 	c.Assert(appendResp.ContentMD5(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.Version(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendResp.Date().IsZero(), chk.Equals, false)
+
+// 	// Get source blob URL with SAS for AppendBlockFromURL.
+// 	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
+
+// 	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
+// 		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+// 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+// 		ContainerName: srcBlobParts.ContainerName,
+// 		BlobName:      srcBlobParts.BlobName,
+// 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
+// 		Version:       "2018-03-28",
+// 	}.NewSASQueryParameters(credential)
+// 	if err != nil {
+// 		c.Fatal(err)
+// 	}
+
+// 	srcBlobURLWithSAS := srcBlobParts.URL()
+
+// 	// Append block from URL.
+// 	cResp2, err := destBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
+// 	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, md5Value[:])
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
+// 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
+// 	c.Assert(appendFromURLResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
+// 	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), azblob.ETagNone)
+// 	c.Assert(appendFromURLResp.LastModified().IsZero(), chk.Equals, false)
+// 	c.Assert(appendFromURLResp.ContentMD5(), chk.DeepEquals, md5Value[:])
+// 	c.Assert(appendFromURLResp.RequestID(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendFromURLResp.Version(), chk.Not(chk.Equals), "")
+// 	c.Assert(appendFromURLResp.Date().IsZero(), chk.Equals, false)
+
+// 	// Check data integrity through downloading.
+// 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+// 	c.Assert(err, chk.IsNil)
+// 	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
+// 	c.Assert(err, chk.IsNil)
+// 	c.Assert(destData, chk.DeepEquals, sourceData)
+
+// 	// Test append block from URL with bad MD5 value
+// 	_, badMD5 := getRandomDataAndReader(16)
+// 	_, err = destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, badMD5[:])
+// 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
+// }
+
 func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
