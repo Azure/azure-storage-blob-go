@@ -154,6 +154,29 @@ func ExampleNewPipeline() {
 				return level <= pipeline.LogWarning // Log all events from warning to more severe
 			},
 		},
+
+		// Set HTTPSender to override the default HTTP Sender
+		HTTPSender: pipeline.FactoryFunc(func(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.PolicyFunc {
+			return func(ctx context.Context, request pipeline.Request) (response pipeline.Response, err error) {
+				// Put your policy behavior code here
+				// Your code should NOT mutate the ctx or request parameters
+				// However, you can make a copy of the request and mutate the copy
+				// You can also pass a different Context on.
+				// You can optionally use po (PolicyOptions) in this func.
+
+				// Forward the request to the next node in the pipeline:
+				response, err = next.Do(ctx, request)
+
+				// Process the response here. You can deserialize the body into an object.
+				// If you do this, also define a struct that wraps an http.Response & your
+				// deserialized struct. Have your wrapper struct implement the
+				// pipeline.Response interface and then return your struct (via the interface)
+				// After the pipeline completes, take response and perform a type assertion
+				// to get back to the wrapper struct so you can access the deserialized object.
+
+				return
+			}
+		}),
 	}
 
 	// Create a request pipeline object configured with credentials and with pipeline options. Once created,
