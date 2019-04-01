@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -154,6 +155,33 @@ func ExampleNewPipeline() {
 				return level <= pipeline.LogWarning // Log all events from warning to more severe
 			},
 		},
+
+		// Set HTTPSender to override the default HTTP Sender that sends the request over the network
+		HTTPSender: pipeline.FactoryFunc(func(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.PolicyFunc {
+			return func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
+				// Implement the HTTP client that will override the default sender.
+				// For example, below HTTP client uses a transport that is different from http.DefaultTransport
+				client := http.Client{
+					Transport: &http.Transport{
+						Proxy: nil,
+						DialContext: (&net.Dialer{
+							Timeout:   30 * time.Second,
+							KeepAlive: 30 * time.Second,
+							DualStack: true,
+						}).DialContext,
+						MaxIdleConns:          100,
+						IdleConnTimeout:       180 * time.Second,
+						TLSHandshakeTimeout:   10 * time.Second,
+						ExpectContinueTimeout: 1 * time.Second,
+					},
+				}
+
+				// Send the request over the network
+				resp, err := client.Do(request.WithContext(ctx))
+
+				return &httpResponse{response: resp}, err
+			}
+		}),
 	}
 
 	// Create a request pipeline object configured with credentials and with pipeline options. Once created,
