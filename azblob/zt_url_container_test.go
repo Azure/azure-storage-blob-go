@@ -701,8 +701,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 	_, err = containerURL.SetAccessPolicy(ctx, azblob.PublicAccessNone, permissions, azblob.ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05",
-		Identifier: "0000", ContainerName: containerName}
+	serviceSASValues := azblob.BlobSASSignatureValues{Identifier: "0000", ContainerName: containerName}
 	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)

@@ -257,7 +257,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	if err != nil {
 		c.Fatal("Invalid credential")
 	}
-	serviceSASValues := azblob.BlobSASSignatureValues{Version: "2015-04-05", StartTime: time.Now().Add(-1 * time.Hour).UTC(),
+	serviceSASValues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: containerName, BlobName: blobName}
 	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
