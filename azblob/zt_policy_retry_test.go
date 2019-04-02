@@ -155,6 +155,7 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 		MaxRetryDelay:               4 * time.Second,
 		RetryReadsFromSecondaryHost: "SecondaryDC",
 	}
+	minExpectedTimeToMaxRetries := (retryOptions.MaxRetryDelay * time.Duration(retryOptions.MaxTries-3)) / 2 // a very rough approximation, of a lower bound, given assumption that we hit the cap early in the retry count, and pessimistically assuming that all get halved by random jitter calcs
 	ctx := context.Background()
 	ctx, cancel := context.WithTimeout(ctx, 64 /*2^MaxTries(6)*/ *retryOptions.TryTimeout)
 	retrytestPolicyFactory := newRetryTestPolicyFactory(c, scenario, retryOptions.MaxTries, cancel)
@@ -164,6 +165,7 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 	}
 	p := pipeline.NewPipeline(factories[:], pipeline.Options{})
 	request, err := pipeline.NewRequest(http.MethodGet, *u, strings.NewReader("TestData"))
+	start := time.Now()
 	response, err := p.Do(ctx, nil, request)
 	switch scenario {
 	case retryTestScenarioRetryUntilSuccess:
@@ -171,9 +173,10 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 			c.Fail() // Operation didn't run to success
 		}
 	case retryTestScenarioRetryUntilMaxRetries:
-		c.Assert(err, chk.NotNil)                                               // Ensure we ended with an error
-		c.Assert(response, chk.IsNil)                                           // Ensure we ended without a valid response
-		c.Assert(retrytestPolicyFactory.try, chk.Equals, retryOptions.MaxTries) // Ensure the operation ends with the exact right number of tries
+		c.Assert(err, chk.NotNil)                                                   // Ensure we ended with an error
+		c.Assert(response, chk.IsNil)                                               // Ensure we ended without a valid response
+		c.Assert(retrytestPolicyFactory.try, chk.Equals, retryOptions.MaxTries)     // Ensure the operation ends with the exact right number of tries
+		c.Assert(time.Since(start) > minExpectedTimeToMaxRetries, chk.Equals, true) // Ensure it took about as long to get here as we expect (bearing in mind randomness in the jitter), as a basic sanity check of our delay duration calculations
 	case retryTestScenarioRetryUntilOperationCancel:
 		c.Assert(err, chk.Equals, context.Canceled)                                     // Ensure we ended due to cancellation
 		c.Assert(response, chk.IsNil)                                                   // Ensure we ended without a valid response
