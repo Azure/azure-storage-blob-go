@@ -6,4 +6,5 @@ script:
 - GOOS=linux go build ./azblob
 - GOOS=darwin go build ./azblob
 - GOOS=windows go build ./azblob
+- GOOS=solaris go build ./azblob
 - go test -race -short -cover -v ./azblob
