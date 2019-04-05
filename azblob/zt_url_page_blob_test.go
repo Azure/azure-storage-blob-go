@@ -3,6 +3,7 @@ package azblob_test
 import (
 	"context"
 	"crypto/md5"
+	"io/ioutil"
 
 	"bytes"
 	"strings"
@@ -42,6 +43,123 @@ func (b *aztestsSuite) TestPutGetPages(c *chk.C) {
 	c.Assert(pageList.Date().IsZero(), chk.Equals, false)
 	c.Assert(pageList.PageRange, chk.HasLen, 1)
 	c.Assert(pageList.PageRange[0], chk.DeepEquals, pageRange)
+}
+
+func (b *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
+	bsu := getBSU()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 4 * 1024 * 1024 // 4MB
+	r, sourceData := getRandomDataAndReader(testSize)
+	ctx := context.Background() // Use default Background context
+	srcBlob, _ := createNewPageBlobWithSize(c, container, int64(testSize))
+	destBlob, _ := createNewPageBlobWithSize(c, container, int64(testSize))
+
+	// Prepare source blob for copy.
+	uploadSrcResp1, err := srcBlob.UploadPages(ctx, 0, r, azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadSrcResp1.Response().StatusCode, chk.Equals, 201)
+
+	// Get source blob URL with SAS for UploadPagesFromURL.
+	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
+
+	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
+		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+		ContainerName: srcBlobParts.ContainerName,
+		BlobName:      srcBlobParts.BlobName,
+		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	srcBlobURLWithSAS := srcBlobParts.URL()
+
+	// Upload page from URL.
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(pResp1.ETag(), chk.NotNil)
+	c.Assert(pResp1.LastModified(), chk.NotNil)
+	c.Assert(pResp1.Response().StatusCode, chk.Equals, 201)
+	c.Assert(pResp1.ContentMD5(), chk.Not(chk.Equals), "")
+	c.Assert(pResp1.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(pResp1.Version(), chk.Not(chk.Equals), "")
+	c.Assert(pResp1.Date().IsZero(), chk.Equals, false)
+
+	// Check data integrity through downloading.
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
+	c.Assert(err, chk.IsNil)
+	c.Assert(destData, chk.DeepEquals, sourceData)
+}
+
+func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
+	bsu := getBSU()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 4 * 1024 * 1024 // 4MB
+	r, sourceData := getRandomDataAndReader(testSize)
+	md5Value := md5.Sum(sourceData)
+	ctx := context.Background() // Use default Background context
+	srcBlob, _ := createNewPageBlobWithSize(c, container, int64(testSize))
+	destBlob, _ := createNewPageBlobWithSize(c, container, int64(testSize))
+
+	// Prepare source blob for copy.
+	uploadSrcResp1, err := srcBlob.UploadPages(ctx, 0, r, azblob.PageBlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadSrcResp1.Response().StatusCode, chk.Equals, 201)
+
+	// Get source blob URL with SAS for UploadPagesFromURL.
+	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
+
+	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
+		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+		ContainerName: srcBlobParts.ContainerName,
+		BlobName:      srcBlobParts.BlobName,
+		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	srcBlobURLWithSAS := srcBlobParts.URL()
+
+	// Upload page from URL with MD5.
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, md5Value[:])
+	c.Assert(err, chk.IsNil)
+	c.Assert(pResp1.ETag(), chk.NotNil)
+	c.Assert(pResp1.LastModified(), chk.NotNil)
+	c.Assert(pResp1.Response().StatusCode, chk.Equals, 201)
+	c.Assert(pResp1.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(pResp1.Version(), chk.Not(chk.Equals), "")
+	c.Assert(pResp1.Date().IsZero(), chk.Equals, false)
+	c.Assert(pResp1.ContentMD5(), chk.DeepEquals, md5Value[:])
+	c.Assert(pResp1.BlobSequenceNumber(), chk.Equals, int64(0))
+
+	// Check data integrity through downloading.
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
+	c.Assert(err, chk.IsNil)
+	c.Assert(destData, chk.DeepEquals, sourceData)
+
+	// Upload page from URL with bad MD5
+	_, badMD5 := getRandomDataAndReader(16)
+	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, badMD5[:])
+	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 
 func (b *aztestsSuite) TestClearDiffPages(c *chk.C) {
