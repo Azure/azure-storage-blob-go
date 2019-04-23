@@ -19,6 +19,7 @@ type BlobSASSignatureValues struct {
 	Identifier         string      `param:"si"`
 	ContainerName      string
 	BlobName           string // Use "" to create a Container SAS
+	SnapshotTime       time.Time //Snapshot time
 	CacheControl       string // rscc
 	ContentDisposition string // rscd
 	ContentEncoding    string // rsce
@@ -30,26 +31,39 @@ type BlobSASSignatureValues struct {
 // the proper SAS query parameters.
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
-	if v.BlobName == "" {
-		// Make sure the permission characters are in the correct order
+	if v.SnapshotTime.IsZero() {
+		if v.BlobName == "" {
+			// Make sure the permission characters are in the correct order
+			perms := &ContainerSASPermissions{}
+			if err := perms.Parse(v.Permissions); err != nil {
+				return SASQueryParameters{}, err
+			}
+			v.Permissions = perms.String()
+		} else {
+			resource = "b"
+			// Make sure the permission characters are in the correct order
+			perms := &BlobSASPermissions{}
+			if err := perms.Parse(v.Permissions); err != nil {
+				return SASQueryParameters{}, err
+			}
+			v.Permissions = perms.String()
+		}
+		if v.Version == "" {
+			v.Version = SASVersion
+		}
+	} else {
+		resource = "bs"
+
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
 			return SASQueryParameters{}, err
 		}
 		v.Permissions = perms.String()
-	} else {
-		resource = "b"
-		// Make sure the permission characters are in the correct order
-		perms := &BlobSASPermissions{}
-		if err := perms.Parse(v.Permissions); err != nil {
-			return SASQueryParameters{}, err
+		if v.Version == "" {
+			v.Version = SASVersion
 		}
-		v.Permissions = perms.String()
 	}
-	if v.Version == "" {
-		v.Version = SASVersion
-	}
-	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
+	startTime, expiryTime, snapshotTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime, v.SnapshotTime)
 
 	// String to sign: http://msdn.microsoft.com/en-us/library/azure/dn140255.aspx
 	stringToSign := strings.Join([]string{
@@ -62,7 +76,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		string(v.Protocol),
 		v.Version,
 		resource,
-		"",                   // signed timestamp, @TODO add for snapshot sas feature
+		snapshotTime,                   // signed timestamp, @TODO add for snapshot sas feature
 		v.CacheControl,       // rscc
 		v.ContentDisposition, // rscd
 		v.ContentEncoding,    // rsce
