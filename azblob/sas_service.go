@@ -32,26 +32,6 @@ type BlobSASSignatureValues struct {
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
 	if v.SnapshotTime.IsZero() {
-		if v.BlobName == "" {
-			// Make sure the permission characters are in the correct order
-			perms := &ContainerSASPermissions{}
-			if err := perms.Parse(v.Permissions); err != nil {
-				return SASQueryParameters{}, err
-			}
-			v.Permissions = perms.String()
-		} else {
-			resource = "b"
-			// Make sure the permission characters are in the correct order
-			perms := &BlobSASPermissions{}
-			if err := perms.Parse(v.Permissions); err != nil {
-				return SASQueryParameters{}, err
-			}
-			v.Permissions = perms.String()
-		}
-		if v.Version == "" {
-			v.Version = SASVersion
-		}
-	} else {
 		resource = "bs"
 
 		perms := &ContainerSASPermissions{}
@@ -62,6 +42,24 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		if v.Version == "" {
 			v.Version = SASVersion
 		}
+	} else if v.BlobName == "" {
+		// Make sure the permission characters are in the correct order
+		perms := &ContainerSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			return SASQueryParameters{}, err
+		}
+		v.Permissions = perms.String()
+	} else {
+		resource = "b"
+		// Make sure the permission characters are in the correct order
+		perms := &BlobSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			return SASQueryParameters{}, err
+		}
+		v.Permissions = perms.String()
+	}
+	if v.Version == "" {
+		v.Version = SASVersion
 	}
 	startTime, expiryTime, snapshotTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime, v.SnapshotTime)
 
