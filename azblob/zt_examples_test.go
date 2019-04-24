@@ -969,7 +969,7 @@ func Example_progressUploadDownload() {
 	// Wrap the request body in a RequestBodyProgress and pass a callback function for progress reporting.
 	_, err = blobURL.Upload(ctx,
 		pipeline.NewRequestBodyProgress(requestBody, func(bytesTransferred int64) {
-			fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Len())
+			fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Size())
 		}),
 		azblob.BlobHTTPHeaders{
 			ContentType:        "text/html; charset=utf-8",
