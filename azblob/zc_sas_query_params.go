@@ -57,6 +57,7 @@ type SASQueryParameters struct {
 	protocol           SASProtocol `param:"spr"`
 	startTime          time.Time   `param:"st"`
 	expiryTime         time.Time   `param:"se"`
+	snapshotTime       time.Time   `param:"snapshot"`
 	ipRange            IPRange     `param:"sip"`
 	identifier         string      `param:"si"`
 	resource           string      `param:"sr"`
@@ -67,6 +68,10 @@ type SASQueryParameters struct {
 	contentEncoding    string      `param:"rsce"`
 	contentLanguage    string      `param:"rscl"`
 	contentType        string      `param:"rsct"`
+}
+
+func (p *SASQueryParameters) SnapshotTime() time.Time {
+	return p.snapshotTime
 }
 
 func (p *SASQueryParameters) Version() string {
@@ -168,6 +173,8 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.startTime, _ = time.Parse(SASTimeFormat, val)
 		case "se":
 			p.expiryTime, _ = time.Parse(SASTimeFormat, val)
+		case "snapshot":
+			p.snapshotTime, _ = time.Parse(SASTimeFormat, val)
 		case "sip":
 			dashIndex := strings.Index(val, "-")
 			if dashIndex == -1 {
@@ -206,6 +213,9 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 
 // AddToValues adds the SAS components to the specified query parameters map.
 func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
+	if !p.expiryTime.IsZero() {
+		v.Add("snapshot", p.snapshotTime.Format(SASTimeFormat))
+	}
 	if p.version != "" {
 		v.Add("sv", p.version)
 	}
