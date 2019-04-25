@@ -37,7 +37,7 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 	}
 	v.Permissions = perms.String()
 
-	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
+	startTime, expiryTime, _ := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime, time.Time{})
 
 	stringToSign := strings.Join([]string{
 		sharedKeyCredential.AccountName(),

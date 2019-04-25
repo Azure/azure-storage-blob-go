@@ -14,6 +14,7 @@ type BlobSASSignatureValues struct {
 	Protocol           SASProtocol `param:"spr"` // See the SASProtocol* constants
 	StartTime          time.Time   `param:"st"`  // Not specified if IsZero
 	ExpiryTime         time.Time   `param:"se"`  // Not specified if IsZero
+	SnapshotTime       time.Time
 	Permissions        string      `param:"sp"`  // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
 	IPRange            IPRange     `param:"sip"`
 	Identifier         string      `param:"si"`
@@ -30,7 +31,15 @@ type BlobSASSignatureValues struct {
 // the proper SAS query parameters.
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
-	if v.BlobName == "" {
+	if v.SnapshotTime.IsZero() {
+		resource = "bs"
+        //Make sure the permission characters are in the correct order
+		perms := &BlobSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			return SASQueryParameters{}, err
+		}
+		v.Permissions = perms.String()
+	} else if v.BlobName == "" {
 		// Make sure the permission characters are in the correct order
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
@@ -49,7 +58,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 	if v.Version == "" {
 		v.Version = SASVersion
 	}
-	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
+	startTime, expiryTime, snapshotTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime, v.SnapshotTime)
 
 	// String to sign: http://msdn.microsoft.com/en-us/library/azure/dn140255.aspx
 	stringToSign := strings.Join([]string{
@@ -62,7 +71,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		string(v.Protocol),
 		v.Version,
 		resource,
-		"",                   // signed timestamp, @TODO add for snapshot sas feature
+		snapshotTime,         // signed timestamp
 		v.CacheControl,       // rscc
 		v.ContentDisposition, // rscd
 		v.ContentEncoding,    // rsce

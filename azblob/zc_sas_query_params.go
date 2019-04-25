@@ -22,7 +22,7 @@ const (
 
 // FormatTimesForSASSigning converts a time.Time to a snapshotTimeFormat string suitable for a
 // SASField's StartTime or ExpiryTime fields. Returns "" if value.IsZero().
-func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) {
+func FormatTimesForSASSigning(startTime, expiryTime, snapshotTime time.Time) (string, string, string) {
 	ss := ""
 	if !startTime.IsZero() {
 		ss = startTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
@@ -31,7 +31,11 @@ func FormatTimesForSASSigning(startTime, expiryTime time.Time) (string, string) 
 	if !expiryTime.IsZero() {
 		se = expiryTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
 	}
-	return ss, se
+	sh := ""
+	if !snapshotTime.IsZero() {
+		sh = snapshotTime.Format(SASTimeFormat)
+	}
+	return ss, se, sh
 }
 
 // SASTimeFormat represents the format of a SAS start or expiry time. Use it when formatting/parsing a time.Time.
