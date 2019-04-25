@@ -97,6 +97,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		contentEncoding:    v.ContentEncoding,
 		contentLanguage:    v.ContentLanguage,
 		contentType:        v.ContentType,
+		snapshotTime:       v.SnapshotTime,
 
 		// Calculated SAS signature
 		signature: signature,

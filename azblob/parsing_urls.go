@@ -124,6 +124,10 @@ func (up BlobURLParts) URL() url.URL {
 
 	rawQuery := up.UnparsedParams
 
+	if up.Snapshot == "" && !up.SAS.snapshotTime.IsZero() {
+		up.Snapshot = up.SAS.snapshotTime.Format(SASTimeFormat)
+	}
+
 	// Concatenate blob snapshot query parameter (if it exists)
 	if up.Snapshot != "" {
 		if len(rawQuery) > 0 {

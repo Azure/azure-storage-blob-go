@@ -169,12 +169,12 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.resourceTypes = val
 		case "spr":
 			p.protocol = SASProtocol(val)
+		case "snapshot":
+			p.snapshotTime, _ = time.Parse(SASTimeFormat, val)
 		case "st":
 			p.startTime, _ = time.Parse(SASTimeFormat, val)
 		case "se":
 			p.expiryTime, _ = time.Parse(SASTimeFormat, val)
-		case "snapshot":
-			p.snapshotTime, _ = time.Parse(SASTimeFormat, val)
 		case "sip":
 			dashIndex := strings.Index(val, "-")
 			if dashIndex == -1 {
@@ -213,9 +213,6 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 
 // AddToValues adds the SAS components to the specified query parameters map.
 func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
-	if !p.expiryTime.IsZero() {
-		v.Add("snapshot", p.snapshotTime.Format(SASTimeFormat))
-	}
 	if p.version != "" {
 		v.Add("sv", p.version)
 	}
