@@ -15,9 +15,9 @@ type BlobSASSignatureValues struct {
 	StartTime          time.Time   `param:"st"`  // Not specified if IsZero
 	ExpiryTime         time.Time   `param:"se"`  // Not specified if IsZero
 	SnapshotTime       time.Time
-	Permissions        string      `param:"sp"`  // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
-	IPRange            IPRange     `param:"sip"`
-	Identifier         string      `param:"si"`
+	Permissions        string  `param:"sp"` // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
+	IPRange            IPRange `param:"sip"`
+	Identifier         string  `param:"si"`
 	ContainerName      string
 	BlobName           string // Use "" to create a Container SAS
 	CacheControl       string // rscc
@@ -31,9 +31,9 @@ type BlobSASSignatureValues struct {
 // the proper SAS query parameters.
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
-	if v.SnapshotTime.IsZero() {
+	if !v.SnapshotTime.IsZero() {
 		resource = "bs"
-        //Make sure the permission characters are in the correct order
+		//Make sure the permission characters are in the correct order
 		perms := &BlobSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
 			return SASQueryParameters{}, err
