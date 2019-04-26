@@ -69,6 +69,7 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 		// Calculated SAS signature
 		signature: signature,
 	}
+
 	return p, nil
 }
 

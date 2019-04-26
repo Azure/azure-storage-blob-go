@@ -33,7 +33,7 @@ func FormatTimesForSASSigning(startTime, expiryTime, snapshotTime time.Time) (st
 	}
 	sh := ""
 	if !snapshotTime.IsZero() {
-		sh = snapshotTime.Format(SASTimeFormat)
+		sh = snapshotTime.Format(SnapshotTimeFormat)
 	}
 	return ss, se, sh
 }
@@ -170,7 +170,7 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 		case "spr":
 			p.protocol = SASProtocol(val)
 		case "snapshot":
-			p.snapshotTime, _ = time.Parse(SASTimeFormat, val)
+			p.snapshotTime, _ = time.Parse(SnapshotTimeFormat, val)
 		case "st":
 			p.startTime, _ = time.Parse(SASTimeFormat, val)
 		case "se":

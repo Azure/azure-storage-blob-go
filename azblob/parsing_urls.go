@@ -126,7 +126,7 @@ func (up BlobURLParts) URL() url.URL {
 
 	//If no snapshot is initially provided, fill it in from the SAS query properties to help the user
 	if up.Snapshot == "" && !up.SAS.snapshotTime.IsZero() {
-		up.Snapshot = up.SAS.snapshotTime.Format(SASTimeFormat)
+		up.Snapshot = up.SAS.snapshotTime.Format(SnapshotTimeFormat)
 	}
 
 	// Concatenate blob snapshot query parameter (if it exists)
