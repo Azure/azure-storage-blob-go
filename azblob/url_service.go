@@ -27,6 +27,7 @@ func NewServiceURL(primaryURL url.URL, p pipeline.Pipeline) ServiceURL {
 	return ServiceURL{client: client}
 }
 
+//GetUserDelegationKey obtains a UserDelegationKey object using the base ServiceURL object.
 func (s ServiceURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
 	sc := newServiceClient(s.client.url, s.client.p)
 	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)
