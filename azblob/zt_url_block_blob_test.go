@@ -108,7 +108,7 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 
 	// Stage blocks from URL.
 	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, azblob.LeaseAccessConditions{})
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, azblob.LeaseAccessConditions{}, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -116,7 +116,7 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, azblob.CountToEnd, azblob.LeaseAccessConditions{})
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, azblob.CountToEnd, azblob.LeaseAccessConditions{}, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
