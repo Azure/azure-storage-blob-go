@@ -35,16 +35,6 @@ func NewBlockBlobURL(url url.URL, p pipeline.Pipeline) BlockBlobURL {
 	return BlockBlobURL{BlobURL: BlobURL{blobClient: blobClient}, bbClient: bbClient}
 }
 
-//GetUserDelegationKey obtains a UserDelegationKey object using the base BlockBlobURL object.
-func (bb BlockBlobURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
-	sc := newServiceClient(bb.bbClient.url, bb.bbClient.p)
-	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)
-	if err != nil {
-		return UserDelegationKey{}, err
-	}
-	return *udk, nil
-}
-
 // WithPipeline creates a new BlockBlobURL object identical to the source but with the specific request policy pipeline.
 func (bb BlockBlobURL) WithPipeline(p pipeline.Pipeline) BlockBlobURL {
 	return NewBlockBlobURL(bb.blobClient.URL(), p)
