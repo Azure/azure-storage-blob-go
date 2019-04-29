@@ -27,6 +27,15 @@ func NewServiceURL(primaryURL url.URL, p pipeline.Pipeline) ServiceURL {
 	return ServiceURL{client: client}
 }
 
+func (s ServiceURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
+	sc := newServiceClient(s.client.url, s.client.p)
+	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)
+	if err != nil {
+		return UserDelegationKey{}, err
+	}
+	return *udk, nil
+}
+
 // URL returns the URL endpoint used by the ServiceURL object.
 func (s ServiceURL) URL() url.URL {
 	return s.client.URL()
