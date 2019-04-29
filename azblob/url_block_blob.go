@@ -35,6 +35,7 @@ func NewBlockBlobURL(url url.URL, p pipeline.Pipeline) BlockBlobURL {
 	return BlockBlobURL{BlobURL: BlobURL{blobClient: blobClient}, bbClient: bbClient}
 }
 
+//GetUserDelegationKey obtains a UserDelegationKey object using the base BlockBlobURL object.
 func (bb BlockBlobURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
 	sc := newServiceClient(bb.bbClient.url, bb.bbClient.p)
 	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)

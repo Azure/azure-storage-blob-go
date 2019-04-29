@@ -31,6 +31,7 @@ func NewPageBlobURL(url url.URL, p pipeline.Pipeline) PageBlobURL {
 	return PageBlobURL{BlobURL: BlobURL{blobClient: blobClient}, pbClient: pbClient}
 }
 
+//GetUserDelegationKey obtains a UserDelegationKey object using the base PageBlobURL object.
 func (pb PageBlobURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
 	sc := newServiceClient(pb.pbClient.url, pb.pbClient.p)
 	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)

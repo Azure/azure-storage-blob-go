@@ -3793,6 +3793,14 @@ type KeyInfo struct {
 	Expiry string `xml:"Expiry"`
 }
 
+//NewKeyInfo creates a new KeyInfo struct with the correct time formatting & conversion
+func NewKeyInfo(Start, Expiry time.Time) KeyInfo {
+	return KeyInfo{
+		Start: Start.UTC().Format(SASTimeFormat),
+		Expiry: Expiry.UTC().Format(SASTimeFormat),
+	}
+}
+
 // ListBlobsFlatSegmentResponse - An enumeration of blobs
 type ListBlobsFlatSegmentResponse struct {
 	rawResponse *http.Response
