@@ -21,16 +21,6 @@ func NewContainerURL(url url.URL, p pipeline.Pipeline) ContainerURL {
 	return ContainerURL{client: client}
 }
 
-//GetUserDelegationKey obtains a UserDelegationKey object using the base ContainerURL object.
-func (c ContainerURL) GetUserDelegationKey(ctx context.Context, info KeyInfo, timeout *int32, requestID *string) (UserDelegationKey, error) {
-	sc := newServiceClient(c.client.url, c.client.p)
-	udk, err := sc.GetUserDelegationKey(ctx, info, timeout, requestID)
-	if err != nil {
-		return UserDelegationKey{}, err
-	}
-	return *udk, nil
-}
-
 // URL returns the URL endpoint used by the ContainerURL object.
 func (c ContainerURL) URL() url.URL {
 	return c.client.URL()
