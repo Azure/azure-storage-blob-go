@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"fmt"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
@@ -223,6 +224,7 @@ func (client serviceClient) GetUserDelegationKey(ctx context.Context, keyInfo Ke
 	}
 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.getUserDelegationKeyResponder}, req)
 	if err != nil {
+		fmt.Println(resp)
 		return nil, err
 	}
 	return resp.(*UserDelegationKey), err

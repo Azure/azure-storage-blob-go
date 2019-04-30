@@ -63,6 +63,11 @@ type SASQueryParameters struct {
 	contentEncoding    string      `param:"rsce"`
 	contentLanguage    string      `param:"rscl"`
 	contentType        string      `param:"rsct"`
+	userDelegationKey  UserDelegationKey
+}
+
+func (p *SASQueryParameters) UserDelegationKey() UserDelegationKey {
+	return p.userDelegationKey
 }
 
 func (p *SASQueryParameters) Version() string {
@@ -190,6 +195,18 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.contentLanguage = val
 		case "rsct":
 			p.contentType = val
+		case "skoid":
+			p.userDelegationKey.SignedOid = val
+		case "sktid":
+			p.userDelegationKey.SignedTid = val
+		case "skt":
+			p.userDelegationKey.SignedStart, _ = time.Parse(SASTimeFormat, val)
+		case "ske":
+			p.userDelegationKey.SignedExpiry, _ = time.Parse(SASTimeFormat, val)
+		case "sks":
+			p.userDelegationKey.SignedService = val
+		case "skv":
+			p.userDelegationKey.SignedVersion = val
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
@@ -231,6 +248,14 @@ func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
 	}
 	if p.permissions != "" {
 		v.Add("sp", p.permissions)
+	}
+	if p.userDelegationKey.SignedOid != "" {
+		v.Add("skoid", p.userDelegationKey.SignedOid)
+		v.Add("sktid", p.userDelegationKey.SignedTid)
+		v.Add("skt", p.userDelegationKey.SignedStart.Format(SASTimeFormat))
+		v.Add("ske", p.userDelegationKey.SignedExpiry.Format(SASTimeFormat))
+		v.Add("sks", p.userDelegationKey.SignedService)
+		v.Add("skv", p.userDelegationKey.SignedVersion)
 	}
 	if p.signature != "" {
 		v.Add("sig", p.signature)

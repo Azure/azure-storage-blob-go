@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -27,19 +28,87 @@ type BlobSASSignatureValues struct {
 	UserDelegationKey  UserDelegationKey
 }
 
+func (v BlobSASSignatureValues) NewIdentitySASQueryParameters(AccountName string) (SASQueryParameters, error) {
+	if v.UserDelegationKey.Value == "" {
+		return SASQueryParameters{}, errors.New("please provide a UserDelegationKey")
+	}
+
+	resource := "b"
+	//Make sure the permission characters are in the correct order
+	perms := &BlobSASPermissions{}
+	if err := perms.Parse(v.Permissions); err != nil {
+		return SASQueryParameters{}, err
+	}
+	v.Permissions = perms.String()
+
+	if v.Version == "" {
+		v.Version = SASVersion
+	}
+	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
+
+	udk := v.UserDelegationKey
+	udkStart, udkExpiry := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry)
+	udkString := strings.Join([]string{
+		udk.SignedOid,
+		udk.SignedTid,
+		udkStart,
+		udkExpiry,
+		udk.SignedService,
+		udk.SignedVersion,
+	}, "\n")
+
+	// String to sign: http://msdn.microsoft.com/en-us/library/azure/dn140255.aspx
+	stringToSign := strings.Join([]string{
+		v.Permissions,
+		startTime,
+		expiryTime,
+		getCanonicalName(AccountName, v.ContainerName, v.BlobName),
+		udkString,
+		v.IPRange.String(),
+		string(v.Protocol),
+		v.Version,
+		resource,
+		"",                   // signed timestamp, @TODO add for snapshot sas feature
+		v.CacheControl,       // rscc
+		v.ContentDisposition, // rscd
+		v.ContentEncoding,    // rsce
+		v.ContentLanguage,    // rscl
+		v.ContentType},       // rsct
+		"\n")
+	signature := v.UserDelegationKey.ComputeHMACSHA256(stringToSign)
+
+	p := SASQueryParameters{
+		// Common SAS parameters
+		version:     v.Version,
+		protocol:    v.Protocol,
+		startTime:   v.StartTime,
+		expiryTime:  v.ExpiryTime,
+		permissions: v.Permissions,
+		ipRange:     v.IPRange,
+
+		// Container/Blob-specific SAS parameters
+		resource:           resource,
+		identifier:         v.Identifier,
+		cacheControl:       v.CacheControl,
+		contentDisposition: v.ContentDisposition,
+		contentEncoding:    v.ContentEncoding,
+		contentLanguage:    v.ContentLanguage,
+		contentType:        v.ContentType,
+
+		// Calculated SAS signature
+		signature: signature,
+
+		// Identity SAS parameters
+		userDelegationKey: v.UserDelegationKey,
+	}
+	return p, nil
+}
+
 // NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
 // the proper SAS query parameters.
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential) (SASQueryParameters, error) {
 	resource := "c"
-	if v.UserDelegationKey.SignedOid != "" { //Can't check if nil, so, next best thing is the default initialization value
-		resource = "b"
-		//Make sure the permission characters are in the correct order
-		perms := &ContainerSASPermissions{}
-		if err := perms.Parse(v.Permissions); err != nil {
-			return SASQueryParameters{}, err
-		}
-		v.Permissions = perms.String()
-	} else if v.BlobName == "" {
+	if v.BlobName == "" {
 		// Make sure the permission characters are in the correct order
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
@@ -60,27 +129,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 	}
 	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
 
-	 /*
-	 http://www.thecodelesscode.com/case/84
-	 Today's mood is cinnamon, and I know I should never use the same variable for two things
-	 But for the sake of simplicity, signedIdentifier isn't compatible with ID SAS, and the required signed items
-	 are added in place of the identifier.
-
-	 If this isn't excusable, please suggest a implementation.
-	 */
 	signedIdentifier := v.Identifier
-	if v.UserDelegationKey.SignedOid != "" { //Can't check if nil, so next best thing is the default initialization value
-		udk := v.UserDelegationKey
-		udkStart, udkExpiry := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry)
-		signedIdentifier = strings.Join([]string{
-			udk.SignedOid,
-			udk.SignedTid,
-			udkStart,
-			udkExpiry,
-			udk.SignedService,
-			udk.SignedVersion,
-		}, "\n")
-	}
 
 	// String to sign: http://msdn.microsoft.com/en-us/library/azure/dn140255.aspx
 	stringToSign := strings.Join([]string{
