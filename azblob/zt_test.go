@@ -20,6 +20,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/go-autorest/autorest/adal"
 )
 
 // For testing docs, see: https://labix.org/gocheck
@@ -230,6 +231,44 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 		return nil, errors.New(accountNameEnvVar + " and/or " + accountKeyEnvVar + " environment variables not specified.")
 	}
 	return azblob.NewSharedKeyCredential(accountName, accountKey)
+}
+
+func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
+	applicationSecretEnvVar := accountType + "APPLICATION_SECRET"
+	applicationIdEnvVar := accountType + "APPLICATION_ID"
+	appSecret, appId := os.Getenv(applicationSecretEnvVar), os.Getenv(applicationIdEnvVar)
+	if appSecret == "" || appId == "" {
+		return nil, errors.New(applicationSecretEnvVar + " and/or " + applicationIdEnvVar + " environment variables not specified.")
+	}
+
+	//Should I _really_ be pulling in ADAL here?
+	//Perhaps there's a better way to get an oauth token?
+	//I really don't want to pull the _entire_ token from the command line (but that may be how it has to be)
+	oauthConfig, err := adal.NewOAuthConfig("https://login.microsoftonline.com", "common")
+	if err != nil {
+		return nil, err
+	}
+
+	spt, err := adal.NewServicePrincipalToken(
+		*oauthConfig,
+		appId,
+		appSecret,
+		"https://storage.azure.com")
+	if err != nil {
+		return nil, err
+	}
+
+	err = spt.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
+	tc := azblob.NewTokenCredential(spt.Token().AccessToken, func(tc azblob.TokenCredential) time.Duration {
+		_ = spt.Refresh()
+		return time.Until(spt.Token().Expires())
+	})
+
+	return &tc, nil
 }
 
 func getGenericBSU(accountType string) (azblob.ServiceURL, error) {

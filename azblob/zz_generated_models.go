@@ -4,6 +4,8 @@ package azblob
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/xml"
 	"errors"
@@ -3796,7 +3798,7 @@ type KeyInfo struct {
 //NewKeyInfo creates a new KeyInfo struct with the correct time formatting & conversion
 func NewKeyInfo(Start, Expiry time.Time) KeyInfo {
 	return KeyInfo{
-		Start: Start.UTC().Format(SASTimeFormat),
+		Start:  Start.UTC().Format(SASTimeFormat),
 		Expiry: Expiry.UTC().Format(SASTimeFormat),
 	}
 }
@@ -4987,6 +4989,13 @@ type UserDelegationKey struct {
 	Value string `xml:"Value"`
 }
 
+func (udk UserDelegationKey) ComputeHMACSHA256(message string) (base64String string) {
+	bytes, _ := base64.StdEncoding.DecodeString(udk.Value)
+	h := hmac.New(sha256.New, bytes)
+	h.Write([]byte(message))
+	return base64.StdEncoding.EncodeToString(h.Sum(nil))
+}
+
 // MarshalXML implements the xml.Marshaler interface for UserDelegationKey.
 func (udk UserDelegationKey) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	udk2 := (*userDelegationKey)(unsafe.Pointer(&udk))
@@ -5061,7 +5070,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
+	rfc3339Format = "2006-01-02T15:04:05Z" //This was wrong in the generated code, FYI
 )
 
 // used to convert times from UTC to GMT before sending across the wire
