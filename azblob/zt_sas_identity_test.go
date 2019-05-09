@@ -52,7 +52,6 @@ func (s *aztestsSuite) TestIdentitySASUsage(c *chk.C) {
 	bSASParts := azblob.NewBlobURLParts(blobURL.URL())
 	bSASParts.SAS = bSAS
 	bsurl := bSASParts.URL()
-	fmt.Println(bsurl.String())
 	bSASURL := azblob.NewBlockBlobURL(bSASParts.URL(), p)
 	_, err = containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
 	if err != nil {
