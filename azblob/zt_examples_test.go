@@ -372,7 +372,7 @@ func ExampleBlobSASSignatureValues() {
 		// To produce a container SAS (as opposed to a blob SAS), assign to Permissions using
 		// ContainerSASPermissions and make sure the BlobName field is "" (the default).
 		Permissions: azblob.BlobSASPermissions{Add: true, Read: true, Write: true}.String(),
-	}.NewSASQueryParameters(credential)
+	}.NewSASQueryParameters(credential, "", nil)
 	if err != nil {
 		log.Fatal(err)
 	}

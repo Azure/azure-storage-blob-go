@@ -63,11 +63,36 @@ type SASQueryParameters struct {
 	contentEncoding    string      `param:"rsce"`
 	contentLanguage    string      `param:"rscl"`
 	contentType        string      `param:"rsct"`
-	userDelegationKey  UserDelegationKey
+	signedOid          string
+	signedTid          string
+	signedStart        time.Time
+	signedExpiry       time.Time
+	signedService      string
+	signedVersion      string
 }
 
-func (p *SASQueryParameters) UserDelegationKey() UserDelegationKey {
-	return p.userDelegationKey
+func (p *SASQueryParameters) SignedOid() string {
+	return p.signedOid
+}
+
+func (p *SASQueryParameters) SignedTid() string {
+	return p.signedTid
+}
+
+func (p *SASQueryParameters) SignedStart() time.Time {
+	return p.signedStart
+}
+
+func (p *SASQueryParameters) SignedExpiry() time.Time {
+	return p.signedExpiry
+}
+
+func (p *SASQueryParameters) SignedService() string {
+	return p.signedService
+}
+
+func (p *SASQueryParameters) SignedVersion() string {
+	return p.signedVersion
 }
 
 func (p *SASQueryParameters) Version() string {
@@ -196,17 +221,17 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 		case "rsct":
 			p.contentType = val
 		case "skoid":
-			p.userDelegationKey.SignedOid = val
+			p.signedOid = val
 		case "sktid":
-			p.userDelegationKey.SignedTid = val
+			p.signedTid = val
 		case "skt":
-			p.userDelegationKey.SignedStart, _ = time.Parse(SASTimeFormat, val)
+			p.signedStart, _ = time.Parse(SASTimeFormat, val)
 		case "ske":
-			p.userDelegationKey.SignedExpiry, _ = time.Parse(SASTimeFormat, val)
+			p.signedExpiry, _ = time.Parse(SASTimeFormat, val)
 		case "sks":
-			p.userDelegationKey.SignedService = val
+			p.signedService = val
 		case "skv":
-			p.userDelegationKey.SignedVersion = val
+			p.signedVersion = val
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
@@ -249,13 +274,13 @@ func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
 	if p.permissions != "" {
 		v.Add("sp", p.permissions)
 	}
-	if p.userDelegationKey.SignedOid != "" {
-		v.Add("skoid", p.userDelegationKey.SignedOid)
-		v.Add("sktid", p.userDelegationKey.SignedTid)
-		v.Add("skt", p.userDelegationKey.SignedStart.Format(SASTimeFormat))
-		v.Add("ske", p.userDelegationKey.SignedExpiry.Format(SASTimeFormat))
-		v.Add("sks", p.userDelegationKey.SignedService)
-		v.Add("skv", p.userDelegationKey.SignedVersion)
+	if p.signedOid != "" {
+		v.Add("skoid", p.signedOid)
+		v.Add("sktid", p.signedTid)
+		v.Add("skt", p.signedStart.Format(SASTimeFormat))
+		v.Add("ske", p.signedExpiry.Format(SASTimeFormat))
+		v.Add("sks", p.signedService)
+		v.Add("skv", p.signedVersion)
 	}
 	if p.signature != "" {
 		v.Add("sig", p.signature)
