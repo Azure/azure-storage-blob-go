@@ -116,7 +116,7 @@ func (b *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
-	}.NewSASQueryParameters(credential)
+	}.NewSASQueryParameters(credential, "", nil)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -188,7 +188,7 @@ func (b *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
-	}.NewSASQueryParameters(credential)
+	}.NewSASQueryParameters(credential, "", nil)
 	if err != nil {
 		c.Fatal(err)
 	}
