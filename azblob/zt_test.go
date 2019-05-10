@@ -78,11 +78,13 @@ func generateName(prefix string) string {
 	// trace to extrat the test name, which is stored in name
 	pc := make([]uintptr, 10)
 	runtime.Callers(0, pc)
-	f := runtime.FuncForPC(pc[0])
-	name := f.Name()
-	for i := 0; !strings.Contains(name, "Suite"); i++ { // The tests are all scoped to the suite, so this ensures getting the actual test name
-		f = runtime.FuncForPC(pc[i])
-		name = f.Name()
+	frames := runtime.CallersFrames(pc)
+	name := ""
+	for f, next := frames.Next(); next; f, next = frames.Next() {
+		name = f.Function
+		if strings.Contains(name, "Suite") {
+			break
+		}
 	}
 	funcNameStart := strings.Index(name, "Test")
 	name = name[funcNameStart+len("Test"):] // Just get the name of the test and not any of the garbage at the beginning
