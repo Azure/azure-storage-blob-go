@@ -128,17 +128,20 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		contentLanguage:    v.ContentLanguage,
 		contentType:        v.ContentType,
 
-		//User delegation SAS specific parameters
-		signedOid:     udk.SignedOid,
-		signedTid:     udk.SignedTid,
-		signedStart:   udk.SignedStart,
-		signedExpiry:  udk.SignedExpiry,
-		signedService: udk.SignedService,
-		signedVersion: udk.SignedVersion,
-
 		// Calculated SAS signature
 		signature: signature,
 	}
+
+	//User delegation SAS specific parameters
+	if udk != nil {
+		p.signedOid = udk.SignedOid
+		p.signedTid = udk.SignedTid
+		p.signedStart = udk.SignedStart
+		p.signedExpiry = udk.SignedExpiry
+		p.signedService = udk.SignedService
+		p.signedVersion = udk.SignedVersion
+	}
+
 	return p, nil
 }
 
