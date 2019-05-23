@@ -9,7 +9,7 @@ import (
 )
 
 //Creates a blob, takes a snapshot, downloads from snapshot, and deletes from the snapshot w/ the token
-func (s *aztestsSuite) TestIdentitySASUsage(c *chk.C) {
+func (s *aztestsSuite) TestUserDelegationSAS(c *chk.C) {
 	//Accumulate prerequisite details to create storage etc.
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
@@ -32,12 +32,12 @@ func (s *aztestsSuite) TestIdentitySASUsage(c *chk.C) {
 		c.Fatal(err)
 	}
 
-	//Prepare identity SAS query
+	//Prepare User Delegation SAS query
 	bSAS, err := azblob.BlobSASSignatureValues{
 		Protocol:      azblob.SASProtocolHTTPS,
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
-		Permissions:   "racwdl",
+		Permissions:   "rd",
 		ContainerName: containerName,
 		BlobName:      blobName,
 	}.NewSASQueryParameters(nil, accountName, &budk)
@@ -48,13 +48,14 @@ func (s *aztestsSuite) TestIdentitySASUsage(c *chk.C) {
 	//Create pipeline
 	p = azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
 
-	//Append identity SAS token to URL
+	//Append User Delegation SAS token to URL
 	bSASParts := azblob.NewBlobURLParts(blobURL.URL())
 	bSASParts.SAS = bSAS
 	bSASURL := azblob.NewBlockBlobURL(bSASParts.URL(), p)
 
 	//Create container & upload sample data
 	_, err = containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+	defer containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -64,18 +65,24 @@ func (s *aztestsSuite) TestIdentitySASUsage(c *chk.C) {
 		c.Fatal(err)
 	}
 
-	//Download data via identity SAS URL; must succeed
+	//Download data via User Delegation SAS URL; must succeed
 	downloadResponse, err := bSASURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
 	if err != nil {
 		c.Fatal(err)
 	}
 	downloadedData := &bytes.Buffer{}
 	reader := downloadResponse.Body(azblob.RetryReaderOptions{})
-	downloadedData.ReadFrom(reader)
-	reader.Close()
+	_, err = downloadedData.ReadFrom(reader)
+	if err != nil {
+		c.Fatal(err)
+	}
+	err = reader.Close()
+	if err != nil {
+		c.Fatal(err)
+	}
 	c.Assert(data, chk.Equals, downloadedData.String())
 
-	//Delete the item using the identity SAS URL; must succeed
+	//Delete the item using the User Delegation SAS URL; must succeed
 	_, err = bSASURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)

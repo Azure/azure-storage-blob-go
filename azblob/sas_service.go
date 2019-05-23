@@ -102,7 +102,13 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		v.ContentLanguage,    // rscl
 		v.ContentType},       // rsct
 		"\n")
-	signature := sharedKeyCredential.ComputeHMACSHA256(stringToSign)
+
+	signature := ""
+	if sharedKeyCredential != nil {
+		signature = sharedKeyCredential.ComputeHMACSHA256(stringToSign)
+	} else {
+		signature = udk.ComputeHMACSHA256(stringToSign)
+	}
 
 	p := SASQueryParameters{
 		// Common SAS parameters
@@ -122,7 +128,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		contentLanguage:    v.ContentLanguage,
 		contentType:        v.ContentType,
 
-		//Identity SAS specific parameters
+		//User delegation SAS specific parameters
 		signedOid:     udk.SignedOid,
 		signedTid:     udk.SignedTid,
 		signedStart:   udk.SignedStart,

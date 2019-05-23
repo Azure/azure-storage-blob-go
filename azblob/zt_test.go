@@ -3,6 +3,7 @@ package azblob_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -234,28 +235,50 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 }
 
 func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
-	applicationSecretEnvVar := accountType + "APPLICATION_SECRET"
+	oauthTokenEnvVar := accountType + "OAUTH_TOKEN"
+	clientSecretEnvVar := accountType + "CLIENT_SECRET"
 	applicationIdEnvVar := accountType + "APPLICATION_ID"
-	appSecret, appId := os.Getenv(applicationSecretEnvVar), os.Getenv(applicationIdEnvVar)
-	if appSecret == "" || appId == "" {
-		return nil, errors.New(applicationSecretEnvVar + " and/or " + applicationIdEnvVar + " environment variables not specified.")
+	tenantIdEnvVar := accountType + "TENANT_ID"
+	oauthToken, appId, tenantId, clientSecret := []byte(os.Getenv(oauthTokenEnvVar)), os.Getenv(applicationIdEnvVar), os.Getenv(tenantIdEnvVar), os.Getenv(clientSecretEnvVar)
+	if (len(oauthToken) == 0 && clientSecret == "") || appId == "" {
+		return nil, errors.New("(" + oauthTokenEnvVar + " OR " + clientSecretEnvVar + ") and/or " + applicationIdEnvVar + " environment variables not specified.")
+	}
+	if tenantId == "" {
+		tenantId = "common"
 	}
 
-	//Should I _really_ be pulling in ADAL here?
-	//Perhaps there's a better way to get an oauth token?
-	//I really don't want to pull the _entire_ token from the command line (but that may be how it has to be)
-	oauthConfig, err := adal.NewOAuthConfig("https://login.microsoftonline.com", "common")
+	var Token adal.Token
+	if len(oauthToken) != 0 {
+		if err := json.Unmarshal(oauthToken, &Token); err != nil {
+			return nil, err
+		}
+	}
+
+	var spt *adal.ServicePrincipalToken
+
+	oauthConfig, err := adal.NewOAuthConfig("https://login.microsoftonline.com", tenantId)
 	if err != nil {
 		return nil, err
 	}
 
-	spt, err := adal.NewServicePrincipalToken(
-		*oauthConfig,
-		appId,
-		appSecret,
-		"https://storage.azure.com")
-	if err != nil {
-		return nil, err
+	if len(oauthToken) == 0 {
+		spt, err = adal.NewServicePrincipalToken(
+			*oauthConfig,
+			appId,
+			clientSecret,
+			"https://storage.azure.com")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		spt, err = adal.NewServicePrincipalTokenFromManualToken(*oauthConfig,
+			appId,
+			"https://storage.azure.com",
+			Token,
+		)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = spt.Refresh()
