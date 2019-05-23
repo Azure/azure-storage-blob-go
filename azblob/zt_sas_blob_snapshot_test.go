@@ -8,46 +8,20 @@ import (
 	"time"
 )
 
-func (s *aztestsSuite) TestSnapshotSASUsage(c *chk.C) {
+func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	//Generate URLs ----------------------------------------------------------------------------------------------------
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
-	currentTime := time.Now().UTC()
-	credential, err := getGenericCredential("")
-	if err != nil {
-		c.Fatal("Invalid credential")
-	}
-
-	genericReadSAS, err := azblob.AccountSASSignatureValues{
-		StartTime:     currentTime,
-		ExpiryTime:    currentTime.Add(48 * time.Hour),
-		Permissions:   "racwdl",
-		ResourceTypes: "sco",
-		Services:      "bfqt",
-	}.NewSASQueryParameters(credential)
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	genericParts := azblob.NewBlobURLParts(containerURL.URL())
-	genericParts.SAS = genericReadSAS
-	genericURL := genericParts.URL()
-
-	//Create pipeline
-	p := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
-	genericContainer := azblob.NewContainerURL(genericURL, p)
-
-	//Create container
-	_, err = genericContainer.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
-
+	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+	defer containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	//Create file in container, download from snapshot to test. --------------------------------------------------------
-	burl := genericContainer.NewBlockBlobURL(blobName)
+	burl := containerURL.NewBlockBlobURL(blobName)
 	data := "Hello world!"
 
 	_, err = burl.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
@@ -61,11 +35,20 @@ func (s *aztestsSuite) TestSnapshotSASUsage(c *chk.C) {
 		c.Fatal(err)
 	}
 
+	//Format snapshot time
 	snapTime, err := time.Parse(azblob.SnapshotTimeFormat, createSnapshot.Snapshot())
 	if err != nil {
 		c.Fatal(err)
 	}
 
+	//Get credentials & current time
+	currentTime := time.Now().UTC()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+
+	//Create SAS query
 	snapSASQueryParams, err := azblob.BlobSASSignatureValues{
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(48 * time.Hour),
@@ -79,6 +62,8 @@ func (s *aztestsSuite) TestSnapshotSASUsage(c *chk.C) {
 		c.Fatal(err)
 	}
 
+	//Attach SAS query to block blob URL
+	p := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
 	snapParts := azblob.NewBlobURLParts(blobURL.URL())
 	snapParts.SAS = snapSASQueryParams
 	sburl := azblob.NewBlockBlobURL(snapParts.URL(), p)
