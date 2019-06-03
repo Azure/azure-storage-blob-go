@@ -81,9 +81,27 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 
 	c.Assert(data, chk.Equals, downloadedData.String())
 
-	//Try (and fail to) delete from snapshot ---------------------------------------------------------------------------
+	//Try to delete snapshot -------------------------------------------------------------------------------------------
 	_, err = sburl.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
-	if err != nil { //This absolutely SHOULD error out.
+	if err != nil { //This shouldn't fail.
 		c.Fatal(err)
+	}
+
+	//Create a normal blob and attempt to use the snapshot SAS against it (assuming failure) ---------------------------
+	//If this succeeds, it means a normal SAS token was created.
+
+	fsburl := containerURL.NewBlockBlobURL("failsnap")
+	_, err = fsburl.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	if err != nil {
+		c.Fatal(err) //should succeed to create the blob via normal auth means
+	}
+
+	fsburlparts := azblob.NewBlobURLParts(fsburl.URL())
+	fsburlparts.SAS = snapSASQueryParams
+	fsburl = azblob.NewBlockBlobURL(fsburlparts.URL(), p) //re-use fsburl as we don't need the sharedkey version anymore
+
+	resp, err := fsburl.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	if err == nil {
+		c.Fatal(resp) //This SHOULD fail. Otherwise we have a normal SAS token...
 	}
 }
