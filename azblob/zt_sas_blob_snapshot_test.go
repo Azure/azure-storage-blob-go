@@ -82,8 +82,8 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	c.Assert(data, chk.Equals, downloadedData.String())
 
 	//Try (and fail to) delete from snapshot ---------------------------------------------------------------------------
-	deleteResponse, err := sburl.Delete(ctx, azblob.DeleteSnapshotsOptionOnly, azblob.BlobAccessConditions{})
-	if err == nil { //This absolutely SHOULD error out.
-		c.Fatal(deleteResponse)
+	_, err = sburl.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	if err != nil { //This absolutely SHOULD error out.
+		c.Fatal(err)
 	}
 }
