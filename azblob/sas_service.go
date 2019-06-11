@@ -32,20 +32,11 @@ type BlobSASSignatureValues struct {
 // Requires either SharedKeyCredential or AccountName & UserDelegationKey
 func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential, accountName string, udk *UserDelegationKey) (SASQueryParameters, error) {
 	resource := "c"
-	if sharedKeyCredential == nil {
-		//Ensure required information is supplied
-		if accountName == "" || udk == nil {
-			return SASQueryParameters{}, errors.New("if using a userDelegationKey, please provide the key and an account name")
-		}
+	if sharedKeyCredential == nil && (accountName == "" || udk == nil) {
+		return SASQueryParameters{}, errors.New("if using a userDelegationKey, please provide the key and an account name")
+	}
 
-		resource = "b"
-		//Make sure the permission characters are in the correct order
-		perms := &BlobSASPermissions{}
-		if err := perms.Parse(v.Permissions); err != nil {
-			return SASQueryParameters{}, err
-		}
-		v.Permissions = perms.String()
-	} else if v.BlobName == "" {
+	if v.BlobName == "" {
 		// Make sure the permission characters are in the correct order
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
