@@ -702,7 +702,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	serviceSASValues := azblob.BlobSASSignatureValues{Identifier: "0000", ContainerName: containerName}
-	queryParams, err := serviceSASValues.NewSASQueryParameters(credential, "", nil)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}

@@ -260,7 +260,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	serviceSASValues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: containerName, BlobName: blobName}
-	queryParams, err := serviceSASValues.NewSASQueryParameters(credential, "", nil)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -309,7 +309,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	if err != nil {
 		c.Fatal("Invalid credential")
 	}
-	queryParams, err := serviceSASValues.NewSASQueryParameters(credential, "", nil)
+	queryParams, err := serviceSASValues.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -333,7 +333,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	copyServiceSASvalues := azblob.BlobSASSignatureValues{StartTime: time.Now().Add(-1 * time.Hour).UTC(),
 		ExpiryTime: time.Now().Add(time.Hour).UTC(), Permissions: azblob.BlobSASPermissions{Read: true, Write: true}.String(),
 		ContainerName: copyContainerName, BlobName: copyBlobName}
-	copyQueryParams, err := copyServiceSASvalues.NewSASQueryParameters(credential, "", nil)
+	copyQueryParams, err := copyServiceSASvalues.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}

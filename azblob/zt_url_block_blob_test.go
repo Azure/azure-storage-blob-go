@@ -99,7 +99,7 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
-	}.NewSASQueryParameters(credential, "", nil)
+	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -182,7 +182,7 @@ func (b *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 		ContentEncoding:    contentEncodingVal,
 		ContentLanguage:    contentLanguageVal,
 		ContentType:        contentTypeVal,
-	}.NewSASQueryParameters(credential, "", nil)
+	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}

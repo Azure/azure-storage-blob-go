@@ -74,7 +74,7 @@ func (b *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
-	}.NewSASQueryParameters(credential, "", nil)
+	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -130,7 +130,7 @@ func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
 		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
-	}.NewSASQueryParameters(credential, "", nil)
+	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}

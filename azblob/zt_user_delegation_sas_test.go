@@ -13,7 +13,6 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
 	currentTime := time.Now().UTC()
-	accountName, _ := accountInfo()
 	ocred, err := getOAuthCredential("")
 	if err != nil {
 		c.Fatal(err)
@@ -24,7 +23,8 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 
 	bsu = bsu.WithPipeline(p)
 	keyInfo := azblob.NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	cudk, err := bsu.GetUserDelegationKey(ctx, keyInfo, nil, nil)
+	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil)
+	cx := &cudk
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -35,7 +35,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
 		Permissions:   "racwdl",
 		ContainerName: containerName,
-	}.NewSASQueryParameters(nil, accountName, &cudk)
+	}.NewSASQueryParameters(cx)
 
 	// Create anonymous pipeline
 	p = azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
@@ -66,7 +66,6 @@ func (s *aztestsSuite) TestUserDelegationSAS(c *chk.C) {
 	containerURL, containerName := getContainerURL(c, bsu)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 	currentTime := time.Now().UTC()
-	accountName, _ := accountInfo()
 	ocred, err := getOAuthCredential("")
 	if err != nil {
 		c.Fatal(err)
@@ -78,7 +77,7 @@ func (s *aztestsSuite) TestUserDelegationSAS(c *chk.C) {
 	// Prepare user delegation key
 	bsu = bsu.WithPipeline(p)
 	keyInfo := azblob.NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationKey(ctx, keyInfo, nil, nil) //MUST have TokenCredential
+	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -91,7 +90,7 @@ func (s *aztestsSuite) TestUserDelegationSAS(c *chk.C) {
 		Permissions:   "rd",
 		ContainerName: containerName,
 		BlobName:      blobName,
-	}.NewSASQueryParameters(nil, accountName, &budk)
+	}.NewSASQueryParameters(budk)
 	if err != nil {
 		c.Fatal(err)
 	}

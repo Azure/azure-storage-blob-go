@@ -2,7 +2,6 @@ package azblob
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -30,10 +29,10 @@ type BlobSASSignatureValues struct {
 // NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
 // the proper SAS query parameters.
 // Requires either SharedKeyCredential or AccountName & UserDelegationKey
-func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *SharedKeyCredential, accountName string, udk *UserDelegationKey) (SASQueryParameters, error) {
+func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountCredential) (SASQueryParameters, error) {
 	resource := "c"
-	if sharedKeyCredential == nil && (accountName == "" || udk == nil) {
-		return SASQueryParameters{}, errors.New("if using a userDelegationKey, please provide the key and an account name")
+	if credential == nil {
+		return SASQueryParameters{}, fmt.Errorf("cannot sign SAS query without StorageAccountCredential")
 	}
 
 	if v.BlobName == "" {
@@ -59,19 +58,17 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 
 	signedIdentifier := v.Identifier
 
-	if sharedKeyCredential != nil {
-		accountName = sharedKeyCredential.AccountName()
-	} else {
-		udkStart, udkExpiry := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry)
+	if udk, ok := credential.(*UserDelegationCredential); ok {
+		udkStart, udkExpiry := FormatTimesForSASSigning(udk.accountKey.SignedStart, udk.accountKey.SignedExpiry)
 		//I don't like this answer to combining the functions
 		//But because signedIdentifier and the user delegation key strings share a place, this is an _OK_ way to do it.
 		signedIdentifier = strings.Join([]string{
-			udk.SignedOid,
-			udk.SignedTid,
+			udk.accountKey.SignedOid,
+			udk.accountKey.SignedTid,
 			udkStart,
 			udkExpiry,
-			udk.SignedService,
-			udk.SignedVersion,
+			udk.accountKey.SignedService,
+			udk.accountKey.SignedVersion,
 		}, "\n")
 	}
 
@@ -80,7 +77,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		v.Permissions,
 		startTime,
 		expiryTime,
-		getCanonicalName(accountName, v.ContainerName, v.BlobName),
+		getCanonicalName(credential.AccountName(), v.ContainerName, v.BlobName),
 		signedIdentifier,
 		v.IPRange.String(),
 		string(v.Protocol),
@@ -95,11 +92,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 		"\n")
 
 	signature := ""
-	if sharedKeyCredential != nil {
-		signature = sharedKeyCredential.ComputeHMACSHA256(stringToSign)
-	} else {
-		signature = udk.ComputeHMACSHA256(stringToSign)
-	}
+	signature = credential.ComputeHMACSHA256(stringToSign)
 
 	p := SASQueryParameters{
 		// Common SAS parameters
@@ -124,13 +117,13 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Share
 	}
 
 	//User delegation SAS specific parameters
-	if udk != nil {
-		p.signedOid = udk.SignedOid
-		p.signedTid = udk.SignedTid
-		p.signedStart = udk.SignedStart
-		p.signedExpiry = udk.SignedExpiry
-		p.signedService = udk.SignedService
-		p.signedVersion = udk.SignedVersion
+	if udk, ok := credential.(*UserDelegationCredential); ok {
+		p.signedOid = udk.accountKey.SignedOid
+		p.signedTid = udk.accountKey.SignedTid
+		p.signedStart = udk.accountKey.SignedStart
+		p.signedExpiry = udk.accountKey.SignedExpiry
+		p.signedService = udk.accountKey.SignedService
+		p.signedVersion = udk.accountKey.SignedVersion
 	}
 
 	return p, nil
