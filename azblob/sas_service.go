@@ -26,9 +26,9 @@ type BlobSASSignatureValues struct {
 	ContentType        string // rsct
 }
 
-// NewSASQueryParameters uses an account's shared key credential to sign this signature values to produce
+// NewSASQueryParameters uses an account's StorageAccountCredential to sign this signature values to produce
 // the proper SAS query parameters.
-// Requires either SharedKeyCredential or AccountName & UserDelegationKey
+// See: StorageAccountCredential. Compatible with both UserDelegationCredential and SharedKeyCredential
 func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountCredential) (SASQueryParameters, error) {
 	resource := "c"
 	if credential == nil {

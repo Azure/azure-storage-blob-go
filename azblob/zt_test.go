@@ -234,6 +234,10 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 	return azblob.NewSharedKeyCredential(accountName, accountKey)
 }
 
+//getOAuthCredential can intake a OAuth credential from environment variables in one of the following ways:
+//Direct: Supply a ADAL OAuth token in OAUTH_TOKEN and application ID in APPLICATION_ID to refresh the supplied token.
+//Client secret: Supply a client secret in CLIENT_SECRET and application ID in APPLICATION_ID for SPN auth.
+//TENANT_ID is optional and will be inferred as common if it is not explicitly defined.
 func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
 	oauthTokenEnvVar := accountType + "OAUTH_TOKEN"
 	clientSecretEnvVar := accountType + "CLIENT_SECRET"
