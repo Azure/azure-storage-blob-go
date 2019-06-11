@@ -24,7 +24,6 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	bsu = bsu.WithPipeline(p)
 	keyInfo := azblob.NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
 	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil)
-	cx := &cudk
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -35,7 +34,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
 		Permissions:   "racwdl",
 		ContainerName: containerName,
-	}.NewSASQueryParameters(cx)
+	}.NewSASQueryParameters(cudk)
 
 	// Create anonymous pipeline
 	p = azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
@@ -52,8 +51,29 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	cURL.RawQuery += cSAS.Encode()
 	cSASURL := azblob.NewContainerURL(cURL, p)
 
-	// Lazily test the container by listing blobs
-	_, err = cSASURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{})
+	bblob := cSASURL.NewBlockBlobURL("test")
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	resp, err := bblob.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	data := &bytes.Buffer{}
+	body := resp.Body(azblob.RetryReaderOptions{})
+	if body == nil {
+		c.Fatal("download body was nil")
+	}
+	_, err = data.ReadFrom(body)
+	if err != nil {
+		c.Fatal(err)
+	}
+	err = body.Close()
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	c.Assert(data.String(), chk.Equals, "hello world!")
+	_, err = bblob.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}

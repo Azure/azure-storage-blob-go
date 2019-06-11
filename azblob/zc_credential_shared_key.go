@@ -43,6 +43,10 @@ func (f SharedKeyCredential) getAccountKey() []byte {
 	return f.accountKey
 }
 
+func (f SharedKeyCredential) getUDKParams() *UserDelegationKey {
+	return nil
+}
+
 // New creates a credential policy object.
 func (f *SharedKeyCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return pipeline.PolicyFunc(func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {

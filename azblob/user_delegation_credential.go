@@ -32,4 +32,8 @@ func (f UserDelegationCredential) ComputeHMACSHA256(message string) (base64Strin
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-//TODO: come back and implement credential policies, but find a good way to do it that doesn't dupe code!
+func (f UserDelegationCredential) getUDKParams() *UserDelegationKey {
+	return &f.accountKey
+}
+
+//TODO: Should we have mimic credential policies?

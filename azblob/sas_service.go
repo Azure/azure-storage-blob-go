@@ -58,17 +58,19 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 
 	signedIdentifier := v.Identifier
 
-	if udk, ok := credential.(*UserDelegationCredential); ok {
-		udkStart, udkExpiry := FormatTimesForSASSigning(udk.accountKey.SignedStart, udk.accountKey.SignedExpiry)
+	udk := credential.getUDKParams()
+
+	if udk != nil {
+		udkStart, udkExpiry := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry)
 		//I don't like this answer to combining the functions
 		//But because signedIdentifier and the user delegation key strings share a place, this is an _OK_ way to do it.
 		signedIdentifier = strings.Join([]string{
-			udk.accountKey.SignedOid,
-			udk.accountKey.SignedTid,
+			udk.SignedOid,
+			udk.SignedTid,
 			udkStart,
 			udkExpiry,
-			udk.accountKey.SignedService,
-			udk.accountKey.SignedVersion,
+			udk.SignedService,
+			udk.SignedVersion,
 		}, "\n")
 	}
 
@@ -117,13 +119,13 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 	}
 
 	//User delegation SAS specific parameters
-	if udk, ok := credential.(*UserDelegationCredential); ok {
-		p.signedOid = udk.accountKey.SignedOid
-		p.signedTid = udk.accountKey.SignedTid
-		p.signedStart = udk.accountKey.SignedStart
-		p.signedExpiry = udk.accountKey.SignedExpiry
-		p.signedService = udk.accountKey.SignedService
-		p.signedVersion = udk.accountKey.SignedVersion
+	if udk != nil {
+		p.signedOid = udk.SignedOid
+		p.signedTid = udk.SignedTid
+		p.signedStart = udk.SignedStart
+		p.signedExpiry = udk.SignedExpiry
+		p.signedService = udk.SignedService
+		p.signedVersion = udk.SignedVersion
 	}
 
 	return p, nil

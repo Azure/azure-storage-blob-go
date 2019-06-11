@@ -4,4 +4,5 @@ package azblob
 type StorageAccountCredential interface {
 	AccountName() string
 	ComputeHMACSHA256(message string) (base64String string)
+	getUDKParams() *UserDelegationKey
 }
