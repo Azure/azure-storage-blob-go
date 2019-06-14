@@ -43,6 +43,7 @@ func (f SharedKeyCredential) getAccountKey() []byte {
 	return f.accountKey
 }
 
+// noop function to satisfy StorageAccountCredential interface
 func (f SharedKeyCredential) getUDKParams() *UserDelegationKey {
 	return nil
 }

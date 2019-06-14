@@ -63,12 +63,12 @@ type SASQueryParameters struct {
 	contentEncoding    string      `param:"rsce"`
 	contentLanguage    string      `param:"rscl"`
 	contentType        string      `param:"rsct"`
-	signedOid          string
-	signedTid          string
-	signedStart        time.Time
-	signedExpiry       time.Time
-	signedService      string
-	signedVersion      string
+	signedOid          string      `param:"skoid"`
+	signedTid          string      `param:"sktid"`
+	signedStart        time.Time   `param:"skt"`
+	signedExpiry       time.Time   `param:"ske"`
+	signedService      string      `param:"sks"`
+	signedVersion      string      `param:"skv"`
 }
 
 func (p *SASQueryParameters) SignedOid() string {
