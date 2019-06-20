@@ -5,6 +5,7 @@
 ## Version XX.XX.XX:
 - Added the ability to obtain User Delegation Keys (UDK)
 - Added the ability to create User Delegation SAS tokens from UDKs
+- Added support for generating and using blob snapshot SAS tokens
 
 ## Version 0.3.0:
 - Removed most panics from the library. Several functions now return an error.

@@ -14,9 +14,10 @@ type BlobSASSignatureValues struct {
 	Protocol           SASProtocol `param:"spr"` // See the SASProtocol* constants
 	StartTime          time.Time   `param:"st"`  // Not specified if IsZero
 	ExpiryTime         time.Time   `param:"se"`  // Not specified if IsZero
-	Permissions        string      `param:"sp"`  // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
-	IPRange            IPRange     `param:"sip"`
-	Identifier         string      `param:"si"`
+	SnapshotTime       time.Time
+	Permissions        string  `param:"sp"` // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
+	IPRange            IPRange `param:"sip"`
+	Identifier         string  `param:"si"`
 	ContainerName      string
 	BlobName           string // Use "" to create a Container SAS
 	CacheControl       string // rscc
@@ -35,7 +36,15 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		return SASQueryParameters{}, fmt.Errorf("cannot sign SAS query without StorageAccountCredential")
 	}
 
-	if v.BlobName == "" {
+	if !v.SnapshotTime.IsZero() {
+		resource = "bs"
+		//Make sure the permission characters are in the correct order
+		perms := &BlobSASPermissions{}
+		if err := perms.Parse(v.Permissions); err != nil {
+			return SASQueryParameters{}, err
+		}
+		v.Permissions = perms.String()
+	} else if v.BlobName == "" {
 		// Make sure the permission characters are in the correct order
 		perms := &ContainerSASPermissions{}
 		if err := perms.Parse(v.Permissions); err != nil {
@@ -54,7 +63,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 	if v.Version == "" {
 		v.Version = SASVersion
 	}
-	startTime, expiryTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime)
+	startTime, expiryTime, snapshotTime := FormatTimesForSASSigning(v.StartTime, v.ExpiryTime, v.SnapshotTime)
 
 	signedIdentifier := v.Identifier
 
@@ -85,7 +94,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		string(v.Protocol),
 		v.Version,
 		resource,
-		"",                   // signed timestamp, @TODO add for snapshot sas feature
+		snapshotTime,         // signed timestamp
 		v.CacheControl,       // rscc
 		v.ContentDisposition, // rscd
 		v.ContentEncoding,    // rsce
@@ -113,6 +122,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		contentEncoding:    v.ContentEncoding,
 		contentLanguage:    v.ContentLanguage,
 		contentType:        v.ContentType,
+		snapshotTime:       v.SnapshotTime,
 
 		// Calculated SAS signature
 		signature: signature,
