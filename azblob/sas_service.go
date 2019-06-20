@@ -70,7 +70,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 	udk := credential.getUDKParams()
 
 	if udk != nil {
-		udkStart, udkExpiry := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry)
+		udkStart, udkExpiry, _ := FormatTimesForSASSigning(udk.SignedStart, udk.SignedExpiry, time.Time{})
 		//I don't like this answer to combining the functions
 		//But because signedIdentifier and the user delegation key strings share a place, this is an _OK_ way to do it.
 		signedIdentifier = strings.Join([]string{
