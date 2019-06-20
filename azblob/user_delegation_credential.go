@@ -36,5 +36,3 @@ func (f UserDelegationCredential) ComputeHMACSHA256(message string) (base64Strin
 func (f UserDelegationCredential) getUDKParams() *UserDelegationKey {
 	return &f.accountKey
 }
-
-//TODO: Should we have mimic credential policies?

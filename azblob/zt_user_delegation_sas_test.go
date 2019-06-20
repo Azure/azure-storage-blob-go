@@ -80,7 +80,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 }
 
 // Creates a blob, takes a snapshot, downloads from snapshot, and deletes from the snapshot w/ the token
-func (s *aztestsSuite) TestUserDelegationSAS(c *chk.C) {
+func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	// Accumulate prerequisite details to create storage etc.
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
