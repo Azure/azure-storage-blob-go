@@ -127,7 +127,7 @@ func (b *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	cResp2, err := destBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
-	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, nil)
+	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, azblob.ModifiedAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
@@ -199,7 +199,7 @@ func (b *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	cResp2, err := destBlob.Create(context.Background(), azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
-	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, md5Value[:])
+	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, azblob.ModifiedAccessConditions{}, md5Value[:])
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
@@ -220,7 +220,7 @@ func (b *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 
 	// Test append block from URL with bad MD5 value
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, badMD5[:])
+	_, err = destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), azblob.AppendBlobAccessConditions{}, azblob.ModifiedAccessConditions{}, badMD5)
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 
