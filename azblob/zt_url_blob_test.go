@@ -1852,7 +1852,8 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 
 	resp2, err := containerURL.ListBlobsFlatSegment(ctx, azblob.Marker{}, azblob.ListBlobsSegmentOptions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTierInferred, chk.IsNil) // AccessTier element only returned on ListBlobs if it is explicitly set
+	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTierInferred, chk.NotNil)
+	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTier, chk.Not(chk.Equals), "")
 
 	_, err = blobURL.SetTier(ctx, azblob.AccessTierP4, azblob.LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)

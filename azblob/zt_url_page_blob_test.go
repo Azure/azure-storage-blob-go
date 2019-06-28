@@ -82,7 +82,7 @@ func (b *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Upload page from URL.
-	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, nil)
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, azblob.PageBlobAccessConditions{}, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(pResp1.ETag(), chk.NotNil)
 	c.Assert(pResp1.LastModified(), chk.NotNil)
@@ -138,7 +138,7 @@ func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Upload page from URL with MD5.
-	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, md5Value[:])
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], azblob.PageBlobAccessConditions{}, azblob.ModifiedAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(pResp1.ETag(), chk.NotNil)
 	c.Assert(pResp1.LastModified(), chk.NotNil)
@@ -158,7 +158,7 @@ func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 
 	// Upload page from URL with bad MD5
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), azblob.PageBlobAccessConditions{}, badMD5[:])
+	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], azblob.PageBlobAccessConditions{}, azblob.ModifiedAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 

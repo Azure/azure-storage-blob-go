@@ -3,6 +3,7 @@ package azblob_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
+	"github.com/Azure/go-autorest/autorest/adal"
 )
 
 // For testing docs, see: https://labix.org/gocheck
@@ -78,11 +80,13 @@ func generateName(prefix string) string {
 	// trace to extrat the test name, which is stored in name
 	pc := make([]uintptr, 10)
 	runtime.Callers(0, pc)
-	f := runtime.FuncForPC(pc[0])
-	name := f.Name()
-	for i := 0; !strings.Contains(name, "Suite"); i++ { // The tests are all scoped to the suite, so this ensures getting the actual test name
-		f = runtime.FuncForPC(pc[i])
-		name = f.Name()
+	frames := runtime.CallersFrames(pc)
+	name := ""
+	for f, next := frames.Next(); next; f, next = frames.Next() {
+		name = f.Function
+		if strings.Contains(name, "Suite") {
+			break
+		}
 	}
 	funcNameStart := strings.Index(name, "Test")
 	name = name[funcNameStart+len("Test"):] // Just get the name of the test and not any of the garbage at the beginning
@@ -228,6 +232,70 @@ func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, erro
 		return nil, errors.New(accountNameEnvVar + " and/or " + accountKeyEnvVar + " environment variables not specified.")
 	}
 	return azblob.NewSharedKeyCredential(accountName, accountKey)
+}
+
+//getOAuthCredential can intake a OAuth credential from environment variables in one of the following ways:
+//Direct: Supply a ADAL OAuth token in OAUTH_TOKEN and application ID in APPLICATION_ID to refresh the supplied token.
+//Client secret: Supply a client secret in CLIENT_SECRET and application ID in APPLICATION_ID for SPN auth.
+//TENANT_ID is optional and will be inferred as common if it is not explicitly defined.
+func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
+	oauthTokenEnvVar := accountType + "OAUTH_TOKEN"
+	clientSecretEnvVar := accountType + "CLIENT_SECRET"
+	applicationIdEnvVar := accountType + "APPLICATION_ID"
+	tenantIdEnvVar := accountType + "TENANT_ID"
+	oauthToken, appId, tenantId, clientSecret := []byte(os.Getenv(oauthTokenEnvVar)), os.Getenv(applicationIdEnvVar), os.Getenv(tenantIdEnvVar), os.Getenv(clientSecretEnvVar)
+	if (len(oauthToken) == 0 && clientSecret == "") || appId == "" {
+		return nil, errors.New("(" + oauthTokenEnvVar + " OR " + clientSecretEnvVar + ") and/or " + applicationIdEnvVar + " environment variables not specified.")
+	}
+	if tenantId == "" {
+		tenantId = "common"
+	}
+
+	var Token adal.Token
+	if len(oauthToken) != 0 {
+		if err := json.Unmarshal(oauthToken, &Token); err != nil {
+			return nil, err
+		}
+	}
+
+	var spt *adal.ServicePrincipalToken
+
+	oauthConfig, err := adal.NewOAuthConfig("https://login.microsoftonline.com", tenantId)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(oauthToken) == 0 {
+		spt, err = adal.NewServicePrincipalToken(
+			*oauthConfig,
+			appId,
+			clientSecret,
+			"https://storage.azure.com")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		spt, err = adal.NewServicePrincipalTokenFromManualToken(*oauthConfig,
+			appId,
+			"https://storage.azure.com",
+			Token,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = spt.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
+	tc := azblob.NewTokenCredential(spt.Token().AccessToken, func(tc azblob.TokenCredential) time.Duration {
+		_ = spt.Refresh()
+		return time.Until(spt.Token().Expires())
+	})
+
+	return &tc, nil
 }
 
 func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
