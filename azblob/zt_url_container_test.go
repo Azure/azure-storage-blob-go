@@ -221,8 +221,6 @@ func (s *aztestsSuite) TestContainerDeleteIfModifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
-
 	_, err := containerURL.Delete(ctx,
 		azblob.ContainerAccessConditions{ModifiedAccessConditions: azblob.ModifiedAccessConditions{IfModifiedSince: currentTime}})
 	c.Assert(err, chk.IsNil)
@@ -245,8 +243,6 @@ func (s *aztestsSuite) TestContainerDeleteIfModifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestContainerDeleteIfUnModifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-
-	defer deleteContainer(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(10)
 	_, err := containerURL.Delete(ctx,
