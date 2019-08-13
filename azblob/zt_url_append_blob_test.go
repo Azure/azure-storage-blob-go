@@ -14,7 +14,7 @@ import (
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 
-func (b *aztestsSuite) TestAppendBlock(c *chk.C) {
+func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -43,7 +43,7 @@ func (b *aztestsSuite) TestAppendBlock(c *chk.C) {
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(2))
 }
 
-func (b *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
+func (s *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -76,7 +76,7 @@ func (b *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 
-func (b *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
+func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
@@ -147,7 +147,7 @@ func (b *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, sourceData)
 }
 
-func (b *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
+func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {

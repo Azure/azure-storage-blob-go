@@ -16,7 +16,7 @@ import (
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 
-func (b *aztestsSuite) TestStageGetBlocks(c *chk.C) {
+func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -70,7 +70,7 @@ func (b *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 0)
 }
 
-func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
+func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
@@ -144,7 +144,7 @@ func (b *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, sourceData)
 }
 
-func (b *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
+func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
@@ -198,7 +198,7 @@ func (b *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 	c.Assert(gResp.ContentType(), chk.Equals, contentTypeVal)
 }
 
-func (b *aztestsSuite) TestStageBlockWithMD5(c *chk.C) {
+func (s *aztestsSuite) TestStageBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
