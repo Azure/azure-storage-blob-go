@@ -179,7 +179,7 @@ func ExampleNewPipeline() {
 				// Send the request over the network
 				resp, err := client.Do(request.WithContext(ctx))
 
-				return &httpResponse{response: resp}, err
+				return pipeline.NewHTTPResponse(resp), err
 			}
 		}),
 	}
