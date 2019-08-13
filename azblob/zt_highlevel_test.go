@@ -2,8 +2,11 @@ package azblob_test
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"os"
+	"sync/atomic"
+	"time"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	chk "gopkg.in/check.v1"
@@ -328,4 +331,105 @@ func (s *aztestsSuite) TestDownloadBufferWithNonZeroOffsetAndCount(c *chk.C) {
 	downloadOffset := 2000
 	downloadCount := 6 * 1024
 	performUploadAndDownloadBufferTest(c, blobSize, blockSize, parallelism, downloadOffset, downloadCount)
+}
+
+func (s *aztestsSuite) TestBasicDoBatchTransfer(c *chk.C) {
+	// test the basic multi-routine processing
+	type testInstance struct {
+		transferSize int64
+		chunkSize    int64
+		parallelism  uint16
+		expectError  bool
+	}
+
+	testMatrix := []testInstance{
+		{transferSize: 100, chunkSize: 10, parallelism: 5, expectError: false},
+		{transferSize: 100, chunkSize: 9, parallelism: 4, expectError: false},
+		{transferSize: 100, chunkSize: 8, parallelism: 15, expectError: false},
+		{transferSize: 100, chunkSize: 1, parallelism: 3, expectError: false},
+		{transferSize: 0, chunkSize: 100, parallelism: 5, expectError: false}, // empty file works
+		{transferSize: 100, chunkSize: 0, parallelism: 5, expectError: true},  // 0 chunk size on the other hand must fail
+		{transferSize: 0, chunkSize: 0, parallelism: 5, expectError: true},
+	}
+
+	for _, test := range testMatrix {
+		ctx := context.Background()
+		// maintain some counts to make sure the right number of chunks were queued, and the total size is correct
+		totalSizeCount := int64(0)
+		runCount := int64(0)
+
+		err := azblob.DoBatchTransfer(ctx, azblob.BatchTransferOptions{
+			TransferSize: test.transferSize,
+			ChunkSize:    test.chunkSize,
+			Parallelism:  test.parallelism,
+			Operation: func(offset int64, chunkSize int64, ctx context.Context) error {
+				atomic.AddInt64(&totalSizeCount, chunkSize)
+				atomic.AddInt64(&runCount, 1)
+				return nil
+			},
+			OperationName: "TestHappyPath",
+		})
+
+		if test.expectError {
+			c.Assert(err, chk.NotNil)
+		} else {
+			c.Assert(err, chk.IsNil)
+			c.Assert(totalSizeCount, chk.Equals, test.transferSize)
+			c.Assert(runCount, chk.Equals, ((test.transferSize-1)/test.chunkSize)+1)
+		}
+	}
+}
+
+// mock a memory mapped file (low-quality mock, meant to simulate the scenario only)
+type mockMMF struct {
+	isClosed   bool
+	failHandle *chk.C
+}
+
+// accept input
+func (m *mockMMF) write(input string) {
+	if m.isClosed {
+		// simulate panic
+		m.failHandle.Fail()
+	}
+}
+
+func (s *aztestsSuite) TestDoBatchTransferWithError(c *chk.C) {
+	ctx := context.Background()
+	mmf := mockMMF{failHandle: c}
+	expectedFirstError := errors.New("#3 means trouble")
+
+	err := azblob.DoBatchTransfer(ctx, azblob.BatchTransferOptions{
+		TransferSize: 5,
+		ChunkSize:    1,
+		Parallelism:  5,
+		Operation: func(offset int64, chunkSize int64, ctx context.Context) error {
+			// simulate doing some work (HTTP call in real scenarios)
+			// later chunks later longer to finish
+			time.Sleep(time.Second * time.Duration(offset))
+			// simulate having gotten data and write it to the memory mapped file
+			mmf.write("input")
+
+			// with one of the chunks, pretend like an error occurred (like the network connection breaks)
+			if offset == 3 {
+				return expectedFirstError
+			} else if offset > 3 {
+				// anything after offset=3 are canceled
+				// so verify that the context indeed got canceled
+				ctxErr := ctx.Err()
+				c.Assert(ctxErr, chk.Equals, context.Canceled)
+				return ctxErr
+			}
+
+			// anything before offset=3 should be done without problem
+			return nil
+		},
+		OperationName: "TestErrorPath",
+	})
+
+	c.Assert(err, chk.Equals, expectedFirstError)
+
+	// simulate closing the mmf and make sure no panic occurs (as reported in #139)
+	mmf.isClosed = true
+	time.Sleep(time.Second * 5)
 }

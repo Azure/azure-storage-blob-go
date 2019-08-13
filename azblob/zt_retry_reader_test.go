@@ -27,25 +27,25 @@ type perByteReader struct {
 	injectedError          error
 
 	// sleepDuraion and closeChannel are only use in "forced cancellation" tests
-	sleepDuration		   time.Duration
-	closeChannel           chan struct{}
+	sleepDuration time.Duration
+	closeChannel  chan struct{}
 }
 
 func newPerByteReader(byteCount int) *perByteReader {
 	perByteReader := perByteReader{
-		byteCount: byteCount,
+		byteCount:    byteCount,
 		closeChannel: nil,
 	}
 
 	perByteReader.RandomBytes = make([]byte, byteCount)
-	_,_ = rand.Read(perByteReader.RandomBytes)
+	_, _ = rand.Read(perByteReader.RandomBytes)
 
 	return &perByteReader
 }
 
 func newSingleUsePerByteReader(contents []byte) *perByteReader {
 	perByteReader := perByteReader{
-		byteCount: len(contents),
+		byteCount:    len(contents),
 		closeChannel: make(chan struct{}, 10),
 	}
 
@@ -86,7 +86,7 @@ func (r *perByteReader) Close() error {
 
 // Test normal retry succeed, note initial response not provided.
 // Tests both with and without notification of failures
-func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
+func (s *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 	// Test twice, the second time using the optional "logging"/notification callback for failed tries
 	// We must test both with and without the callback, since be testing without
 	// we are testing that it is, indeed, optional to provide the callback
@@ -155,7 +155,7 @@ func (r *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 }
 
 // Test normal retry fail as retry Count not enough.
-func (r *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
+func (s *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 	// Extra setup for testing notification of failures (i.e. of unsuccessful tries)
 	failureMethodNumCalls := 0
 	failureWillRetryCount := 0
@@ -210,7 +210,7 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 }
 
 // Test boundary case when Count equals to 0 and fail.
-func (r *aztestsSuite) TestRetryReaderReadCount0(c *chk.C) {
+func (s *aztestsSuite) TestRetryReaderReadCount0(c *chk.C) {
 	byteCount := 1
 	body := newPerByteReader(byteCount)
 	body.doInjectError = true
@@ -243,7 +243,7 @@ func (r *aztestsSuite) TestRetryReaderReadCount0(c *chk.C) {
 	c.Assert(err, chk.Equals, io.EOF)
 }
 
-func (r *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
+func (s *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
 	byteCount := 1
 	body := newPerByteReader(byteCount)
 	body.doInjectError = true
@@ -274,7 +274,7 @@ func (r *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
 // purposes of unit testing, here we are testing the cancellation mechanism that is exposed to
 // consumers of the API, to allow programmatic forcing of retries (e.g. if the consumer deems
 // the read to be taking too long, they may force a retry in the hope of better performance next time).
-func (r *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
+func (s *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
 
 	for _, enableRetryOnEarlyClose := range []bool{false, true} {
 
@@ -326,6 +326,5 @@ func (r *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
 		}
 	}
 }
-
 
 // End testings for RetryReader
