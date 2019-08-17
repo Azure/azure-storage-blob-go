@@ -2,7 +2,7 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
-## Version XX.XX.XX:
+## Version 0.8.0:
 - Fixed error handling in high-level function DoBatchTransfer, and made it public for easy customization
 
 ## Version 0.7.0:
