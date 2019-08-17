@@ -2,6 +2,9 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
+## Version 0.8.0:
+- Fixed error handling in high-level function DoBatchTransfer, and made it public for easy customization
+
 ## Version 0.7.0:
 - Added the ability to obtain User Delegation Keys (UDK)
 - Added the ability to create User Delegation SAS tokens from UDKs

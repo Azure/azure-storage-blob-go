@@ -13,7 +13,7 @@ import (
 	chk "gopkg.in/check.v1"
 )
 
-func (b *aztestsSuite) TestPutGetPages(c *chk.C) {
+func (s *aztestsSuite) TestPutGetPages(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -45,7 +45,7 @@ func (b *aztestsSuite) TestPutGetPages(c *chk.C) {
 	c.Assert(pageList.PageRange[0], chk.DeepEquals, pageRange)
 }
 
-func (b *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
+func (s *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
@@ -100,7 +100,7 @@ func (b *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, sourceData)
 }
 
-func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
+func (s *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
@@ -162,7 +162,7 @@ func (b *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 	validateStorageError(c, err, azblob.ServiceCodeMd5Mismatch)
 }
 
-func (b *aztestsSuite) TestClearDiffPages(c *chk.C) {
+func (s *aztestsSuite) TestClearDiffPages(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -192,7 +192,7 @@ func (b *aztestsSuite) TestClearDiffPages(c *chk.C) {
 	c.Assert(pageList.PageRange, chk.HasLen, 0)
 }
 
-func (b *aztestsSuite) TestIncrementalCopy(c *chk.C) {
+func (s *aztestsSuite) TestIncrementalCopy(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -221,7 +221,7 @@ func (b *aztestsSuite) TestIncrementalCopy(c *chk.C) {
 	waitForIncrementalCopy(c, dstBlob, resp)
 }
 
-func (b *aztestsSuite) TestResizePageBlob(c *chk.C) {
+func (s *aztestsSuite) TestResizePageBlob(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
@@ -240,7 +240,7 @@ func (b *aztestsSuite) TestResizePageBlob(c *chk.C) {
 	c.Assert(resp2.ContentLength(), chk.Equals, int64(8192))
 }
 
-func (b *aztestsSuite) TestPageSequenceNumbers(c *chk.C) {
+func (s *aztestsSuite) TestPageSequenceNumbers(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	blob, _ := createNewPageBlob(c, container)
@@ -260,7 +260,7 @@ func (b *aztestsSuite) TestPageSequenceNumbers(c *chk.C) {
 	c.Assert(resp.Response().StatusCode, chk.Equals, 200)
 }
 
-func (b *aztestsSuite) TestPutPagesWithMD5(c *chk.C) {
+func (s *aztestsSuite) TestPutPagesWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
