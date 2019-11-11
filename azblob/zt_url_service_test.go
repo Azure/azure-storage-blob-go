@@ -9,6 +9,14 @@ import (
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
 
+func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
+	sa := getBSU()
+
+	// Ensure the call succeeded. Don't test for specific account properties because we can't/don't want to set account properties.
+	_, err := sa.GetAccountInfo(context.Background())
+	c.Assert(err, chk.IsNil)
+}
+
 func (s *aztestsSuite) TestListContainers(c *chk.C) {
 	sa := getBSU()
 	resp, err := sa.ListContainersSegment(context.Background(), azblob.Marker{}, azblob.ListContainersSegmentOptions{Prefix: containerPrefix})
