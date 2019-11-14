@@ -13,8 +13,25 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 	sa := getBSU()
 
 	// Ensure the call succeeded. Don't test for specific account properties because we can't/don't want to set account properties.
-	_, err := sa.GetAccountInfo(context.Background())
+	sAccInfo, err := sa.GetAccountInfo(context.Background())
 	c.Assert(err, chk.IsNil)
+	c.Assert(*sAccInfo, chk.Not(chk.DeepEquals), azblob.ServiceGetAccountInfoResponse{})
+
+	// Test on a container
+	cURL := sa.NewContainerURL(generateContainerName())
+	_, err = cURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
+	c.Assert(err, chk.IsNil)
+	cAccInfo, err := cURL.GetAccountInfo(ctx)
+	c.Assert(err, chk.IsNil)
+	c.Assert(*cAccInfo, chk.Not(chk.DeepEquals), azblob.ContainerGetAccountInfoResponse{})
+
+	// test on a block blob URL. They all call the same thing on the base URL, so only one test is needed for that.
+	bbURL := cURL.NewBlockBlobURL(generateBlobName())
+	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	bAccInfo, err := bbURL.GetAccountInfo(ctx)
+	c.Assert(err, chk.IsNil)
+	c.Assert(*bAccInfo, chk.Not(chk.DeepEquals), azblob.BlobGetAccountInfoResponse{})
 }
 
 func (s *aztestsSuite) TestListContainers(c *chk.C) {
