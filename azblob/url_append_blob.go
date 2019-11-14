@@ -42,6 +42,10 @@ func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
 }
 
+func (ab AppendBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
+	return ab.blobClient.GetAccountInfo(ctx)
+}
+
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions) (*AppendBlobCreateResponse, error) {
