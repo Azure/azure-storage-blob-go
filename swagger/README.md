@@ -21,3 +21,4 @@ file-prefix: zz_generated_
 ```
 
 ### TODO: Get rid of StorageError since we define it
+### TODO: rfc3339Format = "2006-01-02T15:04:05Z" //This was wrong in the generated code
