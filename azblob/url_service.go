@@ -38,6 +38,10 @@ func (s ServiceURL) GetUserDelegationCredential(ctx context.Context, info KeyInf
 	return NewUserDelegationCredential(strings.Split(s.client.url.Host, ".")[0], *udk), nil
 }
 
+func (s ServiceURL) GetAccountInfo(ctx context.Context) (*ServiceGetAccountInfoResponse, error) {
+	return s.client.GetAccountInfo(ctx)
+}
+
 // URL returns the URL endpoint used by the ServiceURL object.
 func (s ServiceURL) URL() url.URL {
 	return s.client.URL()
