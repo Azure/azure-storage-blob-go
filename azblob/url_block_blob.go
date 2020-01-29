@@ -48,6 +48,10 @@ func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 	return NewBlockBlobURL(p.URL(), bb.blobClient.Pipeline())
 }
 
+func (bb BlockBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
+	return bb.blobClient.GetAccountInfo(ctx)
+}
+
 // Upload creates a new block blob or overwrites an existing block blob.
 // Updating an existing block blob overwrites any existing metadata on the blob. Partial updates are not
 // supported with Upload; the content of the existing blob is overwritten with the new content. To

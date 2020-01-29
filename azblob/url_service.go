@@ -48,6 +48,10 @@ func NewKeyInfo(Start, Expiry time.Time) KeyInfo {
 	}
 }
 
+func (s ServiceURL) GetAccountInfo(ctx context.Context) (*ServiceGetAccountInfoResponse, error) {
+	return s.client.GetAccountInfo(ctx)
+}
+
 // URL returns the URL endpoint used by the ServiceURL object.
 func (s ServiceURL) URL() url.URL {
 	return s.client.URL()
