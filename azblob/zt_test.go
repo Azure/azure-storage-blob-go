@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/url"
 	"os"
 	"reflect"
@@ -17,11 +18,10 @@ import (
 
 	chk "gopkg.in/check.v1"
 
-	"math/rand"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
+
+	"github.com/Azure/azure-storage-blob-go/azblob"
 )
 
 // For testing docs, see: https://labix.org/gocheck

@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"fmt"
+	"io"
 	"io/ioutil"
 
 	"github.com/Azure/azure-storage-blob-go/azblob"
@@ -1922,4 +1923,27 @@ func (s *aztestsSuite) TestBlobTierInvalidValue(c *chk.C) {
 
 	_, err = blobURL.SetTier(ctx, azblob.AccessTierType("garbage"), azblob.LeaseAccessConditions{})
 	validateStorageError(c, err, azblob.ServiceCodeInvalidHeaderValue)
+}
+
+func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainer(c, bsu)
+	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
+
+	resp, err := bURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+
+	// Verify that we can inject errors first.
+	reader := resp.Body(azblob.InjectErrorInRetryReaderOptions(errors.New("unrecoverable error")))
+
+	_, err = ioutil.ReadAll(reader)
+	c.Assert(err, chk.NotNil)
+	c.Assert(err.Error(), chk.Equals, "unrecoverable error")
+
+	// Then inject the retryable error.
+	reader = resp.Body(azblob.InjectErrorInRetryReaderOptions(io.ErrUnexpectedEOF))
+
+	buf, err := ioutil.ReadAll(reader)
+	c.Assert(err, chk.IsNil)
+	c.Assert(buf, chk.DeepEquals, []byte(blockBlobDefaultData))
 }
