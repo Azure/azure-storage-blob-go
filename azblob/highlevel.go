@@ -352,13 +352,12 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-const oneMIB = 1048576
+const _1MIB = 1024 * 1024
 
 type UploadStreamToBlockBlobOptions struct {
 	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
 	BufferSize int
-
-	// MaxBuffers (defunct) is no longer used. Retained for backwards compatibility.
+	// MaxBuffers defines the number of simultaneous uploads will be performed to upload the file.
 	MaxBuffers       int
 	BlobHTTPHeaders  BlobHTTPHeaders
 	Metadata         Metadata
@@ -370,8 +369,8 @@ func (u *UploadStreamToBlockBlobOptions) defaults() {
 		u.MaxBuffers = 1
 	}
 
-	if u.BufferSize < oneMIB {
-		u.BufferSize = oneMIB
+	if u.BufferSize < _1MIB {
+		u.BufferSize = _1MIB
 	}
 }
 
@@ -381,98 +380,19 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
 	o.defaults()
 
-	result, err := uploadStream(ctx, reader,
-		UploadStreamOptions{BufferSize: o.BufferSize, MaxBuffers: o.MaxBuffers},
-		newChunkWriter(ctx, blockBlobURL, newUUID(), o),
-	)
+	result, err := copyFromReader(ctx, reader, blockBlobURL, o)
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
-type chunkWriter struct {
-	b             BlockBlobURL
-	o             UploadStreamToBlockBlobOptions
-	blockIDPrefix uuid // UUID used with all blockIDs
-
-	ctx context.Context
-
-	// nextChunkNum keeps track on which chunk we are on.
-	nextChunkNum int
-
-	result *BlockBlobCommitBlockListResponse
-}
-
-// newChunkWriter is the constructor for chunkStream.
-// Note: Normally it is a faux pas to pass a Context and attach it to a object. However, in certain circumstances
-// such as short lived single use object, especially ones that are going to implement an interface, it is okay.
-// This Context is used to cause Write() and Close() to error.
-func newChunkWriter(ctx context.Context, blockBlobURL BlockBlobURL, blockIDPrefix uuid, o UploadStreamToBlockBlobOptions) *chunkWriter {
-	return &chunkWriter{ctx: ctx, b: blockBlobURL, blockIDPrefix: blockIDPrefix, o: o}
-}
-
-// Write implements io.Writer.
-func (c *chunkWriter) Write(p []byte) (int, error) {
-	if c.ctx.Err() != nil {
-		return 0, c.ctx.Err()
-	}
-
-	blockID := newUuidBlockID(c.blockIDPrefix).WithBlockNumber(uint32(c.nextChunkNum)).ToBase64()
-	_, err := c.b.StageBlock(c.ctx, blockID, bytes.NewReader(p), LeaseAccessConditions{}, nil)
-	if err != nil {
-		return 0, err
-	}
-
-	c.nextChunkNum++
-	return len(p), nil
-}
-
-// Close closes the writer and commits all the blocks.
-func (c *chunkWriter) Close() error {
-	if c.ctx.Err() != nil {
-		return c.ctx.Err()
-	}
-
-	blockID := newUuidBlockID(c.blockIDPrefix)
-	blockIDs := make([]string, 0, c.nextChunkNum-1)
-	for i := 0; i < c.nextChunkNum; i++ {
-		blockIDs = append(blockIDs, blockID.WithBlockNumber(uint32(i)).ToBase64())
-	}
-
-	var err error
-	c.result, err = c.b.CommitBlockList(c.ctx, blockIDs, c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions)
-	return err
-}
-
-// UploadStreamOptions (defunct) is only used internally. This will be removed or made private in a future version.
+// UploadStreamOptions (defunct) was used internally. This will be removed or made private in a future version.
 type UploadStreamOptions struct {
 	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
 	BufferSize int
 
 	// MaxBuffers (defunct) is no longer used. Retained for backwards compatibility.
 	MaxBuffers int
-}
-
-func (u *UploadStreamOptions) defaults() {
-	if u.MaxBuffers < 0 {
-		u.MaxBuffers = 1
-	}
-
-	if u.BufferSize < oneMIB {
-		u.BufferSize = oneMIB
-	}
-}
-
-func uploadStream(ctx context.Context, reader io.Reader, o UploadStreamOptions, writer *chunkWriter) (CommonResponse, error) {
-	o.defaults()
-
-	_, err := io.CopyBuffer(writer, reader, make([]byte, o.BufferSize))
-	if err != nil {
-		return nil, err
-	}
-	if err := writer.Close(); err != nil {
-		return nil, err
-	}
-	return writer.result, nil
 }
