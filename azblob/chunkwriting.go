@@ -9,8 +9,13 @@ import (
 	"sync"
 )
 
+type blockWriter interface {
+	StageBlock(context.Context, string, io.ReadSeeker, LeaseAccessConditions, []byte) (*BlockBlobStageBlockResponse, error)
+	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error)
+}
+
 // copyFromReader copies a source io.Reader to blob storage using concurrent uploads.
-func copyFromReader(ctx context.Context, from io.Reader, to BlockBlobURL, o UploadStreamToBlockBlobOptions) (*BlockBlobCommitBlockListResponse, error) {
+func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions) (*BlockBlobCommitBlockListResponse, error) {
 	o.defaults()
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -78,7 +83,7 @@ type copier struct {
 	reader io.Reader
 
 	prefix uuid
-	to     BlockBlobURL
+	to     blockWriter
 	o      UploadStreamToBlockBlobOptions
 
 	// num is the current chunk we are on.
@@ -97,7 +102,7 @@ type copier struct {
 }
 
 // getErr returns an error by priority. First, if a function set an error, it returns that error. Next, if the Context has an error it returns
-// that error. Otherwise it is nil.
+// that error. Otherwise it is nil. getErr supports only a single call.
 func (c *copier) getErr() error {
 	select {
 	case err := <-c.errCh:
@@ -115,7 +120,7 @@ func (c *copier) sendChunk() error {
 	}
 
 	chunk := c.buffers.Get().(*chunk)
-	n, err := c.reader.Read(chunk.payload)
+	n, err := io.ReadFull(c.reader, chunk.payload)
 	chunk.payload = chunk.payload[0:n]
 	switch {
 	case err == nil && n == 0:
@@ -125,15 +130,15 @@ func (c *copier) sendChunk() error {
 		c.num++
 		c.ch <- chunk
 		return nil
-	case err != nil && err == io.EOF && n == 0:
+	case err != nil && (err == io.EOF || err == io.ErrUnexpectedEOF) && n == 0:
 		return io.EOF
 	}
 
-	if err == io.EOF {
+	if err == io.EOF || err == io.ErrUnexpectedEOF {
 		chunk.num = c.num
 		c.num++
 		c.ch <- chunk
-		return err
+		return io.EOF
 	}
 	if err := c.getErr(); err != nil {
 		return err

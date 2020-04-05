@@ -352,7 +352,7 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-const _1MIB = 1024 * 1024
+const _1MiB = 1024 * 1024
 
 type UploadStreamToBlockBlobOptions struct {
 	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
@@ -369,8 +369,8 @@ func (u *UploadStreamToBlockBlobOptions) defaults() {
 		u.MaxBuffers = 1
 	}
 
-	if u.BufferSize < _1MIB {
-		u.BufferSize = _1MIB
+	if u.BufferSize < _1MiB {
+		u.BufferSize = _1MiB
 	}
 }
 
