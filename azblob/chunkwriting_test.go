@@ -10,19 +10,24 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
 
-const finalName = "final"
+const finalFileName = "final"
 
 type fakeBlockWriter struct {
-	path string
+	path       string
+	block      int32
+	errOnBlock int32
 }
 
 func newFakeBlockWriter() *fakeBlockWriter {
 	f := &fakeBlockWriter{
-		path: filepath.Join(os.TempDir(), newUUID().String()),
+		path:       filepath.Join(os.TempDir(), newUUID().String()),
+		block:      -1,
+		errOnBlock: -1,
 	}
 
 	if err := os.MkdirAll(f.path, 0700); err != nil {
@@ -33,6 +38,11 @@ func newFakeBlockWriter() *fakeBlockWriter {
 }
 
 func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte) (*BlockBlobStageBlockResponse, error) {
+	n := atomic.AddInt32(&f.block, 1)
+	if n == f.errOnBlock {
+		return nil, io.ErrNoProgress
+	}
+
 	blockID = strings.Replace(blockID, "/", "slash", -1)
 
 	fp, err := os.OpenFile(filepath.Join(f.path, blockID), os.O_CREATE+os.O_WRONLY, 0600)
@@ -49,7 +59,7 @@ func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.R
 }
 
 func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error) {
-	dst, err := os.OpenFile(filepath.Join(f.path, finalName), os.O_CREATE+os.O_WRONLY, 0600)
+	dst, err := os.OpenFile(filepath.Join(f.path, finalFileName), os.O_CREATE+os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +85,7 @@ func (f *fakeBlockWriter) cleanup() {
 }
 
 func (f *fakeBlockWriter) final() string {
-	return filepath.Join(f.path, finalName)
+	return filepath.Join(f.path, finalFileName)
 }
 
 func createSrcFile(size int) (string, error) {
@@ -151,16 +161,22 @@ func TestCopyFromReader(t *testing.T) {
 	cancel()
 
 	tests := []struct {
-		desc     string
-		ctx      context.Context
-		o        UploadStreamToBlockBlobOptions
-		fileSize int
-		err      bool
+		desc      string
+		ctx       context.Context
+		o         UploadStreamToBlockBlobOptions
+		fileSize  int
+		uploadErr bool
+		err       bool
 	}{
 		{
 			desc: "context was cancelled",
 			ctx:  canceled,
 			err:  true,
+		},
+		{
+			desc:     "Send file(0 KiB) with default UploadStreamToBlockBlobOptions",
+			ctx:      context.Background(),
+			fileSize: 0,
 		},
 		{
 			desc:     "Send file(10 KiB) with default UploadStreamToBlockBlobOptions",
@@ -196,6 +212,14 @@ func TestCopyFromReader(t *testing.T) {
 			o:        UploadStreamToBlockBlobOptions{MaxBuffers: 2},
 		},
 		{
+			desc:      "Send file(12 MiB) with 3 writers and 1 MiB buffer and a write error",
+			ctx:       context.Background(),
+			fileSize:  12 * _1MiB,
+			o:         UploadStreamToBlockBlobOptions{MaxBuffers: 2, BufferSize: _1MiB},
+			uploadErr: true,
+			err:       true,
+		},
+		{
 			desc:     "Send file(12 MiB) with 3 writers and 1.5 MiB buffer",
 			ctx:      context.Background(),
 			fileSize: 12 * _1MiB,
@@ -223,6 +247,9 @@ func TestCopyFromReader(t *testing.T) {
 
 		br := newFakeBlockWriter()
 		defer br.cleanup()
+		if test.uploadErr {
+			br.errOnBlock = 1
+		}
 
 		_, err = copyFromReader(test.ctx, from, br, test.o)
 		switch {

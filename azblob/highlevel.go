@@ -390,9 +390,6 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 
 // UploadStreamOptions (defunct) was used internally. This will be removed or made private in a future version.
 type UploadStreamOptions struct {
-	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
 	BufferSize int
-
-	// MaxBuffers (defunct) is no longer used. Retained for backwards compatibility.
 	MaxBuffers int
 }

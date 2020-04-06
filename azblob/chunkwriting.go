@@ -9,12 +9,21 @@ import (
 	"sync"
 )
 
+// blockWriter provides methods to upload blocks that represent a file to a server and commit them.
+// This allows us to provide a local implementation that fakes the server for hermetic testing.
 type blockWriter interface {
 	StageBlock(context.Context, string, io.ReadSeeker, LeaseAccessConditions, []byte) (*BlockBlobStageBlockResponse, error)
 	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error)
 }
 
 // copyFromReader copies a source io.Reader to blob storage using concurrent uploads.
+// TODO(someone): The existing model provides a buffer size and buffer limit as limiting factors.  The buffer size is probably
+// useless other than needing to be above some number, as the network stack is going to hack up the buffer over some size. The
+// max buffers is providing a cap on how much memory we use (by multiplying it times the buffer size) and how many go routines can upload
+// at a time.  I think having a single max memory dial would be more efficient.  We can choose an internal buffer size that works
+// well, 4 MiB or 8 MiB, and autoscale to as many goroutines within the memory limit. This gives a single dial to tweak and we can
+// choose a max value for the memory setting based on internal transfers within Azure (which will give us the maximum throughput model).
+// We can even provide a utility to dial this number in for customer networks to optimize their copies.
 func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions) (*BlockBlobCommitBlockListResponse, error) {
 	o.defaults()
 
@@ -81,9 +90,10 @@ type copier struct {
 
 	// reader is the source to be written to disk.
 	reader io.Reader
+	// to is the location we are writing our chunks to.
+	to blockWriter
 
 	prefix uuid
-	to     blockWriter
 	o      UploadStreamToBlockBlobOptions
 
 	// num is the current chunk we are on.
@@ -101,8 +111,8 @@ type copier struct {
 	result *BlockBlobCommitBlockListResponse
 }
 
-// getErr returns an error by priority. First, if a function set an error, it returns that error. Next, if the Context has an error it returns
-// that error. Otherwise it is nil. getErr supports only a single call.
+// getErr returns an error by priority. First, if a function set an error, it returns that error. Next, if the Context has an error
+// it returns that error. Otherwise it is nil. getErr supports only returning an error once per copier.
 func (c *copier) getErr() error {
 	select {
 	case err := <-c.errCh:
@@ -113,7 +123,7 @@ func (c *copier) getErr() error {
 }
 
 // sendChunk reads data from out internal reader, creates a chunk, and sends it to be written via a channel.
-// sendChunk returns io.EOF when the reader returns an io.EOF.
+// sendChunk returns io.EOF when the reader returns an io.EOF or io.ErrUnexpectedEOF.
 func (c *copier) sendChunk() error {
 	if err := c.getErr(); err != nil {
 		return err
@@ -146,7 +156,7 @@ func (c *copier) sendChunk() error {
 	return err
 }
 
-// writer writes chunks that come on a channel via write(). This is mean to be started by a goroutine.
+// writer writes chunks sent on a channel.
 func (c *copier) writer() {
 	defer c.wg.Done()
 
@@ -165,6 +175,9 @@ func (c *copier) writer() {
 }
 
 // write uploads a chunk to blob storage.
+// TODO(someone): Might be worth having StageBlock() retry with some exponential delays before giving up.
+// Sucks to have a 100GiB upload die because of a single write that could be corrected. Right now this
+// is just mimicking the previous behavior.
 func (c *copier) write(chunk *chunk) error {
 	defer c.buffers.Put(chunk)
 
@@ -185,14 +198,8 @@ func (c *copier) close() error {
 	close(c.ch)
 	c.wg.Wait()
 
-	select {
-	case err := <-c.errCh:
+	if err := c.getErr(); err != nil {
 		return err
-	default:
-	}
-
-	if c.ctx.Err() != nil {
-		return c.ctx.Err()
 	}
 
 	blockID := newUuidBlockID(c.prefix)
