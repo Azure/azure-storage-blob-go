@@ -83,12 +83,12 @@ type chunk struct {
 // copier streams a file via chunks in parallel from a reader representing a file.
 // Do not use directly, instead use copyFromReader().
 type copier struct {
-	// ctx holds the context of a copier. This is normally a faux paux to store a Context in a struct. In this case,
+	// ctx holds the context of a copier. This is normally a faux pas to store a Context in a struct. In this case,
 	// the copier has the lifetime of a function call, so its fine.
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	// reader is the source to be written to disk.
+	// reader is the source to be written to storage.
 	reader io.Reader
 	// to is the location we are writing our chunks to.
 	to blockWriter
@@ -175,9 +175,6 @@ func (c *copier) writer() {
 }
 
 // write uploads a chunk to blob storage.
-// TODO(someone): Might be worth having StageBlock() retry with some exponential delays before giving up.
-// Sucks to have a 100GiB upload die because of a single write that could be corrected. Right now this
-// is just mimicking the previous behavior.
 func (c *copier) write(chunk *chunk) error {
 	defer c.buffers.Put(chunk)
 
