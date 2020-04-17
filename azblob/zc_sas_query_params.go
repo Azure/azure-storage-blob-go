@@ -25,15 +25,15 @@ const (
 func FormatTimesForSASSigning(startTime, expiryTime, snapshotTime time.Time) (string, string, string) {
 	ss := ""
 	if !startTime.IsZero() {
-		ss = startTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
+		ss = startTime.UTC().Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
 	}
 	se := ""
 	if !expiryTime.IsZero() {
-		se = expiryTime.Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
+		se = expiryTime.UTC().Format(SASTimeFormat) // "yyyy-MM-ddTHH:mm:ssZ"
 	}
 	sh := ""
 	if !snapshotTime.IsZero() {
-		sh = snapshotTime.Format(SnapshotTimeFormat)
+		sh = snapshotTime.UTC().Format(SnapshotTimeFormat)
 	}
 	return ss, se, sh
 }
