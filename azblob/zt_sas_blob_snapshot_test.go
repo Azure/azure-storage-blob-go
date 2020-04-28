@@ -1,11 +1,11 @@
-package azblob_test
+package azblob
 
 import (
 	"bytes"
-	"github.com/Azure/azure-storage-blob-go/azblob"
-	chk "gopkg.in/check.v1"
 	"strings"
 	"time"
+
+	chk "gopkg.in/check.v1"
 )
 
 func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
@@ -14,8 +14,8 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	containerURL, containerName := getContainerURL(c, bsu)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
-	_, err := containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
-	defer containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
+	_, err := containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -24,19 +24,19 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	burl := containerURL.NewBlockBlobURL(blobName)
 	data := "Hello world!"
 
-	_, err = burl.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	_, err = burl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	//Create a snapshot & URL
-	createSnapshot, err := burl.CreateSnapshot(ctx, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	createSnapshot, err := burl.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	//Format snapshot time
-	snapTime, err := time.Parse(azblob.SnapshotTimeFormat, createSnapshot.Snapshot())
+	snapTime, err := time.Parse(SnapshotTimeFormat, createSnapshot.Snapshot())
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -49,40 +49,40 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	}
 
 	//Create SAS query
-	snapSASQueryParams, err := azblob.BlobSASSignatureValues{
+	snapSASQueryParams, err := BlobSASSignatureValues{
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(48 * time.Hour),
 		SnapshotTime:  snapTime,
 		Permissions:   "racwd",
 		ContainerName: containerName,
 		BlobName:      blobName,
-		Protocol:      azblob.SASProtocolHTTPS,
+		Protocol:      SASProtocolHTTPS,
 	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	//Attach SAS query to block blob URL
-	p := azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
-	snapParts := azblob.NewBlobURLParts(blobURL.URL())
+	p := NewPipeline(NewAnonymousCredential(), PipelineOptions{})
+	snapParts := NewBlobURLParts(blobURL.URL())
 	snapParts.SAS = snapSASQueryParams
-	sburl := azblob.NewBlockBlobURL(snapParts.URL(), p)
+	sburl := NewBlockBlobURL(snapParts.URL(), p)
 
 	//Test the snapshot
-	downloadResponse, err := sburl.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	downloadResponse, err := sburl.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	downloadedData := &bytes.Buffer{}
-	reader := downloadResponse.Body(azblob.RetryReaderOptions{})
+	reader := downloadResponse.Body(RetryReaderOptions{})
 	downloadedData.ReadFrom(reader)
 	reader.Close()
 
 	c.Assert(data, chk.Equals, downloadedData.String())
 
 	//Try to delete snapshot -------------------------------------------------------------------------------------------
-	_, err = sburl.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	_, err = sburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err != nil { //This shouldn't fail.
 		c.Fatal(err)
 	}
@@ -91,16 +91,16 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	//If this succeeds, it means a normal SAS token was created.
 
 	fsburl := containerURL.NewBlockBlobURL("failsnap")
-	_, err = fsburl.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	_, err = fsburl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err) //should succeed to create the blob via normal auth means
 	}
 
-	fsburlparts := azblob.NewBlobURLParts(fsburl.URL())
+	fsburlparts := NewBlobURLParts(fsburl.URL())
 	fsburlparts.SAS = snapSASQueryParams
-	fsburl = azblob.NewBlockBlobURL(fsburlparts.URL(), p) //re-use fsburl as we don't need the sharedkey version anymore
+	fsburl = NewBlockBlobURL(fsburlparts.URL(), p) //re-use fsburl as we don't need the sharedkey version anymore
 
-	resp, err := fsburl.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	resp, err := fsburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err == nil {
 		c.Fatal(resp) //This SHOULD fail. Otherwise we have a normal SAS token...
 	}

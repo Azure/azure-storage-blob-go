@@ -5,9 +5,6 @@ import (
 	"io"
 	"net/url"
 
-	"encoding/base64"
-	"encoding/binary"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
@@ -110,57 +107,4 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-block-list.
 func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType, ac LeaseAccessConditions) (*BlockList, error) {
 	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(), nil)
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type BlockID [64]byte
-
-func (blockID BlockID) ToBase64() string {
-	return base64.StdEncoding.EncodeToString(blockID[:])
-}
-
-func (blockID *BlockID) FromBase64(s string) error {
-	*blockID = BlockID{} // Zero out the block ID
-	_, err := base64.StdEncoding.Decode(blockID[:], ([]byte)(s))
-	return err
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-type uuidBlockID BlockID
-
-func (ubi uuidBlockID) UUID() uuid {
-	u := uuid{}
-	copy(u[:], ubi[:len(u)])
-	return u
-}
-
-func (ubi uuidBlockID) Number() uint32 {
-	return binary.BigEndian.Uint32(ubi[len(uuid{}):])
-}
-
-func newUuidBlockID(u uuid) uuidBlockID {
-	ubi := uuidBlockID{}     // Create a new uuidBlockID
-	copy(ubi[:len(u)], u[:]) // Copy the specified UUID into it
-	// Block number defaults to 0
-	return ubi
-}
-
-func (ubi *uuidBlockID) SetUUID(u uuid) *uuidBlockID {
-	copy(ubi[:len(u)], u[:])
-	return ubi
-}
-
-func (ubi uuidBlockID) WithBlockNumber(blockNumber uint32) uuidBlockID {
-	binary.BigEndian.PutUint32(ubi[len(uuid{}):], blockNumber) // Put block number after UUID
-	return ubi                                                 // Return the passed-in copy
-}
-
-func (ubi uuidBlockID) ToBase64() string {
-	return BlockID(ubi).ToBase64()
-}
-
-func (ubi *uuidBlockID) FromBase64(s string) error {
-	return (*BlockID)(ubi).FromBase64(s)
 }

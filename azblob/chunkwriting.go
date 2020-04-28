@@ -3,10 +3,14 @@ package azblob
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
 	"sync"
+
+	guuid "github.com/google/uuid"
 )
 
 // blockWriter provides methods to upload blocks that represent a file to a server and commit them.
@@ -30,32 +34,32 @@ func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o Uploa
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	copy := &copier{
+	cp := &copier{
 		ctx:    ctx,
 		cancel: cancel,
 		reader: from,
 		to:     to,
-		prefix: newUUID(),
+		id:     newID(),
 		o:      o,
-		ch:     make(chan *chunk, 1),
+		ch:     make(chan []byte, 1),
 		errCh:  make(chan error, 1),
 		buffers: sync.Pool{
 			New: func() interface{} {
-				return &chunk{payload: make([]byte, o.BufferSize)}
+				return make([]byte, o.BufferSize)
 			},
 		},
 	}
 
 	// Starts the pools of concurrent writers.
-	copy.wg.Add(o.MaxBuffers)
+	cp.wg.Add(o.MaxBuffers)
 	for i := 0; i < o.MaxBuffers; i++ {
-		go copy.writer()
+		go cp.writer()
 	}
 
 	// Send all our chunks until we get an error.
 	var err error
 	for {
-		if err = copy.sendChunk(); err != nil {
+		if err = cp.sendChunk(); err != nil {
 			break
 		}
 	}
@@ -65,19 +69,11 @@ func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o Uploa
 	}
 
 	// Close out our upload.
-	if err := copy.close(); err != nil {
+	if err := cp.close(); err != nil {
 		return nil, err
 	}
 
-	return copy.result, nil
-}
-
-// chunk represents a chunk of data to be sent to blob storage.
-type chunk struct {
-	// num is the number of the chunk. Must be unique per chunk upload for a single file.
-	num int32
-	// payload is the chunk data.
-	payload []byte
+	return cp.result, nil
 }
 
 // copier streams a file via chunks in parallel from a reader representing a file.
@@ -93,13 +89,13 @@ type copier struct {
 	// to is the location we are writing our chunks to.
 	to blockWriter
 
-	prefix uuid
-	o      UploadStreamToBlockBlobOptions
+	id *id
+	o  UploadStreamToBlockBlobOptions
 
 	// num is the current chunk we are on.
 	num int32
 	// ch is used to pass the next chunk of data from our reader to one of the writers.
-	ch chan *chunk
+	ch chan []byte
 	// errCh is used to hold the first error from our concurrent writers.
 	errCh chan error
 	// wg provides a count of how many writers we are waiting to finish.
@@ -129,15 +125,13 @@ func (c *copier) sendChunk() error {
 		return err
 	}
 
-	chunk := c.buffers.Get().(*chunk)
-	n, err := io.ReadFull(c.reader, chunk.payload)
-	chunk.payload = chunk.payload[0:n]
+	chunk := c.buffers.Get().([]byte)
+	n, err := io.ReadFull(c.reader, chunk)
+	chunk = chunk[0:n]
 	switch {
 	case err == nil && n == 0:
 		return nil
 	case err == nil:
-		chunk.num = c.num
-		c.num++
 		c.ch <- chunk
 		return nil
 	case err != nil && (err == io.EOF || err == io.ErrUnexpectedEOF) && n == 0:
@@ -145,8 +139,6 @@ func (c *copier) sendChunk() error {
 	}
 
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		chunk.num = c.num
-		c.num++
 		c.ch <- chunk
 		return io.EOF
 	}
@@ -175,15 +167,14 @@ func (c *copier) writer() {
 }
 
 // write uploads a chunk to blob storage.
-func (c *copier) write(chunk *chunk) error {
+func (c *copier) write(chunk []byte) error {
 	defer c.buffers.Put(chunk)
 
 	if err := c.ctx.Err(); err != nil {
 		return err
 	}
 
-	blockID := newUuidBlockID(c.prefix).WithBlockNumber(uint32(chunk.num)).ToBase64()
-	_, err := c.to.StageBlock(c.ctx, blockID, bytes.NewReader(chunk.payload), LeaseAccessConditions{}, nil)
+	_, err := c.to.StageBlock(c.ctx, c.id.next(), bytes.NewReader(chunk), LeaseAccessConditions{}, nil)
 	if err != nil {
 		return fmt.Errorf("write error: %w", err)
 	}
@@ -199,16 +190,39 @@ func (c *copier) close() error {
 		return err
 	}
 
-	blockID := newUuidBlockID(c.prefix)
-	var blockIDs []string
-	if c.num > 0 {
-		blockIDs = make([]string, 0, c.num-1)
-		for i := 0; i < int(c.num); i++ {
-			blockIDs = append(blockIDs, blockID.WithBlockNumber(uint32(i)).ToBase64())
-		}
-	}
-
 	var err error
-	c.result, err = c.to.CommitBlockList(c.ctx, blockIDs, c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions)
+	c.result, err = c.to.CommitBlockList(c.ctx, c.id.issued(), c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions)
 	return err
+}
+
+// id allows the creation of unique IDs based on UUID4 + an int32. This autoincrements.
+type id struct {
+	u   [64]byte
+	num uint32
+	all []string
+}
+
+// newID constructs a new id.
+func newID() *id {
+	uu := guuid.New()
+	u := [64]byte{}
+	copy(u[:], uu[:])
+	return &id{u: u}
+}
+
+// next returns the next ID.  This is not thread-safe.
+func (id *id) next() string {
+	defer func() { id.num++ }()
+
+	binary.BigEndian.PutUint32((id.u[len(guuid.UUID{}):]), id.num)
+	str := base64.StdEncoding.EncodeToString(id.u[:])
+	id.all = append(id.all, str)
+
+	return str
+}
+
+// issued returns all ids that have been issued. This returned value shares the internal slice so it is not safe to modify the return.
+// The value is only valid until the next time next() is called.
+func (id *id) issued() []string {
+	return id.all
 }

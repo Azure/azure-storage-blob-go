@@ -1,4 +1,4 @@
-package azblob_test
+package azblob
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Azure/azure-storage-blob-go/azblob"
 	chk "gopkg.in/check.v1"
 )
 
@@ -35,15 +34,15 @@ func performUploadStreamToBlockBlobTest(c *chk.C, blobSize, bufferSize, maxBuffe
 	blobContentReader, blobData := getRandomDataAndReader(blobSize)
 
 	// Perform UploadStreamToBlockBlob
-	uploadResp, err := azblob.UploadStreamToBlockBlob(ctx, blobContentReader, blobURL,
-		azblob.UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
+	uploadResp, err := UploadStreamToBlockBlob(ctx, blobContentReader, blobURL,
+		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
 
 	// Assert that upload was successful
 	c.Assert(err, chk.Equals, nil)
 	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
 
 	// Download the blob to verify
-	downloadResponse, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	downloadResponse, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
 
 	// Assert that the content is correct
@@ -108,8 +107,8 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 	blockBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Upload the file to a block blob
-	response, err := azblob.UploadFileToBlockBlob(context.Background(), file, blockBlobURL,
-		azblob.UploadToBlockBlobOptions{
+	response, err := UploadFileToBlockBlob(context.Background(), file, blockBlobURL,
+		UploadToBlockBlobOptions{
 			BlockSize:   int64(blockSize),
 			Parallelism: uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
@@ -128,9 +127,9 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 	defer os.Remove(destFileName)
 
 	// Perform download
-	err = azblob.DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
+	err = DownloadBlobToFile(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
 		destFile,
-		azblob.DownloadFromBlobOptions{
+		DownloadFromBlobOptions{
 			BlockSize:   int64(blockSize),
 			Parallelism: uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
@@ -143,7 +142,7 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 
 	// Assert downloaded data is consistent
 	var destBuffer []byte
-	if downloadCount == azblob.CountToEnd {
+	if downloadCount == CountToEnd {
 		destBuffer = make([]byte, fileSize-downloadOffset)
 	} else {
 		destBuffer = make([]byte, downloadCount)
@@ -233,8 +232,8 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 	blockBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Pass the Context, stream, stream size, block blob URL, and options to StreamToBlockBlob
-	response, err := azblob.UploadBufferToBlockBlob(context.Background(), bytesToUpload, blockBlobURL,
-		azblob.UploadToBlockBlobOptions{
+	response, err := UploadBufferToBlockBlob(context.Background(), bytesToUpload, blockBlobURL,
+		UploadToBlockBlobOptions{
 			BlockSize:   int64(blockSize),
 			Parallelism: uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
@@ -247,16 +246,16 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 
 	// Set up buffer to download the blob to
 	var destBuffer []byte
-	if downloadCount == azblob.CountToEnd {
+	if downloadCount == CountToEnd {
 		destBuffer = make([]byte, blobSize-downloadOffset)
 	} else {
 		destBuffer = make([]byte, downloadCount)
 	}
 
 	// Download the blob to a buffer
-	err = azblob.DownloadBlobToBuffer(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
-		destBuffer, azblob.DownloadFromBlobOptions{
-			AccessConditions: azblob.BlobAccessConditions{},
+	err = DownloadBlobToBuffer(context.Background(), blockBlobURL.BlobURL, int64(downloadOffset), int64(downloadCount),
+		destBuffer, DownloadFromBlobOptions{
+			AccessConditions: BlobAccessConditions{},
 			BlockSize:        int64(blockSize),
 			Parallelism:      uint16(parallelism),
 			// If Progress is non-nil, this function is called periodically as bytes are uploaded.
@@ -358,7 +357,7 @@ func (s *aztestsSuite) TestBasicDoBatchTransfer(c *chk.C) {
 		totalSizeCount := int64(0)
 		runCount := int64(0)
 
-		err := azblob.DoBatchTransfer(ctx, azblob.BatchTransferOptions{
+		err := DoBatchTransfer(ctx, BatchTransferOptions{
 			TransferSize: test.transferSize,
 			ChunkSize:    test.chunkSize,
 			Parallelism:  test.parallelism,
@@ -399,7 +398,7 @@ func (s *aztestsSuite) TestDoBatchTransferWithError(c *chk.C) {
 	mmf := mockMMF{failHandle: c}
 	expectedFirstError := errors.New("#3 means trouble")
 
-	err := azblob.DoBatchTransfer(ctx, azblob.BatchTransferOptions{
+	err := DoBatchTransfer(ctx, BatchTransferOptions{
 		TransferSize: 5,
 		ChunkSize:    1,
 		Parallelism:  5,
