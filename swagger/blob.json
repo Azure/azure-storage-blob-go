@@ -2,7 +2,7 @@
   "swagger": "2.0",
   "info": {
     "title": "Azure Blob Storage",
-    "version": "2018-11-09",
+    "version": "2019-02-02",
     "x-ms-code-generation-settings": {
       "header": "MIT",
       "strictSpecAdherence": false
@@ -61,6 +61,11 @@
           "202": {
             "description": "Success (Accepted)",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -108,6 +113,11 @@
           "200": {
             "description": "Success.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -180,6 +190,11 @@
           "200": {
             "description": "Success.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -269,6 +284,11 @@
           "200": {
             "description": "Success.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -319,7 +339,7 @@
           "service"
         ],
         "operationId": "Service_GetUserDelegationKey",
-        "description": "Retrieves a user delgation key for the Blob service. This is only a valid operation when using bearer token authentication.",
+        "description": "Retrieves a user delegation key for the Blob service. This is only a valid operation when using bearer token authentication.",
         "parameters": [
           {
             "$ref": "#/parameters/KeyInfo"
@@ -338,6 +358,11 @@
           "200": {
             "description": "Success.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -409,6 +434,11 @@
           "200": {
             "description": "Success (OK)",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -491,6 +521,83 @@
         }
       ]
     },
+    "/?comp=batch": {
+      "post": {
+        "tags": [
+          "service"
+        ],
+        "operationId": "Service_SubmitBatch",
+        "description": "The Batch operation allows multiple API calls to be embedded into a single HTTP request.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Body"
+          },
+          {
+            "$ref": "#/parameters/ContentLength"
+          },
+          {
+            "$ref": "#/parameters/MultipartContentType"
+          },
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "headers": {
+              "Content-Type": {
+                "type": "string",
+                "description": "The media type of the body of the response. For batch requests, this is multipart/mixed; boundary=batchresponse_GUID"
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "This header uniquely identifies the request that was made and can be used for troubleshooting the request."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "Indicates the version of the Blob service used to execute the request. This header is returned for requests made against version 2009-09-19 and above."
+              }
+            },
+            "schema": {
+              "type": "object",
+              "format": "file"
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-error-code": {
+                "x-ms-client-name": "ErrorCode",
+                "type": "string"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/StorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "comp",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "batch"
+          ]
+        }
+      ]
+    },
     "/{containerName}?restype=container": {
       "put": {
         "tags": [
@@ -528,6 +635,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -641,6 +753,11 @@
                   "modelAsString": false
                 }
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -725,6 +842,11 @@
           "202": {
             "description": "Accepted",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -808,6 +930,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -909,6 +1036,11 @@
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -988,6 +1120,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -1089,6 +1226,11 @@
                 "x-ms-client-name": "LeaseId",
                 "type": "string",
                 "description": "Uniquely identifies a container's lease"
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -1198,6 +1340,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -1313,6 +1460,11 @@
                 "type": "string",
                 "description": "Uniquely identifies a container's lease"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -1426,6 +1578,11 @@
                 "x-ms-client-name": "LeaseTime",
                 "type": "integer",
                 "description": "Approximate time remaining in the lease period, in seconds."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -1544,6 +1701,11 @@
                 "type": "string",
                 "description": "Uniquely identifies a container's lease"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -1650,6 +1812,11 @@
                 "type": "string",
                 "description": "The media type of the body of the response. For List Blobs this is 'application/xml'"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -1749,6 +1916,11 @@
                 "type": "string",
                 "description": "The media type of the body of the response. For List Blobs this is 'application/xml'"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -1823,6 +1995,11 @@
           "200": {
             "description": "Success (OK)",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -1905,6 +2082,629 @@
         }
       ]
     },
+    "/{filesystem}/{path}?resource=directory&Create": {
+      "put": {
+        "tags": [
+          "directory"
+        ],
+        "operationId": "Directory_Create",
+        "description": "Create a directory. By default, the destination is overwritten and if the destination already exists and has a lease the lease is broken. This operation supports conditional HTTP requests.  For more information, see [Specifying Conditional Headers for Blob Service Operations](https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations).  To fail if the destination already exists, use a conditional request with If-None-Match: \"*\".",
+        "consumes": [
+          "application/octet-stream"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/DirectoryProperties"
+          },
+          {
+            "$ref": "#/parameters/PosixPermissions"
+          },
+          {
+            "$ref": "#/parameters/PosixUmask"
+          },
+          {
+            "$ref": "#/parameters/XMsCacheControl"
+          },
+          {
+            "$ref": "#/parameters/XMsContentType"
+          },
+          {
+            "$ref": "#/parameters/XMsContentEncoding"
+          },
+          {
+            "$ref": "#/parameters/XMsContentLanguage"
+          },
+          {
+            "$ref": "#/parameters/XMsContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The file or directory was created.",
+            "headers": {
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              },
+              "Content-Length": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The size of the resource in bytes."
+              },
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "resource",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "directory"
+          ]
+        }
+      ]
+    },
+    "/{filesystem}/{path}?DirectoryRename": {
+      "put": {
+        "tags": [
+          "directory"
+        ],
+        "operationId": "Directory_Rename",
+        "description": "Rename a directory. By default, the destination is overwritten and if the destination already exists and has a lease the lease is broken. This operation supports conditional HTTP requests. For more information, see [Specifying Conditional Headers for Blob Service Operations](https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations). To fail if the destination already exists, use a conditional request with If-None-Match: \"*\".",
+        "consumes": [
+          "application/octet-stream"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/Continuation"
+          },
+          {
+            "$ref": "#/parameters/PathRenameMode"
+          },
+          {
+            "$ref": "#/parameters/FileRenameSource"
+          },
+          {
+            "$ref": "#/parameters/DirectoryProperties"
+          },
+          {
+            "$ref": "#/parameters/PosixPermissions"
+          },
+          {
+            "$ref": "#/parameters/PosixUmask"
+          },
+          {
+            "$ref": "#/parameters/XMsCacheControl"
+          },
+          {
+            "$ref": "#/parameters/XMsContentType"
+          },
+          {
+            "$ref": "#/parameters/XMsContentEncoding"
+          },
+          {
+            "$ref": "#/parameters/XMsContentLanguage"
+          },
+          {
+            "$ref": "#/parameters/XMsContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/SourceLeaseId"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/SourceIfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/SourceIfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/SourceIfMatch"
+          },
+          {
+            "$ref": "#/parameters/SourceIfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The directory was renamed.",
+            "headers": {
+              "x-ms-continuation": {
+                "x-ms-client-name": "marker",
+                "type": "string",
+                "description": "When renaming a directory, the number of paths that are renamed with each invocation is limited. If the number of paths to be renamed exceeds this limit, a continuation token is returned in this response header. When a continuation token is returned in the response, it must be specified in a subsequent invocation of the rename operation to continue renaming the directory."
+              },
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              },
+              "Content-Length": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The size of the resource in bytes."
+              },
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      }
+    },
+    "/{filesystem}/{path}?DirectoryDelete": {
+      "delete": {
+        "tags": [
+          "directory"
+        ],
+        "operationId": "Directory_Delete",
+        "description": "Deletes the directory",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/RecursiveDirectoryDelete"
+          },
+          {
+            "$ref": "#/parameters/Continuation"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The directory was deleted.",
+            "headers": {
+              "x-ms-continuation": {
+                "x-ms-client-name": "marker",
+                "type": "string",
+                "description": "When renaming a directory, the number of paths that are renamed with each invocation is limited. If the number of paths to be renamed exceeds this limit, a continuation token is returned in this response header. When a continuation token is returned in the response, it must be specified in a subsequent invocation of the rename operation to continue renaming the directory."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              },
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      }
+    },
+    "/{filesystem}/{path}?action=setAccessControl&directory": {
+      "patch": {
+        "tags": [
+          "directory"
+        ],
+        "operationId": "Directory_SetAccessControl",
+        "description": "Set the owner, group, permissions, or access control list for a directory.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/Owner"
+          },
+          {
+            "$ref": "#/parameters/Group"
+          },
+          {
+            "$ref": "#/parameters/PosixPermissions"
+          },
+          {
+            "$ref": "#/parameters/PosixAcl"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Set directory access control response.",
+            "headers": {
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              },
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "action",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "setAccessControl"
+          ]
+        }
+      ]
+    },
+    "/{filesystem}/{path}?action=getAccessControl&directory": {
+      "head": {
+        "tags": [
+          "directory"
+        ],
+        "operationId": "Directory_GetAccessControl",
+        "description": "Get the owner, group, permissions, or access control list for a directory.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/Upn"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get directory access control response.",
+            "headers": {
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              },
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-owner": {
+                "description": "The owner of the file or directory. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-group": {
+                "description": "The owning group of the file or directory. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-permissions": {
+                "description": "The POSIX access permissions for the file owner, the file owning group, and others. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-acl": {
+                "description": "The POSIX access control list for the file or directory.  Included in the response only if the action is \"getAccessControl\" and Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "action",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "getAccessControl"
+          ]
+        }
+      ]
+    },
     "/{containerName}/{blob}": {
       "get": {
         "tags": [
@@ -1927,6 +2727,18 @@
           },
           {
             "$ref": "#/parameters/GetRangeContentMD5"
+          },
+          {
+            "$ref": "#/parameters/GetRangeContentCRC64"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -2103,6 +2915,11 @@
                   "modelAsString": false
                 }
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2127,10 +2944,15 @@
                 "type": "integer",
                 "description": "The number of committed blocks present in the blob. This header is returned only for append blobs."
               },
-	      "x-ms-server-encrypted": {
+	            "x-ms-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the blob data and application metadata are completely encrypted using the specified algorithm. Otherwise, the value is set to false (when the blob is unencrypted, or if only parts of the blob/application metadata are encrypted)."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               },
               "x-ms-blob-content-md5": {
                 "x-ms-client-name": "BlobContentMD5",
@@ -2216,6 +3038,12 @@
                   "modelAsString": false
                 }
               },
+              "x-ms-content-crc64": {
+                "x-ms-client-name": "ContentCrc64",
+                "type": "string",
+                "format": "byte",
+                "description": "If the request is to read a specified range and the x-ms-range-get-content-crc64 is set to true, then the request returns a crc64 for the range, as long as the range size is less than or equal to 4 MB. If both x-ms-range-get-content-crc64 & x-ms-range-get-content-md5 is specified in the same request, it will fail with 400(Bad Request)"
+              },
               "x-ms-copy-completion-time": {
                 "x-ms-client-name": "CopyCompletionTime",
                 "type": "string",
@@ -2299,6 +3127,11 @@
                   "modelAsString": false
                 }
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2323,10 +3156,15 @@
                 "type": "integer",
                 "description": "The number of committed blocks present in the blob. This header is returned only for append blobs."
               },
-	      "x-ms-server-encrypted": {
+	            "x-ms-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the blob data and application metadata are completely encrypted using the specified algorithm. Otherwise, the value is set to false (when the blob is unencrypted, or if only parts of the blob/application metadata are encrypted)."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               },
               "x-ms-blob-content-md5": {
                 "x-ms-client-name": "BlobContentMD5",
@@ -2369,6 +3207,15 @@
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -2557,6 +3404,11 @@
                 "format": "int64",
                 "description": "The current sequence number for a page blob. This header is not returned for block blobs or append blobs"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2581,10 +3433,15 @@
                 "type": "integer",
                 "description": "The number of committed blocks present in the blob. This header is returned only for append blobs."
               },
-	      "x-ms-server-encrypted": {
+	            "x-ms-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the blob data and application metadata are completely encrypted using the specified algorithm. Otherwise, the value is set to false (when the blob is unencrypted, or if only parts of the blob/application metadata are encrypted)."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the metadata. This header is only returned when the metadata was encrypted with a customer-provided key."
               },
               "x-ms-access-tier": {
                 "x-ms-client-name": "AccessTier",
@@ -2665,6 +3522,11 @@
           "202": {
             "description": "The delete request was accepted and the blob will be deleted.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2697,6 +3559,387 @@
         }
       }
     },
+    "/{filesystem}/{path}?action=setAccessControl&blob": {
+      "patch": {
+        "tags": [
+          "blob"
+        ],
+        "operationId": "Blob_SetAccessControl",
+        "description": "Set the owner, group, permissions, or access control list for a blob.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/Owner"
+          },
+          {
+            "$ref": "#/parameters/Group"
+          },
+          {
+            "$ref": "#/parameters/PosixPermissions"
+          },
+          {
+            "$ref": "#/parameters/PosixAcl"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Set blob access control response.",
+            "headers": {
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              },
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "action",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "setAccessControl"
+          ]
+        }
+      ]
+    },
+    "/{filesystem}/{path}?action=getAccessControl&blob": {
+      "head": {
+        "tags": [
+          "blob"
+        ],
+        "operationId": "Blob_GetAccessControl",
+        "description": "Get the owner, group, permissions, or access control list for a blob.",
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/Upn"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get blob access control response.",
+            "headers": {
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              },
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified. Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-owner": {
+                "description": "The owner of the file or directory. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-group": {
+                "description": "The owning group of the file or directory. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-permissions": {
+                "description": "The POSIX access permissions for the file owner, the file owning group, and others. Included in the response if Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-acl": {
+                "description": "The POSIX access control list for the file or directory.  Included in the response only if the action is \"getAccessControl\" and Hierarchical Namespace is enabled for the account.",
+                "type": "string"
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "action",
+          "in": "query",
+          "required": true,
+          "type": "string",
+          "enum": [
+            "getAccessControl"
+          ]
+        }
+      ]
+    },
+    "/{filesystem}/{path}?FileRename": {
+      "put": {
+        "tags": [
+          "blob"
+        ],
+        "operationId": "Blob_Rename",
+        "description": "Rename a blob/file.  By default, the destination is overwritten and if the destination already exists and has a lease the lease is broken.  This operation supports conditional HTTP requests.  For more information, see [Specifying Conditional Headers for Blob Service Operations](https://docs.microsoft.com/en-us/rest/api/storageservices/specifying-conditional-headers-for-blob-service-operations).  To fail if the destination already exists, use a conditional request with If-None-Match: \"*\".",
+        "consumes": [
+          "application/octet-stream"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/PathRenameMode"
+          },
+          {
+            "$ref": "#/parameters/FileRenameSource"
+          },
+          {
+            "$ref": "#/parameters/DirectoryProperties"
+          },
+          {
+            "$ref": "#/parameters/PosixPermissions"
+          },
+          {
+            "$ref": "#/parameters/PosixUmask"
+          },
+          {
+            "$ref": "#/parameters/XMsCacheControl"
+          },
+          {
+            "$ref": "#/parameters/XMsContentType"
+          },
+          {
+            "$ref": "#/parameters/XMsContentEncoding"
+          },
+          {
+            "$ref": "#/parameters/XMsContentLanguage"
+          },
+          {
+            "$ref": "#/parameters/XMsContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/SourceLeaseId"
+          },
+          {
+            "$ref": "#/parameters/IfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/parameters/IfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/SourceIfModifiedSince"
+          },
+          {
+            "$ref": "#/parameters/SourceIfUnmodifiedSince"
+          },
+          {
+            "$ref": "#/parameters/SourceIfMatch"
+          },
+          {
+            "$ref": "#/parameters/SourceIfNoneMatch"
+          },
+          {
+            "$ref": "#/parameters/ApiVersionParameter"
+          },
+          {
+            "$ref": "#/parameters/ClientRequestId"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The file was renamed.",
+            "headers": {
+              "ETag": {
+                "type": "string",
+                "format": "etag",
+                "description": "An HTTP entity tag associated with the file or directory."
+              },
+              "Last-Modified": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "The data and time the file or directory was last modified.  Write operations on the file or directory update the last modified time."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              },
+              "Content-Length": {
+                "type": "integer",
+                "format": "int64",
+                "description": "The size of the resource in bytes."
+              },
+              "Date": {
+                "type": "string",
+                "format": "date-time-rfc1123",
+                "description": "A UTC date/time value generated by the service that indicates the time at which the response was initiated."
+              }
+            }
+          },
+          "default": {
+            "description": "Failure",
+            "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
+              "x-ms-request-id": {
+                "x-ms-client-name": "RequestId",
+                "type": "string",
+                "description": "A server-generated UUID recorded in the analytics logs for troubleshooting and correlation."
+              },
+              "x-ms-version": {
+                "x-ms-client-name": "Version",
+                "type": "string",
+                "description": "The version of the REST protocol used to process the request."
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/DataLakeStorageError"
+            }
+          }
+        }
+      }
+    },
     "/{containerName}/{blob}?PageBlob": {
       "put": {
         "tags": [
@@ -2713,6 +3956,9 @@
           },
           {
             "$ref": "#/parameters/ContentLength"
+          },
+          {
+            "$ref": "#/parameters/PremiumPageBlobAccessTierOptional"
           },
           {
             "$ref": "#/parameters/BlobContentType"
@@ -2737,6 +3983,15 @@
           },
           {
             "$ref": "#/parameters/BlobContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -2782,6 +4037,11 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2796,12 +4056,17 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
-	      "x-ms-request-server-encrypted": {
-		"x-ms-client-name": "IsServerEncrypted",
-		"type": "boolean",
-		"description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
-	      }
+	            },
+	            "x-ms-request-server-encrypted": {
+		            "x-ms-client-name": "IsServerEncrypted",
+		            "type": "boolean",
+		            "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
+              }
             }
           },
           "default": {
@@ -2879,6 +4144,15 @@
             "$ref": "#/parameters/BlobContentDisposition"
           },
           {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
             "$ref": "#/parameters/IfModifiedSince"
           },
           {
@@ -2916,6 +4190,11 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -2930,11 +4209,16 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+	            },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               }
             }
           },
@@ -2988,6 +4272,9 @@
           {
             "$ref": "#/parameters/Timeout"
           },
+		      {
+            "$ref": "#/parameters/ContentMD5"
+          },
           {
             "$ref": "#/parameters/ContentLength"
           },
@@ -3014,6 +4301,18 @@
           },
           {
             "$ref": "#/parameters/BlobContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
+            "$ref": "#/parameters/AccessTierOptional"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -3053,6 +4352,11 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3067,11 +4371,16 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+	            },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               }
             }
           },
@@ -3130,6 +4439,11 @@
           "200": {
             "description": "The blob was undeleted successfully.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3244,6 +4558,11 @@
                 "format": "int64",
                 "description": "The current sequence number for a page blob. This header is not returned for block blobs or append blobs"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3305,6 +4624,15 @@
             "$ref": "#/parameters/LeaseIdOptional"
           },
           {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
             "$ref": "#/parameters/IfModifiedSince"
           },
           {
@@ -3337,6 +4665,11 @@
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3351,11 +4684,16 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+              },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the metadata. This header is only returned when the metadata was encrypted with a customer-provided key."
               }
             }
           },
@@ -3439,6 +4777,11 @@
                 "x-ms-client-name": "LeaseId",
                 "type": "string",
                 "description": "Uniquely identifies a blobs's lease"
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -3545,6 +4888,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the blob was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -3657,6 +5005,11 @@
                 "type": "string",
                 "description": "Uniquely identifies a blobs's lease"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3765,6 +5118,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the blob was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -3882,6 +5240,11 @@
                 "type": "integer",
                 "description": "Approximate time remaining in the lease period, in seconds."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -3956,6 +5319,15 @@
             "$ref": "#/parameters/Metadata"
           },
           {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
             "$ref": "#/parameters/IfModifiedSince"
           },
           {
@@ -3996,6 +5368,11 @@
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -4010,6 +5387,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
+              },
+              "x-ms-request-server-encrypted": {
+                "x-ms-client-name": "IsServerEncrypted",
+                "type": "boolean",
+                "description": "True if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise. For a snapshot request, this header is set to true when metadata was provided in the request and encrypted with a customer-provided key."
               }
             }
           },
@@ -4052,6 +5434,12 @@
           },
           {
             "$ref": "#/parameters/Metadata"
+          },
+          {
+            "$ref": "#/parameters/AccessTierOptional"
+          },
+          {
+            "$ref": "#/parameters/RehydratePriority"
           },
           {
             "$ref": "#/parameters/SourceIfModifiedSince"
@@ -4103,6 +5491,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4172,6 +5565,9 @@
             "$ref": "#/parameters/Metadata"
           },
           {
+            "$ref": "#/parameters/AccessTierOptional"
+          },
+          {
             "$ref": "#/parameters/SourceIfModifiedSince"
           },
           {
@@ -4206,6 +5602,9 @@
           },
           {
             "$ref": "#/parameters/ClientRequestId"
+          },
+          {
+            "$ref": "#/parameters/SourceContentMD5"
           }
         ],
         "responses": {
@@ -4221,6 +5620,11 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4253,6 +5657,16 @@
                   "name": "SyncCopyStatusType",
                   "modelAsString": false
                 }
+              },
+              "Content-MD5": {
+                "type": "string",
+                "format": "byte",
+                "description": "This response header is returned so that the client can check for the integrity of the copied content. This header is only returned if the source content MD5 was specified."
+              },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This response header is returned so that the client can check for the integrity of the copied content."
               }
             }
           },
@@ -4310,6 +5724,11 @@
           "204": {
             "description": "The delete request was accepted and the blob will be deleted.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -4376,7 +5795,10 @@
             "$ref": "#/parameters/Timeout"
           },
           {
-            "$ref": "#/parameters/AccessTier"
+            "$ref": "#/parameters/AccessTierRequired"
+          },
+          {
+            "$ref": "#/parameters/RehydratePriority"
           },
           {
             "$ref": "#/parameters/ApiVersionParameter"
@@ -4392,6 +5814,11 @@
           "200": {
             "description": "The new tier will take effect immediately.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -4407,6 +5834,11 @@
           "202": {
             "description": "The transition to the new tier is pending.",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -4461,6 +5893,11 @@
           "200": {
             "description": "Success (OK)",
             "headers": {
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -4564,6 +6001,9 @@
             "$ref": "#/parameters/ContentMD5"
           },
           {
+            "$ref": "#/parameters/ContentCrc64"
+          },
+          {
             "$ref": "#/parameters/Body"
           },
           {
@@ -4571,6 +6011,15 @@
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/ApiVersionParameter"
@@ -4586,7 +6035,12 @@
               "Content-MD5": {
                 "type": "string",
                 "format": "byte",
-                "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4602,11 +6056,21 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+	            },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the block. This header is only returned when the block was encrypted with a customer-provided key."
               }
             }
           },
@@ -4660,7 +6124,19 @@
             "$ref": "#/parameters/SourceContentMD5"
           },
           {
+            "$ref": "#/parameters/SourceContentCRC64"
+          },
+          {
             "$ref": "#/parameters/Timeout"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
@@ -4691,7 +6167,17 @@
               "Content-MD5": {
                 "type": "string",
                 "format": "byte",
-                "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4712,6 +6198,11 @@
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the block. This header is only returned when the block was encrypted with a customer-provided key."
               }
             }
           },
@@ -4768,6 +6259,12 @@
             "$ref": "#/parameters/BlobContentMD5"
           },
           {
+            "$ref": "#/parameters/ContentMD5"
+          },
+          {
+            "$ref": "#/parameters/ContentCrc64"
+          },
+          {
             "$ref": "#/parameters/Metadata"
           },
           {
@@ -4775,6 +6272,18 @@
           },
           {
             "$ref": "#/parameters/BlobContentDisposition"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
+            "$ref": "#/parameters/AccessTierOptional"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -4820,7 +6329,17 @@
               "Content-MD5": {
                 "type": "string",
                 "format": "byte",
-                "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
+                "description": "This header is returned so that the client can check for message content integrity. This header refers to the content of the request, meaning, in this case, the list of blocks, and not the content of the blob itself."
+              },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. This header refers to the content of the request, meaning, in this case, the list of blocks, and not the content of the blob itself."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4836,11 +6355,16 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+	            },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               }
             }
           },
@@ -4907,6 +6431,11 @@
                 "type": "integer",
                 "format": "int64",
                 "description": "The size of the blob in bytes."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -4975,6 +6504,9 @@
             "$ref": "#/parameters/ContentMD5"
           },
           {
+            "$ref": "#/parameters/ContentCrc64"
+          },
+          {
             "$ref": "#/parameters/Timeout"
           },
           {
@@ -4982,6 +6514,15 @@
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/IfSequenceNumberLessThanOrEqualTo"
@@ -5030,11 +6571,21 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
               "x-ms-blob-sequence-number": {
                 "x-ms-client-name": "BlobSequenceNumber",
                 "type": "integer",
                 "format": "int64",
                 "description": "The current sequence number for the page blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -5050,11 +6601,16 @@
                 "type": "string",
                 "format": "date-time-rfc1123",
                 "description": "UTC date/time value generated by the service that indicates the time at which the response was initiated"
-	      },
+	            },
               "x-ms-request-server-encrypted": {
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the pages. This header is only returned when the pages were encrypted with a customer-provided key."
               }
             }
           },
@@ -5124,6 +6680,15 @@
             "$ref": "#/parameters/LeaseIdOptional"
           },
           {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
             "$ref": "#/parameters/IfSequenceNumberLessThanOrEqualTo"
           },
           {
@@ -5170,11 +6735,21 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
               "x-ms-blob-sequence-number": {
                 "x-ms-client-name": "BlobSequenceNumber",
                 "type": "integer",
                 "format": "int64",
                 "description": "The current sequence number for the page blob."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -5256,6 +6831,9 @@
             "$ref": "#/parameters/SourceContentMD5"
           },
           {
+            "$ref": "#/parameters/SourceContentCRC64"
+          },
+          {
             "$ref": "#/parameters/ContentLength"
           },
           {
@@ -5263,6 +6841,15 @@
           },
           {
             "$ref": "#/parameters/RangeRequiredPutPageFromUrl"
+          },
+	        {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
@@ -5326,6 +6913,11 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
               "x-ms-blob-sequence-number": {
                 "x-ms-client-name": "BlobSequenceNumber",
                 "type": "integer",
@@ -5351,6 +6943,11 @@
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the blob. This header is only returned when the blob was encrypted with a customer-provided key."
               }
             }
           },
@@ -5454,6 +7051,11 @@
                 "type": "integer",
                 "format": "int64",
                 "description": "The size of the blob in bytes."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -5563,6 +7165,11 @@
                 "format": "int64",
                 "description": "The size of the blob in bytes."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -5624,6 +7231,15 @@
             "$ref": "#/parameters/LeaseIdOptional"
           },
           {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
+          },
+          {
             "$ref": "#/parameters/IfModifiedSince"
           },
           {
@@ -5664,6 +7280,11 @@
                 "type": "integer",
                 "format": "int64",
                 "description": "The current sequence number for a page blob. This header is not returned for block blobs or append blobs"
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
               },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
@@ -5767,6 +7388,11 @@
                 "format": "int64",
                 "description": "The current sequence number for a page blob. This header is not returned for block blobs or append blobs"
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -5857,6 +7483,11 @@
                 "format": "date-time-rfc1123",
                 "description": "Returns the date and time the container was last modified. Any operation that modifies the blob, including an update of the blob's metadata or properties, changes the last-modified time of the blob."
               },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -5944,6 +7575,9 @@
             "$ref": "#/parameters/ContentMD5"
           },
           {
+            "$ref": "#/parameters/ContentCrc64"
+          },
+          {
             "$ref": "#/parameters/LeaseIdOptional"
           },
           {
@@ -5951,6 +7585,15 @@
           },
           {
             "$ref": "#/parameters/BlobConditionAppendPos"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/IfModifiedSince"
@@ -5990,6 +7633,16 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
+              "x-ms-client-request-id": {
+                "x-ms-client-name": "ClientRequestId",
+                "type": "string",
+                "description": "If a client request id header is sent in the request, this header will be present in the response with the same value."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -6019,6 +7672,11 @@
                 "x-ms-client-name": "IsServerEncrypted",
                 "type": "boolean",
                 "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the block. This header is only returned when the block was encrypted with a customer-provided key."
               }
             }
           },
@@ -6066,10 +7724,25 @@
             "$ref": "#/parameters/SourceContentMD5"
           },
           {
+	          "$ref": "#/parameters/SourceContentCRC64"
+          },
+          {
             "$ref": "#/parameters/Timeout"
           },
           {
             "$ref": "#/parameters/ContentLength"
+          },
+	        {
+            "$ref": "#/parameters/ContentMD5"
+          },
+	        {
+            "$ref": "#/parameters/EncryptionKey"
+          },
+          {
+            "$ref": "#/parameters/EncryptionKeySha256"
+          },
+          {
+            "$ref": "#/parameters/EncryptionAlgorithm"
           },
           {
             "$ref": "#/parameters/LeaseIdOptional"
@@ -6130,6 +7803,11 @@
                 "format": "byte",
                 "description": "If the blob has an MD5 hash and this operation is to read the full blob, this response header is returned so that the client can check for message content integrity."
               },
+              "x-ms-content-crc64": {
+                "type": "string",
+                "format": "byte",
+                "description": "This header is returned so that the client can check for message content integrity. The value of this header is computed by the Blob service; it is not necessarily the same value specified in the request headers."
+              },
               "x-ms-request-id": {
                 "x-ms-client-name": "RequestId",
                 "type": "string",
@@ -6154,6 +7832,16 @@
                 "x-ms-client-name": "BlobCommittedBlockCount",
                 "type": "integer",
                 "description": "The number of committed blocks present in the blob. This header is returned only for append blobs."
+              },
+              "x-ms-encryption-key-sha256": {
+                "x-ms-client-name": "EncryptionKeySha256",
+                "type": "string",
+                "description": "The SHA-256 hash of the encryption key used to encrypt the block. This header is only returned when the block was encrypted with a customer-provided key."
+              },
+              "x-ms-request-server-encrypted": {
+                "x-ms-client-name": "IsServerEncrypted",
+                "type": "boolean",
+                "description": "The value of this header is set to true if the contents of the request are successfully encrypted using the specified algorithm, and false otherwise."
               }
             }
           },
@@ -6311,11 +7999,26 @@
     "StorageError": {
       "type": "object",
       "properties": {
+        "Message": {
+          "type": "string"
+        }
+      }
+    },
+    "DataLakeStorageError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "description": "The service error response object.",
+          "properties": {
         "Code": {
+              "description": "The service error code.",
           "type": "string"
         },
         "Message": {
+              "description": "The service error message.",
           "type": "string"
+            }
+          }
         }
       }
     },
@@ -6350,10 +8053,14 @@
         "P4",
         "P6",
         "P10",
+        "P15",
         "P20",
         "P30",
         "P40",
         "P50",
+        "P60",
+        "P70",
+        "P80",
         "Hot",
         "Cool",
         "Archive"
@@ -6400,7 +8107,7 @@
           "$ref": "#/definitions/BlobProperties"
         },
         "Metadata": {
-          "$ref": "#/definitions/Metadata"
+          "$ref": "#/definitions/BlobMetadata"
         }
       }
     },
@@ -6521,6 +8228,9 @@
         "ArchiveStatus": {
           "$ref": "#/definitions/ArchiveStatus"
         },
+        "CustomerProvidedKeySha256": {
+          "type": "string"
+        },
         "AccessTierChangeTime": {
           "type": "string",
           "format": "date-time-rfc1123"
@@ -6559,9 +8269,6 @@
         },
         "MaxResults": {
           "type": "integer"
-        },
-        "Delimiter": {
-          "type": "string"
         },
         "Segment": {
           "$ref": "#/definitions/BlobFlatListSegment"
@@ -6760,7 +8467,7 @@
           "$ref": "#/definitions/ContainerProperties"
         },
         "Metadata": {
-          "$ref": "#/definitions/Metadata"
+          "$ref": "#/definitions/ContainerMetadata"
         }
       }
     },
@@ -6983,7 +8690,12 @@
         "UnauthorizedBlobOverwrite",
         "BlobBeingRehydrated",
         "BlobArchived",
-        "BlobNotArchived"
+        "BlobNotArchived",
+        "AuthorizationSourceIPMismatch",
+        "AuthorizationProtocolMismatch",
+        "AuthorizationPermissionMismatch",
+        "AuthorizationServiceMismatch",
+        "AuthorizationResourceTypeMismatch"
       ],
       "x-ms-enum": {
         "name": "StorageErrorCode",
@@ -7050,8 +8762,28 @@
         }
       }
     },
-    "Metadata": {
+    "ContainerMetadata": {
       "type": "object",
+      "xml": {
+        "name": "Metadata"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "BlobMetadata": {
+      "type": "object",
+      "xml": {
+        "name": "Metadata"
+      },
+      "properties": {
+        "Encrypted": {
+          "type": "string",
+          "xml": {
+            "attribute": true
+          }
+        }
+      },
       "additionalProperties": {
         "type": "string"
       }
@@ -7281,7 +9013,7 @@
       "type": "string",
       "description": "Specifies the version of the operation to use for this request.",
       "enum": [
-        "2018-11-09"
+        "2019-02-02"
       ]
     },
     "Blob": {
@@ -7294,6 +9026,22 @@
       "maxLength": 1024,
       "x-ms-parameter-location": "method",
       "description": "The blob name."
+    },
+    "Filesystem": {
+      "name": "filesystem",
+      "in": "path",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "The filesystem name."
+    },
+    "Path": {
+      "name": "path",
+      "in": "path",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "The namespace path to a file or directory."
     },
     "BlobCacheControl": {
       "name": "x-ms-blob-cache-control",
@@ -7350,7 +9098,7 @@
         "modelAsString": true
       }
     },
-    "AccessTier": {
+    "AccessTierRequired": {
       "name": "x-ms-access-tier",
       "x-ms-client-name": "tier",
       "in": "header",
@@ -7360,10 +9108,14 @@
         "P4",
         "P6",
         "P10",
+        "P15",
         "P20",
         "P30",
         "P40",
         "P50",
+        "P60",
+        "P70",
+        "P80",
         "Hot",
         "Cool",
         "Archive"
@@ -7374,6 +9126,78 @@
       },
       "x-ms-parameter-location": "method",
       "description": "Indicates the tier to be set on the blob."
+    },
+    "AccessTierOptional": {
+      "name": "x-ms-access-tier",
+      "x-ms-client-name": "tier",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "enum": [
+        "P4",
+        "P6",
+        "P10",
+        "P15",
+        "P20",
+        "P30",
+        "P40",
+        "P50",
+        "P60",
+        "P70",
+        "P80",
+        "Hot",
+        "Cool",
+        "Archive"
+      ],
+      "x-ms-enum": {
+        "name": "AccessTier",
+        "modelAsString": true
+      },
+      "x-ms-parameter-location": "method",
+      "description": "Optional. Indicates the tier to be set on the blob."
+    },
+    "PremiumPageBlobAccessTierOptional": {
+      "name": "x-ms-access-tier",
+      "x-ms-client-name": "tier",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "enum": [
+        "P4",
+        "P6",
+        "P10",
+        "P15",
+        "P20",
+        "P30",
+        "P40",
+        "P50",
+        "P60",
+        "P70",
+        "P80"
+      ],
+      "x-ms-enum": {
+        "name": "PremiumPageBlobAccessTier",
+        "modelAsString": true
+      },
+      "x-ms-parameter-location": "method",
+      "description": "Optional. Indicates the tier to be set on the page blob."
+    },
+    "RehydratePriority": {
+      "name": "x-ms-rehydrate-priority",
+      "x-ms-client-name": "rehydratePriority",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "enum": [
+        "High",
+        "Standard"
+      ],
+      "x-ms-enum": {
+        "name": "RehydratePriority",
+        "modelAsString": true
+      },
+      "x-ms-parameter-location": "method",
+      "description": "Optional: Indicates the priority with which to rehydrate an archived blob."
     },
     "BlobContentDisposition": {
       "name": "x-ms-blob-content-disposition",
@@ -7506,6 +9330,15 @@
       "x-ms-parameter-location": "method",
       "description": "Initial data"
     },
+    "Continuation": {
+      "name": "continuation",
+      "x-ms-client-name": "marker",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "When renaming a directory, the number of paths that are renamed with each invocation is limited.  If the number of paths to be renamed exceeds this limit, a continuation token is returned in this response header.  When a continuation token is returned in the response, it must be specified in a subsequent invocation of the rename operation to continue renaming the directory."
+    },
     "ContainerAcl": {
       "name": "containerAcl",
       "in": "body",
@@ -7541,7 +9374,16 @@
       "x-ms-parameter-location": "method",
       "description": "The container name."
     },
-
+    "ContentCrc64": {
+      "name": "x-ms-content-crc64",
+      "x-ms-client-name": "transactionalContentCrc64",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "format": "byte",
+      "x-ms-parameter-location": "method",
+      "description": "Specify the transactional crc64 for the body, to be validated by the service."
+    },
     "ContentLength": {
       "name": "Content-Length",
       "in": "header",
@@ -7596,6 +9438,67 @@
       "in": "query",
       "required": true
     },
+    "DirectoryProperties": {
+      "name": "x-ms-properties",
+      "description": "Optional.  User-defined properties to be stored with the file or directory, in the format of a comma-separated list of name and value pairs \"n1=v1, n2=v2, ...\", where each value is base64 encoded.",
+      "x-ms-client-name": "directoryProperties",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method"
+    },
+    "EncryptionKey": {
+      "name": "x-ms-encryption-key",
+      "x-ms-client-name": "encryptionKey",
+      "type": "string",
+      "in": "header",
+      "required": false,
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "cpk-info"
+      },
+      "description": "Optional. Specifies the encryption key to use to encrypt the data provided in the request. If not specified, encryption is performed with the root account encryption key.  For more information, see Encryption at Rest for Azure Storage Services."
+    },
+    "EncryptionKeySha256": {
+      "name": "x-ms-encryption-key-sha256",
+      "x-ms-client-name": "encryptionKeySha256",
+      "type": "string",
+      "in": "header",
+      "required": false,
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "cpk-info"
+      },
+      "description": "The SHA-256 hash of the provided encryption key. Must be provided if the x-ms-encryption-key header is provided."
+    },
+    "EncryptionAlgorithm": {
+      "name": "x-ms-encryption-algorithm",
+      "x-ms-client-name": "encryptionAlgorithm",
+      "type": "string",
+      "in": "header",
+      "required": false,
+      "enum": [
+        "AES256"
+      ],
+      "x-ms-enum": {
+        "name": "EncryptionAlgorithmType",
+        "modelAsString": false
+      },
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "cpk-info"
+      },
+      "description": "The algorithm used to produce the encryption key hash. Currently, the only accepted value is \"AES256\". Must be provided if the x-ms-encryption-key header is provided."
+    },
+    "FileRenameSource": {
+      "name": "x-ms-rename-source",
+      "x-ms-client-name": "renameSource",
+      "in": "header",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "The file or directory to be renamed. The value must have the following format: \"/{filesysystem}/{path}\".  If \"x-ms-properties\" is specified, the properties will overwrite the existing properties; otherwise, the existing properties will be preserved."
+    },
     "GetRangeContentMD5": {
       "name": "x-ms-range-get-content-md5",
       "x-ms-client-name": "rangeGetContentMD5",
@@ -7604,6 +9507,15 @@
       "type": "boolean",
       "x-ms-parameter-location": "method",
       "description": "When set to true and specified together with the Range, the service returns the MD5 hash for the range, as long as the range is less than or equal to 4 MB in size."
+    },
+    "GetRangeContentCRC64": {
+      "name": "x-ms-range-get-content-crc64",
+      "x-ms-client-name": "rangeGetContentCRC64",
+      "in": "header",
+      "required": false,
+      "type": "boolean",
+      "x-ms-parameter-location": "method",
+      "description": "When set to true and specified together with the Range, the service returns the CRC64 hash for the range, as long as the range is less than or equal to 4 MB in size."
     },
     "IfMatch": {
       "name": "If-Match",
@@ -7782,6 +9694,33 @@
       "x-ms-parameter-location": "method",
       "description": "Specifies the current lease ID on the resource."
     },
+    "Owner": {
+      "name": "x-ms-owner",
+      "x-ms-client-name": "owner",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "description": "Optional. The owner of the blob or directory.",
+      "x-ms-parameter-location": "method"
+    },
+    "Group": {
+      "name": "x-ms-group",
+      "x-ms-client-name": "group",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "description": "Optional. The owning group of the blob or directory.",
+      "x-ms-parameter-location": "method"
+    },
+    "Upn": {
+      "name": "upn",
+      "x-ms-client-name": "upn",
+      "in": "query",
+      "description": "Optional. Valid only when Hierarchical Namespace is enabled for the account. If \"true\", the identity values returned in the x-ms-owner, x-ms-group, and x-ms-acl response headers will be transformed from Azure Active Directory Object IDs to User Principal Names.  If \"false\", the values will be returned as Azure Active Directory Object IDs. The default value is false.",
+      "required": false,
+      "type": "boolean",
+      "x-ms-parameter-location": "method"
+    },
     "Marker": {
       "name": "marker",
       "in": "query",
@@ -7808,6 +9747,58 @@
       "x-ms-parameter-location": "method",
       "description": "Optional. Specifies a user-defined name-value pair associated with the blob. If no name-value pairs are specified, the operation will copy the metadata from the source blob or file to the destination blob. If one or more name-value pairs are specified, the destination blob is created with the specified metadata, and metadata is not copied from the source blob or file. Note that beginning with version 2009-09-19, metadata names must adhere to the naming rules for C# identifiers. See Naming and Referencing Containers, Blobs, and Metadata for more information.",
       "x-ms-header-collection-prefix": "x-ms-meta-"
+    },
+    "MultipartContentType": {
+      "name": "Content-Type",
+      "x-ms-client-name": "multipartContentType",
+      "in": "header",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "Required. The value of this header must be multipart/mixed with a batch boundary. Example header value: multipart/mixed; boundary=batch_<GUID>"
+    },
+    "PathRenameMode": {
+      "name": "mode",
+      "x-ms-client-name": "pathRenameMode",
+      "description": "Determines the behavior of the rename operation",
+      "in": "query",
+      "required": false,
+      "type": "string",
+      "enum": [
+        "legacy",
+        "posix"
+      ],
+      "x-ms-enum": {
+        "name": "PathRenameMode",
+        "modelAsString": false
+      }
+    },
+    "PosixPermissions": {
+      "name": "x-ms-permissions",
+      "description": "Optional and only valid if Hierarchical Namespace is enabled for the account. Sets POSIX access permissions for the file owner, the file owning group, and others. Each class may be granted read, write, or execute permission.  The sticky bit is also supported.  Both symbolic (rwxrw-rw-) and 4-digit octal notation (e.g. 0766) are supported.",
+      "x-ms-client-name": "posixPermissions",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method"
+    },
+    "PosixAcl": {
+      "name": "x-ms-acl",
+      "description": "Sets POSIX access control rights on files and directories. The value is a comma-separated list of access control entries. Each access control entry (ACE) consists of a scope, a type, a user or group identifier, and permissions in the format \"[scope:][type]:[id]:[permissions]\".",
+      "x-ms-client-name": "posixAcl",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method"
+    },
+    "PosixUmask": {
+      "name": "x-ms-umask",
+      "x-ms-client-name": "posixUmask",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "Only valid if Hierarchical Namespace is enabled for the account. This umask restricts permission settings for file and directory, and will only be applied when default Acl does not exist in parent directory. If the umask bit has set, it means that the corresponding permission will be disabled. Otherwise the corresponding permission will be determined by the permission. A 4-digit octal notation (e.g. 0022) is supported here. If no umask was specified, a default umask - 0027 will be used."
     },
     "Prefix": {
       "name": "prefix",
@@ -7861,6 +9852,15 @@
       "x-ms-parameter-location": "method",
       "description": "The range of bytes to which the source range would be written. The range should be 512 aligned and range-end is required."
     },
+    "RecursiveDirectoryDelete": {
+      "name": "recursive",
+      "x-ms-client-name": "recursiveDirectoryDelete",
+      "in": "query",
+      "required": true,
+      "type": "boolean",
+      "x-ms-parameter-location": "method",
+      "description": "If \"true\", all paths beneath the directory will be deleted. If \"false\" and the directory is non-empty, an error occurs."
+    },
     "SequenceNumberAction": {
       "name": "x-ms-sequence-number-action",
       "x-ms-client-name": "sequenceNumberAction",
@@ -7897,6 +9897,16 @@
       "x-ms-parameter-location": "method",
       "description": "Specify the md5 calculated for the range of bytes that must be read from the copy source."
     },
+    "SourceContentCRC64": {
+      "name": "x-ms-source-content-crc64",
+      "x-ms-client-name": "sourceContentcrc64",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "format": "byte",
+      "x-ms-parameter-location": "method",
+      "description": "Specify the crc64 calculated for the range of bytes that must be read from the copy source."
+    },
     "SourceRange": {
       "name": "x-ms-source-range",
       "x-ms-client-name": "sourceRange",
@@ -7905,15 +9915,15 @@
       "type": "string",
       "x-ms-parameter-location": "method",
       "description": "Bytes of source data in the specified range."
-      },
-      "SourceRangeRequiredPutPageFromUrl": {
-        "name": "x-ms-source-range",
-        "x-ms-client-name": "sourceRange",
-        "in": "header",
-        "required": true,
-        "type": "string",
-        "x-ms-parameter-location": "method",
-        "description": "Bytes of source data in the specified range. The length of this range should match the ContentLength header and x-ms-range/Range destination range header."
+    },
+    "SourceRangeRequiredPutPageFromUrl": {
+      "name": "x-ms-source-range",
+      "x-ms-client-name": "sourceRange",
+      "in": "header",
+      "required": true,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "description": "Bytes of source data in the specified range. The length of this range should match the ContentLength header and x-ms-range/Range destination range header."
     },
     "SourceIfMatch": {
       "name": "x-ms-source-if-match",
@@ -8004,6 +10014,66 @@
       "minimum": 0,
       "x-ms-parameter-location": "method",
       "description": "The timeout parameter is expressed in seconds. For more information, see <a href=\"https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations\">Setting Timeouts for Blob Service Operations.</a>"
-      }
+    },
+    "XMsCacheControl": {
+      "name": "x-ms-cache-control",
+      "x-ms-client-name": "cacheControl",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "directory-http-headers"
+      },
+      "description": "Cache control for given resource"
+    },
+    "XMsContentType": {
+      "name": "x-ms-content-type",
+      "x-ms-client-name": "contentType",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "directory-http-headers"
+      },
+      "description": "Content type for given resource"
+    },
+    "XMsContentEncoding": {
+      "name": "x-ms-content-encoding",
+      "x-ms-client-name": "contentEncoding",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "directory-http-headers"
+      },
+      "description": "Content encoding for given resource"
+    },
+    "XMsContentLanguage": {
+      "name": "x-ms-content-language",
+      "x-ms-client-name": "contentLanguage",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "directory-http-headers"
+      },
+      "description": "Content language for given resource"
+    },
+    "XMsContentDisposition": {
+      "name": "x-ms-content-disposition",
+      "x-ms-client-name": "contentDisposition",
+      "in": "header",
+      "required": false,
+      "type": "string",
+      "x-ms-parameter-location": "method",
+      "x-ms-parameter-grouping": {
+        "name": "directory-http-headers"
+      },
+      "description": "Content disposition for given resource"
+    }
   }
 }
