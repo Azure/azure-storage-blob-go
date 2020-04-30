@@ -163,19 +163,19 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for copy.
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
 	// Get source blob URL with SAS for StageFromURL.
-	srcBlobParts := azblob.NewBlobURLParts(srcBlob.URL())
+	srcBlobParts := NewBlobURLParts(srcBlob.URL())
 
-	srcBlobParts.SAS, err = azblob.BlobSASSignatureValues{
-		Protocol:      azblob.SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+	srcBlobParts.SAS, err = BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
-		Permissions:   azblob.BlobSASPermissions{Read: true}.String(),
+		Permissions:   BlobSASPermissions{Read: true}.String(),
 	}.NewSASQueryParameters(credential)
 	if err != nil {
 		c.Fatal(err)
@@ -184,7 +184,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke copy blob from URL.
-	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, azblob.Metadata{"foo": "bar"}, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{}, sourceDataMD5Value[:])
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:])
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -196,9 +196,9 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
 
 	// Check data integrity through downloading.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, azblob.CountToEnd, azblob.BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
-	destData, err := ioutil.ReadAll(downloadResp.Body(azblob.RetryReaderOptions{}))
+	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
 	c.Assert(destData, chk.DeepEquals, sourceData)
 
@@ -207,11 +207,11 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 
 	// Edge case 1: Provide bad MD5 and make sure the copy fails
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, azblob.Metadata{}, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{}, badMD5)
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5)
 	c.Assert(err, chk.NotNil)
 
 	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, azblob.Metadata{}, azblob.ModifiedAccessConditions{}, azblob.BlobAccessConditions{}, nil)
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
