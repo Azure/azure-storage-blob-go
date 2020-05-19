@@ -301,6 +301,10 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 		return errors.New("ChunkSize cannot be 0")
 	}
 
+	if o.Parallelism == 0 {
+		o.Parallelism = 5 // default Parallelism
+	}
+
 	// Prepare and do parallel operations.
 	numChunks := uint16(((o.TransferSize - 1) / o.ChunkSize) + 1)
 	operationChannel := make(chan func() error, o.Parallelism) // Create the channel that release 'Parallelism' goroutines concurrently
@@ -309,9 +313,6 @@ func DoBatchTransfer(ctx context.Context, o BatchTransferOptions) error {
 	defer cancel()
 
 	// Create the goroutines that process each operation (in parallel).
-	if o.Parallelism == 0 {
-		o.Parallelism = 5 // default Parallelism
-	}
 	for g := uint16(0); g < o.Parallelism; g++ {
 		//grIndex := g
 		go func() {
