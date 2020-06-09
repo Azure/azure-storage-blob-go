@@ -1,4 +1,4 @@
-module github.com/Azure/azure-kusto-go
+module github.com/Azure/azure-storage-blob-go
 
 go 1.13
 
