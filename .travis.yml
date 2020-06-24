@@ -1,6 +1,6 @@
 language: go
 go:
-- "1.12.1"
+- "1.13"
 script:
 - export GO111MODULE=on
 - GOOS=linux go build ./azblob

@@ -1,11 +1,11 @@
-package azblob_test
+package azblob
 
 import (
 	"bytes"
-	"github.com/Azure/azure-storage-blob-go/azblob"
-	chk "gopkg.in/check.v1"
 	"strings"
 	"time"
+
+	chk "gopkg.in/check.v1"
 )
 
 //Creates a container and tests permissions by listing blobs
@@ -19,17 +19,17 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	}
 
 	// Create pipeline w/ OAuth to handle user delegation key obtaining
-	p := azblob.NewPipeline(*ocred, azblob.PipelineOptions{})
+	p := NewPipeline(*ocred, PipelineOptions{})
 
 	bsu = bsu.WithPipeline(p)
-	keyInfo := azblob.NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
+	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
 	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil)
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	cSAS, err := azblob.BlobSASSignatureValues{
-		Protocol:      azblob.SASProtocolHTTPS,
+	cSAS, err := BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
 		Permissions:   "racwdl",
@@ -37,11 +37,11 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	}.NewSASQueryParameters(cudk)
 
 	// Create anonymous pipeline
-	p = azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
+	p = NewPipeline(NewAnonymousCredential(), PipelineOptions{})
 
 	// Create the container
-	_, err = containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
-	defer containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
+	_, err = containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -49,17 +49,17 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	// Craft a container URL w/ container UDK SAS
 	cURL := containerURL.URL()
 	cURL.RawQuery += cSAS.Encode()
-	cSASURL := azblob.NewContainerURL(cURL, p)
+	cSASURL := NewContainerURL(cURL, p)
 
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), azblob.BlobHTTPHeaders{}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	resp, err := bblob.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	data := &bytes.Buffer{}
-	body := resp.Body(azblob.RetryReaderOptions{})
+	body := resp.Body(RetryReaderOptions{})
 	if body == nil {
 		c.Fatal("download body was nil")
 	}
@@ -73,7 +73,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	}
 
 	c.Assert(data.String(), chk.Equals, "hello world!")
-	_, err = bblob.Delete(ctx, azblob.DeleteSnapshotsOptionNone, azblob.BlobAccessConditions{})
+	_, err = bblob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -92,19 +92,19 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	}
 
 	// Create pipeline to handle requests
-	p := azblob.NewPipeline(*ocred, azblob.PipelineOptions{})
+	p := NewPipeline(*ocred, PipelineOptions{})
 
 	// Prepare user delegation key
 	bsu = bsu.WithPipeline(p)
-	keyInfo := azblob.NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
+	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
 	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	// Prepare User Delegation SAS query
-	bSAS, err := azblob.BlobSASSignatureValues{
-		Protocol:      azblob.SASProtocolHTTPS,
+	bSAS, err := BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
 		Permissions:   "rd",
@@ -116,32 +116,32 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	}
 
 	// Create pipeline
-	p = azblob.NewPipeline(azblob.NewAnonymousCredential(), azblob.PipelineOptions{})
+	p = NewPipeline(NewAnonymousCredential(), PipelineOptions{})
 
 	// Append User Delegation SAS token to URL
-	bSASParts := azblob.NewBlobURLParts(blobURL.URL())
+	bSASParts := NewBlobURLParts(blobURL.URL())
 	bSASParts.SAS = bSAS
-	bSASURL := azblob.NewBlockBlobURL(bSASParts.URL(), p)
+	bSASURL := NewBlockBlobURL(bSASParts.URL(), p)
 
 	// Create container & upload sample data
-	_, err = containerURL.Create(ctx, azblob.Metadata{}, azblob.PublicAccessNone)
-	defer containerURL.Delete(ctx, azblob.ContainerAccessConditions{})
+	_, err = containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), azblob.BlobHTTPHeaders{ContentType: "text/plain"}, azblob.Metadata{}, azblob.BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	// Download data via User Delegation SAS URL; must succeed
-	downloadResponse, err := bSASURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	if err != nil {
 		c.Fatal(err)
 	}
 	downloadedData := &bytes.Buffer{}
-	reader := downloadResponse.Body(azblob.RetryReaderOptions{})
+	reader := downloadResponse.Body(RetryReaderOptions{})
 	_, err = downloadedData.ReadFrom(reader)
 	if err != nil {
 		c.Fatal(err)
@@ -153,7 +153,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	c.Assert(data, chk.Equals, downloadedData.String())
 
 	// Delete the item using the User Delegation SAS URL; must succeed
-	_, err = bSASURL.Delete(ctx, azblob.DeleteSnapshotsOptionInclude, azblob.BlobAccessConditions{})
+	_, err = bSASURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 	if err != nil {
 		c.Fatal(err)
 	}
