@@ -20,8 +20,6 @@ import (
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/go-autorest/autorest/adal"
-
-	"github.com/Azure/azure-storage-blob-go/azblob"
 )
 
 // For testing docs, see: https://labix.org/gocheck

@@ -183,7 +183,7 @@ func (s *aztestsSuite) TestRetryReaderWithRetryIoUnexpectedEOF(c *chk.C) {
 		body.doInjectTimes = 1
 		body.injectedError = io.ErrUnexpectedEOF
 
-		getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+		getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 			r := http.Response{}
 			body.currentByteIndex = int(info.Offset)
 			r.Body = body
@@ -191,15 +191,15 @@ func (s *aztestsSuite) TestRetryReaderWithRetryIoUnexpectedEOF(c *chk.C) {
 			return &r, nil
 		}
 
-		httpGetterInfo := azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
+		httpGetterInfo := HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
 		initResponse, err := getter(context.Background(), httpGetterInfo)
 		c.Assert(err, chk.IsNil)
 
-		rrOptions := azblob.RetryReaderOptions{MaxRetryRequests: 1}
+		rrOptions := RetryReaderOptions{MaxRetryRequests: 1}
 		if logThisRun {
 			rrOptions.NotifyFailedRead = failureMethod
 		}
-		retryReader := azblob.NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
+		retryReader := NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
 
 		// should fail and succeed through retry
 		can := make([]byte, 1)
