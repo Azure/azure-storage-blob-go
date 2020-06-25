@@ -2,6 +2,16 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
+## Version 0.10.0:
+- Added support for CopyBlobFromURL (sync) and upgrade version to 2019-02-02.
+- Provided default values for UploadStreamToBlockBlobOptions and refactored UploadStreamToBlockBlob.
+- Added support for multiple start/expiry time formats.
+- Added Solaris support.
+- Enabled recovering from a unexpectedEOF error.
+
+## Version 0.9.0:
+- Updated go.mod to fix dependency issues.
+
 ## Version 0.8.0:
 - Fixed error handling in high-level function DoBatchTransfer, and made it public for easy customization
 
