@@ -41,7 +41,7 @@ func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o Uploa
 		to:     to,
 		id:     newID(),
 		o:      o,
-		ch:     make(chan []byte, 1),
+		ch:     make(chan copierChunk, 1),
 		errCh:  make(chan error, 1),
 		buffers: sync.Pool{
 			New: func() interface{} {
@@ -95,7 +95,7 @@ type copier struct {
 	// num is the current chunk we are on.
 	num int32
 	// ch is used to pass the next chunk of data from our reader to one of the writers.
-	ch chan []byte
+	ch chan copierChunk
 	// errCh is used to hold the first error from our concurrent writers.
 	errCh chan error
 	// wg provides a count of how many writers we are waiting to finish.
@@ -105,6 +105,11 @@ type copier struct {
 
 	// result holds the final result from blob storage after we have submitted all chunks.
 	result *BlockBlobCommitBlockListResponse
+}
+
+type copierChunk struct {
+	buffer []byte
+	id     string
 }
 
 // getErr returns an error by priority. First, if a function set an error, it returns that error. Next, if the Context has an error
@@ -125,21 +130,26 @@ func (c *copier) sendChunk() error {
 		return err
 	}
 
-	chunk := c.buffers.Get().([]byte)
-	n, err := io.ReadFull(c.reader, chunk)
-	chunk = chunk[0:n]
+	buffer := c.buffers.Get().([]byte)
+	n, err := io.ReadFull(c.reader, buffer)
 	switch {
 	case err == nil && n == 0:
 		return nil
 	case err == nil:
-		c.ch <- chunk
+		c.ch <- copierChunk{
+			buffer: buffer[0:n],
+			id:     c.id.next(),
+		}
 		return nil
 	case err != nil && (err == io.EOF || err == io.ErrUnexpectedEOF) && n == 0:
 		return io.EOF
 	}
 
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		c.ch <- chunk
+		c.ch <- copierChunk{
+			buffer: buffer[0:n],
+			id:     c.id.next(),
+		}
 		return io.EOF
 	}
 	if err := c.getErr(); err != nil {
@@ -167,14 +177,14 @@ func (c *copier) writer() {
 }
 
 // write uploads a chunk to blob storage.
-func (c *copier) write(chunk []byte) error {
-	defer c.buffers.Put(chunk)
+func (c *copier) write(chunk copierChunk) error {
+	defer c.buffers.Put(chunk.buffer)
 
 	if err := c.ctx.Err(); err != nil {
 		return err
 	}
 
-	_, err := c.to.StageBlock(c.ctx, c.id.next(), bytes.NewReader(chunk), LeaseAccessConditions{}, nil)
+	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil)
 	if err != nil {
 		return fmt.Errorf("write error: %w", err)
 	}
