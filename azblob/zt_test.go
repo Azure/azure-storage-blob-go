@@ -1,4 +1,4 @@
-package azblob_test
+package azblob
 
 import (
 	"bytes"
@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/url"
 	"os"
 	"reflect"
@@ -17,10 +18,7 @@ import (
 
 	chk "gopkg.in/check.v1"
 
-	"math/rand"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/azblob"
 	"github.com/Azure/go-autorest/autorest/adal"
 )
 
@@ -35,7 +33,7 @@ type aztestsSuite struct{}
 var _ = chk.Suite(&aztestsSuite{})
 
 func (s *aztestsSuite) TestRetryPolicyRetryReadsFromSecondaryHostField(c *chk.C) {
-	_, found := reflect.TypeOf(azblob.RetryOptions{}).FieldByName("RetryReadsFromSecondaryHost")
+	_, found := reflect.TypeOf(RetryOptions{}).FieldByName("RetryReadsFromSecondaryHost")
 	if !found {
 		// Make sure the RetryOption was not erroneously overwritten
 		c.Fatal("RetryOption's RetryReadsFromSecondaryHost field must exist in the Blob SDK - uncomment it and make sure the field is returned from the retryReadsFromSecondaryHost() method too!")
@@ -51,7 +49,7 @@ const (
 )
 
 var ctx = context.Background()
-var basicHeaders = azblob.BlobHTTPHeaders{
+var basicHeaders = BlobHTTPHeaders{
 	ContentType:        "my_type",
 	ContentDisposition: "my_disposition",
 	CacheControl:       "control",
@@ -60,7 +58,7 @@ var basicHeaders = azblob.BlobHTTPHeaders{
 	ContentEncoding:    "my_encoding",
 }
 
-var basicMetadata = azblob.Metadata{"foo": "bar"}
+var basicMetadata = Metadata{"foo": "bar"}
 
 type testPipeline struct{}
 
@@ -104,28 +102,28 @@ func generateBlobName() string {
 	return generateName(blobPrefix)
 }
 
-func getContainerURL(c *chk.C, bsu azblob.ServiceURL) (container azblob.ContainerURL, name string) {
+func getContainerURL(c *chk.C, bsu ServiceURL) (container ContainerURL, name string) {
 	name = generateContainerName()
 	container = bsu.NewContainerURL(name)
 
 	return container, name
 }
 
-func getBlockBlobURL(c *chk.C, container azblob.ContainerURL) (blob azblob.BlockBlobURL, name string) {
+func getBlockBlobURL(c *chk.C, container ContainerURL) (blob BlockBlobURL, name string) {
 	name = generateBlobName()
 	blob = container.NewBlockBlobURL(name)
 
 	return blob, name
 }
 
-func getAppendBlobURL(c *chk.C, container azblob.ContainerURL) (blob azblob.AppendBlobURL, name string) {
+func getAppendBlobURL(c *chk.C, container ContainerURL) (blob AppendBlobURL, name string) {
 	name = generateBlobName()
 	blob = container.NewAppendBlobURL(name)
 
 	return blob, name
 }
 
-func getPageBlobURL(c *chk.C, container azblob.ContainerURL) (blob azblob.PageBlobURL, name string) {
+func getPageBlobURL(c *chk.C, container ContainerURL) (blob PageBlobURL, name string) {
 	name = generateBlobName()
 	blob = container.NewPageBlobURL(name)
 
@@ -143,33 +141,33 @@ func getRandomDataAndReader(n int) (*bytes.Reader, []byte) {
 	return bytes.NewReader(data), data
 }
 
-func createNewContainer(c *chk.C, bsu azblob.ServiceURL) (container azblob.ContainerURL, name string) {
+func createNewContainer(c *chk.C, bsu ServiceURL) (container ContainerURL, name string) {
 	container, name = getContainerURL(c, bsu)
 
-	cResp, err := container.Create(ctx, nil, azblob.PublicAccessNone)
+	cResp, err := container.Create(ctx, nil, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 	return container, name
 }
 
-func createNewContainerWithSuffix(c *chk.C, bsu azblob.ServiceURL, suffix string) (container azblob.ContainerURL, name string) {
+func createNewContainerWithSuffix(c *chk.C, bsu ServiceURL, suffix string) (container ContainerURL, name string) {
 	// The goal of adding the suffix is to be able to predetermine what order the containers will be in when listed.
 	// We still need the container prefix to come first, though, to ensure only containers as a part of this test
 	// are listed at all.
 	name = generateName(containerPrefix + suffix)
 	container = bsu.NewContainerURL(name)
 
-	cResp, err := container.Create(ctx, nil, azblob.PublicAccessNone)
+	cResp, err := container.Create(ctx, nil, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 	return container, name
 }
 
-func createNewBlockBlob(c *chk.C, container azblob.ContainerURL) (blob azblob.BlockBlobURL, name string) {
+func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, name string) {
 	blob, name = getBlockBlobURL(c, container)
 
-	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), azblob.BlobHTTPHeaders{},
-		nil, azblob.BlobAccessConditions{})
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -177,68 +175,68 @@ func createNewBlockBlob(c *chk.C, container azblob.ContainerURL) (blob azblob.Bl
 	return
 }
 
-func createNewAppendBlob(c *chk.C, container azblob.ContainerURL) (blob azblob.AppendBlobURL, name string) {
+func createNewAppendBlob(c *chk.C, container ContainerURL) (blob AppendBlobURL, name string) {
 	blob, name = getAppendBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
 }
 
-func createNewPageBlob(c *chk.C, container azblob.ContainerURL) (blob azblob.PageBlobURL, name string) {
+func createNewPageBlob(c *chk.C, container ContainerURL) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, azblob.PageBlobPageBytes*10, 0, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
 }
 
-func createNewPageBlobWithSize(c *chk.C, container azblob.ContainerURL, sizeInBytes int64) (blob azblob.PageBlobURL, name string) {
+func createNewPageBlobWithSize(c *chk.C, container ContainerURL, sizeInBytes int64) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, sizeInBytes, 0, azblob.BlobHTTPHeaders{}, nil, azblob.BlobAccessConditions{})
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
 }
 
-func createBlockBlobWithPrefix(c *chk.C, container azblob.ContainerURL, prefix string) (blob azblob.BlockBlobURL, name string) {
+func createBlockBlobWithPrefix(c *chk.C, container ContainerURL, prefix string) (blob BlockBlobURL, name string) {
 	name = prefix + generateName(blobPrefix)
 	blob = container.NewBlockBlobURL(name)
 
-	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), azblob.BlobHTTPHeaders{},
-		nil, azblob.BlobAccessConditions{})
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 	return
 }
 
-func deleteContainer(c *chk.C, container azblob.ContainerURL) {
-	resp, err := container.Delete(ctx, azblob.ContainerAccessConditions{})
+func deleteContainer(c *chk.C, container ContainerURL) {
+	resp, err := container.Delete(ctx, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 202)
 }
 
-func getGenericCredential(accountType string) (*azblob.SharedKeyCredential, error) {
+func getGenericCredential(accountType string) (*SharedKeyCredential, error) {
 	accountNameEnvVar := accountType + "ACCOUNT_NAME"
 	accountKeyEnvVar := accountType + "ACCOUNT_KEY"
 	accountName, accountKey := os.Getenv(accountNameEnvVar), os.Getenv(accountKeyEnvVar)
 	if accountName == "" || accountKey == "" {
 		return nil, errors.New(accountNameEnvVar + " and/or " + accountKeyEnvVar + " environment variables not specified.")
 	}
-	return azblob.NewSharedKeyCredential(accountName, accountKey)
+	return NewSharedKeyCredential(accountName, accountKey)
 }
 
 //getOAuthCredential can intake a OAuth credential from environment variables in one of the following ways:
 //Direct: Supply a ADAL OAuth token in OAUTH_TOKEN and application ID in APPLICATION_ID to refresh the supplied token.
 //Client secret: Supply a client secret in CLIENT_SECRET and application ID in APPLICATION_ID for SPN auth.
 //TENANT_ID is optional and will be inferred as common if it is not explicitly defined.
-func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
+func getOAuthCredential(accountType string) (*TokenCredential, error) {
 	oauthTokenEnvVar := accountType + "OAUTH_TOKEN"
 	clientSecretEnvVar := accountType + "CLIENT_SECRET"
 	applicationIdEnvVar := accountType + "APPLICATION_ID"
@@ -290,7 +288,7 @@ func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
 		return nil, err
 	}
 
-	tc := azblob.NewTokenCredential(spt.Token().AccessToken, func(tc azblob.TokenCredential) time.Duration {
+	tc := NewTokenCredential(spt.Token().AccessToken, func(tc TokenCredential) time.Duration {
 		_ = spt.Refresh()
 		return time.Until(spt.Token().Expires())
 	})
@@ -298,36 +296,36 @@ func getOAuthCredential(accountType string) (*azblob.TokenCredential, error) {
 	return &tc, nil
 }
 
-func getGenericBSU(accountType string) (azblob.ServiceURL, error) {
+func getGenericBSU(accountType string) (ServiceURL, error) {
 	credential, err := getGenericCredential(accountType)
 	if err != nil {
-		return azblob.ServiceURL{}, err
+		return ServiceURL{}, err
 	}
 
-	pipeline := azblob.NewPipeline(credential, azblob.PipelineOptions{})
+	pipeline := NewPipeline(credential, PipelineOptions{})
 	blobPrimaryURL, _ := url.Parse("https://" + credential.AccountName() + ".blob.core.windows.net/")
-	return azblob.NewServiceURL(*blobPrimaryURL, pipeline), nil
+	return NewServiceURL(*blobPrimaryURL, pipeline), nil
 }
 
-func getBSU() azblob.ServiceURL {
+func getBSU() ServiceURL {
 	bsu, _ := getGenericBSU("")
 	return bsu
 }
 
-func getAlternateBSU() (azblob.ServiceURL, error) {
+func getAlternateBSU() (ServiceURL, error) {
 	return getGenericBSU("SECONDARY_")
 }
 
-func getPremiumBSU() (azblob.ServiceURL, error) {
+func getPremiumBSU() (ServiceURL, error) {
 	return getGenericBSU("PREMIUM_")
 }
 
-func getBlobStorageBSU() (azblob.ServiceURL, error) {
+func getBlobStorageBSU() (ServiceURL, error) {
 	return getGenericBSU("BLOB_STORAGE_")
 }
 
-func validateStorageError(c *chk.C, err error, code azblob.ServiceCodeType) {
-	serr, _ := err.(azblob.StorageError)
+func validateStorageError(c *chk.C, err error, code ServiceCodeType) {
+	serr, _ := err.(StorageError)
 	c.Assert(serr.ServiceCode(), chk.Equals, code)
 }
 
@@ -348,10 +346,10 @@ func generateCurrentTimeWithModerateResolution() time.Time {
 // those changes not being reflected yet, we will wait 30 seconds and try the test again. If it fails this time for any reason,
 // we fail the test. It is the responsibility of the the testImplFunc to determine which error string indicates the test should be retried.
 // There can only be one such string. All errors that cannot be due to this detail should be asserted and not returned as an error string.
-func runTestRequiringServiceProperties(c *chk.C, bsu azblob.ServiceURL, code string,
-	enableServicePropertyFunc func(*chk.C, azblob.ServiceURL),
-	testImplFunc func(*chk.C, azblob.ServiceURL) error,
-	disableServicePropertyFunc func(*chk.C, azblob.ServiceURL)) {
+func runTestRequiringServiceProperties(c *chk.C, bsu ServiceURL, code string,
+	enableServicePropertyFunc func(*chk.C, ServiceURL),
+	testImplFunc func(*chk.C, ServiceURL) error,
+	disableServicePropertyFunc func(*chk.C, ServiceURL)) {
 	enableServicePropertyFunc(c, bsu)
 	defer disableServicePropertyFunc(c, bsu)
 	err := testImplFunc(c, bsu)
@@ -363,19 +361,19 @@ func runTestRequiringServiceProperties(c *chk.C, bsu azblob.ServiceURL, code str
 	}
 }
 
-func enableSoftDelete(c *chk.C, bsu azblob.ServiceURL) {
+func enableSoftDelete(c *chk.C, bsu ServiceURL) {
 	days := int32(1)
-	_, err := bsu.SetProperties(ctx, azblob.StorageServiceProperties{DeleteRetentionPolicy: &azblob.RetentionPolicy{Enabled: true, Days: &days}})
+	_, err := bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: true, Days: &days}})
 	c.Assert(err, chk.IsNil)
 }
 
-func disableSoftDelete(c *chk.C, bsu azblob.ServiceURL) {
-	_, err := bsu.SetProperties(ctx, azblob.StorageServiceProperties{DeleteRetentionPolicy: &azblob.RetentionPolicy{Enabled: false}})
+func disableSoftDelete(c *chk.C, bsu ServiceURL) {
+	_, err := bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: false}})
 	c.Assert(err, chk.IsNil)
 }
 
-func validateUpload(c *chk.C, blobURL azblob.BlockBlobURL) {
-	resp, err := blobURL.Download(ctx, 0, 0, azblob.BlobAccessConditions{}, false)
+func validateUpload(c *chk.C, blobURL BlockBlobURL) {
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
 	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(data, chk.HasLen, 0)

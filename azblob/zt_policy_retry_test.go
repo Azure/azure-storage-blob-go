@@ -1,4 +1,4 @@
-package azblob_test
+package azblob
 
 import (
 	"context"
@@ -12,7 +12,6 @@ import (
 	chk "gopkg.in/check.v1"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
-	"github.com/Azure/azure-storage-blob-go/azblob"
 )
 
 // For testing docs, see: https://labix.org/gocheck
@@ -147,8 +146,8 @@ func (p *retryTestPolicy) Do(ctx context.Context, request pipeline.Request) (res
 
 func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 	u, _ := url.Parse("http://PrimaryDC")
-	retryOptions := azblob.RetryOptions{
-		Policy:                      azblob.RetryPolicyExponential,
+	retryOptions := RetryOptions{
+		Policy:                      RetryPolicyExponential,
 		MaxTries:                    6,
 		TryTimeout:                  2 * time.Second,
 		RetryDelay:                  1 * time.Second,
@@ -160,7 +159,7 @@ func testRetryTestScenario(c *chk.C, scenario retryTestScenario) {
 	ctx, cancel := context.WithTimeout(ctx, 64 /*2^MaxTries(6)*/ *retryOptions.TryTimeout)
 	retrytestPolicyFactory := newRetryTestPolicyFactory(c, scenario, retryOptions.MaxTries, cancel)
 	factories := [...]pipeline.Factory{
-		azblob.NewRetryPolicyFactory(retryOptions),
+		NewRetryPolicyFactory(retryOptions),
 		retrytestPolicyFactory,
 	}
 	p := pipeline.NewPipeline(factories[:], pipeline.Options{})

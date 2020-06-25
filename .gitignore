@@ -291,3 +291,4 @@ __pycache__/
 *.xsd.cs
 
 vendor/
+*.env
