@@ -1,10 +1,12 @@
 package azblob
 
 import (
-	"bytes"
 	"crypto/md5"
-	"errors"
+	"io"
 	"io/ioutil"
+
+	"bytes"
+	"errors"
 	"net/url"
 	"os"
 	"strings"
@@ -1922,13 +1924,13 @@ func (s *aztestsSuite) TestBlobURLPartsSASQueryTimes(c *chk.C) {
 	for i := 0; i < len(StartTimesInputs); i++ {
 		urlString :=
 			"https://myaccount.blob.core.windows.net/mycontainer/mydirectory/myfile.txt?" +
-			"se=" + url.QueryEscape(ExpiryTimesInputs[i]) + "&" +
-			"sig=NotASignature&" +
-			"sp=r&" +
-			"spr=https&" +
-			"sr=b&" +
-			"st=" + url.QueryEscape(StartTimesInputs[i]) + "&" +
-			"sv=2019-10-10"
+				"se=" + url.QueryEscape(ExpiryTimesInputs[i]) + "&" +
+				"sig=NotASignature&" +
+				"sp=r&" +
+				"spr=https&" +
+				"sr=b&" +
+				"st=" + url.QueryEscape(StartTimesInputs[i]) + "&" +
+				"sv=2019-10-10"
 		url, _ := url.Parse(urlString)
 
 		parts := NewBlobURLParts(*url)
@@ -1944,4 +1946,27 @@ func (s *aztestsSuite) TestBlobURLPartsSASQueryTimes(c *chk.C) {
 		uResult := parts.URL()
 		c.Assert(uResult.String(), chk.Equals, urlString)
 	}
+}
+
+func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainer(c, bsu)
+	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
+
+	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+
+	// Verify that we can inject errors first.
+	reader := resp.Body(InjectErrorInRetryReaderOptions(errors.New("unrecoverable error")))
+
+	_, err = ioutil.ReadAll(reader)
+	c.Assert(err, chk.NotNil)
+	c.Assert(err.Error(), chk.Equals, "unrecoverable error")
+
+	// Then inject the retryable error.
+	reader = resp.Body(InjectErrorInRetryReaderOptions(io.ErrUnexpectedEOF))
+
+	buf, err := ioutil.ReadAll(reader)
+	c.Assert(err, chk.IsNil)
+	c.Assert(buf, chk.DeepEquals, []byte(blockBlobDefaultData))
 }

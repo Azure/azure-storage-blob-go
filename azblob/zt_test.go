@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/url"
 	"os"
 	"reflect"
@@ -16,8 +17,6 @@ import (
 	"time"
 
 	chk "gopkg.in/check.v1"
-
-	"math/rand"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/go-autorest/autorest/adal"
