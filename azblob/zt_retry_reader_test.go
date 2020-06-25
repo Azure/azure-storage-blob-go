@@ -1,4 +1,4 @@
-package azblob_test
+package azblob
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Azure/azure-storage-blob-go/azblob"
 	chk "gopkg.in/check.v1"
 )
 
@@ -68,7 +67,7 @@ func (r *perByteReader) Read(b []byte) (n int, err error) {
 		// error
 		select {
 		case <-r.closeChannel:
-			return n, errors.New(azblob.ReadOnClosedBodyMessage)
+			return n, errors.New(ReadOnClosedBodyMessage)
 		case <-time.After(r.sleepDuration):
 			return n, nil
 		}
@@ -114,7 +113,7 @@ func (s *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 		body.doInjectTimes = 1
 		body.injectedError = &net.DNSError{IsTemporary: true}
 
-		getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+		getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 			r := http.Response{}
 			body.currentByteIndex = int(info.Offset)
 			r.Body = body
@@ -122,15 +121,15 @@ func (s *aztestsSuite) TestRetryReaderReadWithRetry(c *chk.C) {
 			return &r, nil
 		}
 
-		httpGetterInfo := azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
+		httpGetterInfo := HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
 		initResponse, err := getter(context.Background(), httpGetterInfo)
 		c.Assert(err, chk.IsNil)
 
-		rrOptions := azblob.RetryReaderOptions{MaxRetryRequests: 1}
+		rrOptions := RetryReaderOptions{MaxRetryRequests: 1}
 		if logThisRun {
 			rrOptions.NotifyFailedRead = failureMethod
 		}
-		retryReader := azblob.NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
+		retryReader := NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
 
 		// should fail and succeed through retry
 		can := make([]byte, 1)
@@ -251,7 +250,7 @@ func (s *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 	startResponse := http.Response{}
 	startResponse.Body = body
 
-	getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+	getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 		r := http.Response{}
 		body.currentByteIndex = int(info.Offset)
 		r.Body = body
@@ -259,10 +258,10 @@ func (s *aztestsSuite) TestRetryReaderReadNegativeNormalFail(c *chk.C) {
 		return &r, nil
 	}
 
-	rrOptions := azblob.RetryReaderOptions{
+	rrOptions := RetryReaderOptions{
 		MaxRetryRequests: 1,
 		NotifyFailedRead: failureMethod}
-	retryReader := azblob.NewRetryReader(context.Background(), &startResponse, azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, rrOptions, getter)
+	retryReader := NewRetryReader(context.Background(), &startResponse, HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, rrOptions, getter)
 
 	// should fail
 	can := make([]byte, 1)
@@ -291,7 +290,7 @@ func (s *aztestsSuite) TestRetryReaderReadCount0(c *chk.C) {
 	startResponse := http.Response{}
 	startResponse.Body = body
 
-	getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+	getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 		r := http.Response{}
 		body.currentByteIndex = int(info.Offset)
 		r.Body = body
@@ -299,7 +298,7 @@ func (s *aztestsSuite) TestRetryReaderReadCount0(c *chk.C) {
 		return &r, nil
 	}
 
-	retryReader := azblob.NewRetryReader(context.Background(), &startResponse, azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, azblob.RetryReaderOptions{MaxRetryRequests: 1}, getter)
+	retryReader := NewRetryReader(context.Background(), &startResponse, HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, RetryReaderOptions{MaxRetryRequests: 1}, getter)
 
 	// should consume the only byte
 	can := make([]byte, 1)
@@ -324,7 +323,7 @@ func (s *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
 	startResponse := http.Response{}
 	startResponse.Body = body
 
-	getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+	getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 		r := http.Response{}
 		body.currentByteIndex = int(info.Offset)
 		r.Body = body
@@ -332,7 +331,7 @@ func (s *aztestsSuite) TestRetryReaderReadNegativeNonRetriableError(c *chk.C) {
 		return &r, nil
 	}
 
-	retryReader := azblob.NewRetryReader(context.Background(), &startResponse, azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, azblob.RetryReaderOptions{MaxRetryRequests: 2}, getter)
+	retryReader := NewRetryReader(context.Background(), &startResponse, HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}, RetryReaderOptions{MaxRetryRequests: 2}, getter)
 
 	dest := make([]byte, 1)
 	_, err := retryReader.Read(dest)
@@ -359,7 +358,7 @@ func (s *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
 		sleepDuration := 100 * time.Millisecond
 		randBytes := make([]byte, byteCount)
 		_, _ = rand.Read(randBytes)
-		getter := func(ctx context.Context, info azblob.HTTPGetterInfo) (*http.Response, error) {
+		getter := func(ctx context.Context, info HTTPGetterInfo) (*http.Response, error) {
 			body := newSingleUsePerByteReader(randBytes) // make new one every time, since we force closes in this test, and its unusable after a close
 			body.sleepDuration = sleepDuration
 			r := http.Response{}
@@ -369,13 +368,13 @@ func (s *aztestsSuite) TestRetryReaderReadWithForcedRetry(c *chk.C) {
 			return &r, nil
 		}
 
-		httpGetterInfo := azblob.HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
+		httpGetterInfo := HTTPGetterInfo{Offset: 0, Count: int64(byteCount)}
 		initResponse, err := getter(context.Background(), httpGetterInfo)
 		c.Assert(err, chk.IsNil)
 
-		rrOptions := azblob.RetryReaderOptions{MaxRetryRequests: 2, TreatEarlyCloseAsError: !enableRetryOnEarlyClose}
+		rrOptions := RetryReaderOptions{MaxRetryRequests: 2, TreatEarlyCloseAsError: !enableRetryOnEarlyClose}
 		rrOptions.NotifyFailedRead = failureMethod
-		retryReader := azblob.NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
+		retryReader := NewRetryReader(context.Background(), initResponse, httpGetterInfo, rrOptions, getter)
 
 		// set up timed cancellation from separate goroutine
 		go func() {
