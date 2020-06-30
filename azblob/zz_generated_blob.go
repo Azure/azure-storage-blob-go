@@ -958,7 +958,7 @@ func (client blobClient) getPropertiesPreparer(snapshot *string, versionID *stri
 		params.Set("snapshot", *snapshot)
 	}
 	if versionID != nil && len(*versionID) > 0 {
-		params.Set("versionid", *versionID)
+		params.Set("version_id", *versionID)
 	}
 	if timeout != nil {
 		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
