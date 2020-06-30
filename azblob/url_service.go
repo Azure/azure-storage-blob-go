@@ -116,14 +116,14 @@ type ListContainersSegmentOptions struct {
 	// TODO: update swagger to generate this type?
 }
 
-func (o *ListContainersSegmentOptions) pointers() (prefix *string, include ListContainersIncludeType, maxResults *int32) {
+func (o *ListContainersSegmentOptions) pointers() (prefix *string, include []ListContainersIncludeType, maxResults *int32) {
 	if o.Prefix != "" {
 		prefix = &o.Prefix
 	}
 	if o.MaxResults != 0 {
 		maxResults = &o.MaxResults
 	}
-	include = ListContainersIncludeType(o.Detail.string())
+	include = []ListContainersIncludeType{ListContainersIncludeType(o.Detail.string())}
 	return
 }
 
@@ -131,14 +131,20 @@ func (o *ListContainersSegmentOptions) pointers() (prefix *string, include ListC
 type ListContainersDetail struct {
 	// Tells the service whether to return metadata for each container.
 	Metadata bool
+
+	// Show containers that have been deleted when the soft-delete feature is enabled.
+	Deleted bool
 }
 
 // string produces the Include query parameter's value.
 func (d *ListContainersDetail) string() string {
-	items := make([]string, 0, 1)
+	items := make([]string, 0, 2)
 	// NOTE: Multiple strings MUST be appended in alphabetic order or signing the string for authentication fails!
 	if d.Metadata {
 		items = append(items, string(ListContainersIncludeMetadata))
+	}
+	if d.Deleted {
+		items = append(items, string(ListContainersIncludeDeleted))
 	}
 	if len(items) > 0 {
 		return strings.Join(items, ",")

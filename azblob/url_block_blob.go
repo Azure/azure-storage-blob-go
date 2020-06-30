@@ -65,9 +65,13 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 	return bb.bbClient.Upload(ctx, body, count, nil, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		AccessTierNone, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil)
+		nil, // Blob tags
+		nil,
+		nil, // Blob tags
+	)
 }
 
 // StageBlock uploads the specified block to the block blob's "staging area" to be later committed by a call to CommitBlockList.
@@ -79,7 +83,8 @@ func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, bod
 		return nil, err
 	}
 	return bb.bbClient.StageBlock(ctx, base64BlockID, count, body, transactionalMD5, nil, nil, ac.pointers(),
-		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		nil)
 }
 
@@ -90,6 +95,7 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, nil,
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
@@ -106,14 +112,21 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, nil, nil,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		AccessTierNone,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		nil,
+		nil, // Blob tags
+	)
 }
 
 // GetBlockList returns the list of blocks that have been uploaded as part of a block blob using the specified block list filter.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-block-list.
 func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType, ac LeaseAccessConditions) (*BlockList, error) {
-	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(), nil)
+	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(),
+		nil, // Blob tags
+		nil)
 }
 
 // CopyFromURL synchronously copies the data at the source URL to a block blob, with sizes up to 256 MB.
@@ -130,5 +143,9 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		dstLeaseID, nil, srcContentMD5)
+		nil, // Blob tags
+		dstLeaseID, nil, srcContentMD5,
+		nil, // Blob tags
+		nil, // seal Blob
+	)
 }

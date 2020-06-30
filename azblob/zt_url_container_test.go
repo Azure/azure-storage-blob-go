@@ -577,19 +577,21 @@ func (s *aztestsSuite) TestContainerGetSetPermissionsMultiplePolicies(c *chk.C) 
 	start := generateCurrentTimeWithModerateResolution()
 	expiry := start.Add(5 * time.Minute)
 	expiry2 := start.Add(time.Minute)
+	readWrite := AccessPolicyPermission{Read: true, Write: true}.String()
+	readOnly := AccessPolicyPermission{Read: true}.String()
 	permissions := []SignedIdentifier{
 		{ID: "0000",
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{Read: true, Write: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &readWrite,
 			},
 		},
 		{ID: "0001",
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry2,
-				Permission: AccessPolicyPermission{Read: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry2,
+				Permission: &readOnly,
 			},
 		},
 	}
@@ -683,12 +685,13 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 
 	start := time.Now().UTC().Add(-15 * time.Second)
 	expiry := start.Add(5 * time.Minute).UTC()
+	readOnly := AccessPolicyPermission{Read: true}.String()
 	permissions := []SignedIdentifier{{
 		ID: "0000",
 		AccessPolicy: AccessPolicy{
-			Start:      start,
-			Expiry:     expiry,
-			Permission: AccessPolicyPermission{List: true}.String(),
+			Start:      &start,
+			Expiry:     &expiry,
+			Permission: &readOnly,
 		},
 	}}
 	_, err = containerURL.SetAccessPolicy(ctx, PublicAccessNone, permissions, ContainerAccessConditions{})
@@ -727,13 +730,14 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLMoreThanFive(c *chk.C) {
 	start := time.Now().UTC()
 	expiry := start.Add(5 * time.Minute).UTC()
 	permissions := make([]SignedIdentifier, 6, 6)
+	listOnly := AccessPolicyPermission{Read: true}.String()
 	for i := 0; i < 6; i++ {
 		permissions[i] = SignedIdentifier{
 			ID: "000" + strconv.Itoa(i),
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{List: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &listOnly,
 			},
 		}
 	}
@@ -750,14 +754,15 @@ func (s *aztestsSuite) TestContainerSetPermissionsDeleteAndModifyACL(c *chk.C) {
 
 	start := generateCurrentTimeWithModerateResolution()
 	expiry := start.Add(5 * time.Minute).UTC()
+	listOnly := AccessPolicyPermission{Read: true}.String()
 	permissions := make([]SignedIdentifier, 2, 2)
 	for i := 0; i < 2; i++ {
 		permissions[i] = SignedIdentifier{
 			ID: "000" + strconv.Itoa(i),
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{List: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &listOnly,
 			},
 		}
 	}
@@ -788,13 +793,14 @@ func (s *aztestsSuite) TestContainerSetPermissionsDeleteAllPolicies(c *chk.C) {
 	start := time.Now().UTC()
 	expiry := start.Add(5 * time.Minute).UTC()
 	permissions := make([]SignedIdentifier, 2, 2)
+	listOnly := AccessPolicyPermission{Read: true}.String()
 	for i := 0; i < 2; i++ {
 		permissions[i] = SignedIdentifier{
 			ID: "000" + strconv.Itoa(i),
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{List: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &listOnly,
 			},
 		}
 	}
@@ -820,13 +826,14 @@ func (s *aztestsSuite) TestContainerSetPermissionsInvalidPolicyTimes(c *chk.C) {
 	expiry := time.Now().UTC()
 	start := expiry.Add(5 * time.Minute).UTC()
 	permissions := make([]SignedIdentifier, 2, 2)
+	listOnly := AccessPolicyPermission{Read: true}.String()
 	for i := 0; i < 2; i++ {
 		permissions[i] = SignedIdentifier{
 			ID: "000" + strconv.Itoa(i),
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{List: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &listOnly,
 			},
 		}
 	}
@@ -858,13 +865,14 @@ func (s *aztestsSuite) TestContainerSetPermissionsSignedIdentifierTooLong(c *chk
 	expiry := time.Now().UTC()
 	start := expiry.Add(5 * time.Minute).UTC()
 	permissions := make([]SignedIdentifier, 2, 2)
+	listOnly := AccessPolicyPermission{Read: true}.String()
 	for i := 0; i < 2; i++ {
 		permissions[i] = SignedIdentifier{
 			ID: id,
 			AccessPolicy: AccessPolicy{
-				Start:      start,
-				Expiry:     expiry,
-				Permission: AccessPolicyPermission{List: true}.String(),
+				Start:      &start,
+				Expiry:     &expiry,
+				Permission: &listOnly,
 			},
 		}
 	}

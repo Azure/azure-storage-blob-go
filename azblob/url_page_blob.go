@@ -55,8 +55,13 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 	return pb.pbClient.Create(ctx, 0, size, nil, PremiumPageBlobAccessTierNone,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		nil, nil, EncryptionAlgorithmNone, // CPK
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, &sequenceNumber, nil)
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		&sequenceNumber, nil,
+		nil, // Blob tags
+	)
 }
 
 // UploadPages writes 1 or more pages to the page blob. The start offset and the stream size must be a multiple of 512 bytes.
@@ -74,8 +79,11 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		nil)
 }
 
 // UploadPagesFromURL copies 1 or more pages from a source URL to the page blob.
@@ -89,10 +97,13 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := destinationAccessConditions.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPagesFromURL(ctx, sourceURL.String(), *PageRange{Start: sourceOffset, End: sourceOffset + count - 1}.pointers(), 0,
 		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, nil,
-		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
 // ClearPages frees the specified pages from the page blob.
@@ -104,6 +115,7 @@ func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan,
 		ifSequenceNumberEqual, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
@@ -115,7 +127,9 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 	return pb.pbClient.GetPageRanges(ctx, nil, nil,
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		nil)
 }
 
 // GetPageRangesDiff gets the collection of page ranges that differ between a specified snapshot and this page blob.
@@ -123,9 +137,11 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count int64, prevSnapshot string, ac BlobAccessConditions) (*PageList, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.GetPageRangesDiff(ctx, nil, nil, &prevSnapshot,
+		nil, // Get managed disk diff
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
 		nil)
 }
 
@@ -135,6 +151,7 @@ func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessCondi
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Resize(ctx, size, nil, ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
