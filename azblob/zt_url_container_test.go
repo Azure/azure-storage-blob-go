@@ -685,13 +685,13 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 
 	start := time.Now().UTC().Add(-15 * time.Second)
 	expiry := start.Add(5 * time.Minute).UTC()
-	readOnly := AccessPolicyPermission{Read: true}.String()
+	listOnly := AccessPolicyPermission{List: true}.String()
 	permissions := []SignedIdentifier{{
 		ID: "0000",
 		AccessPolicy: AccessPolicy{
 			Start:      &start,
 			Expiry:     &expiry,
-			Permission: &readOnly,
+			Permission: &listOnly,
 		},
 	}}
 	_, err = containerURL.SetAccessPolicy(ctx, PublicAccessNone, permissions, ContainerAccessConditions{})
