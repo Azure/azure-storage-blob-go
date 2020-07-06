@@ -136,7 +136,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 
 	// Getting blob data anonymously should still be valid with container access
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -160,7 +160,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 
 	// Accessing blob specific data should be public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -184,7 +184,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 
 	// Blob data is not public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	_, err = blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	_, err = blobURL2.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 404) // HEAD request does not return a status code
@@ -424,7 +424,7 @@ func testContainerListBlobsIncludeTypeDeletedImpl(c *chk.C, bsu ServiceURL) erro
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -456,7 +456,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, blobURL2, resp2)
 	blobURL3, blobName3 := createBlockBlobWithPrefix(c, containerURL, "deleted")
-	_, err = blobURL3.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL3.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, nil, nil, nil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
 		ListBlobsSegmentOptions{Details: BlobListingDetails{Snapshots: true, Copy: true, Deleted: true}})
@@ -635,7 +635,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessNone(c *chk.C) {
 	bsu2 := NewServiceURL(bsu.URL(), pipeline)
 	containerURL2 := bsu2.NewContainerURL(containerName)
 	blobURL2 := containerURL2.NewBlockBlobURL(blobName)
-	_, err = blobURL2.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	_, err = blobURL2.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 
 	// Get permissions via the original container URL so the request succeeds
 	resp, _ := containerURL.GetAccessPolicy(ctx, LeaseAccessConditions{})

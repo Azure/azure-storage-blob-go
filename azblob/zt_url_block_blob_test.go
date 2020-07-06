@@ -139,7 +139,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 
 	// Check data integrity through downloading.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -171,7 +171,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobParts := NewBlobURLParts(srcBlob.URL())
 
 	srcBlobParts.SAS, err = BlobSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
@@ -196,7 +196,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
 
 	// Check data integrity through downloading.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -262,7 +262,7 @@ func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 
 	blobURL := NewBlobURL(blobParts.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
 
-	gResp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	gResp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(gResp.CacheControl(), chk.Equals, cacheControlVal)
 	c.Assert(gResp.ContentDisposition(), chk.Equals, contentDispositionVal)
@@ -306,7 +306,7 @@ func (s *aztestsSuite) TestBlobPutBlobNonEmptyBody(c *chk.C) {
 	_, err := blobURL.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	data, err := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(string(data), chk.Equals, blockBlobDefaultData)
@@ -321,7 +321,7 @@ func (s *aztestsSuite) TestBlobPutBlobHTTPHeaders(c *chk.C) {
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), basicHeaders, nil, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	h := resp.NewHTTPHeaders()
 	h.ContentMD5 = nil // the service generates a MD5 value, omit before comparing
@@ -337,7 +337,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataNotEmpty(c *chk.C) {
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -351,7 +351,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataEmpty(c *chk.C) {
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
 }
@@ -428,7 +428,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
@@ -444,7 +444,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
@@ -458,7 +458,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
@@ -474,7 +474,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
@@ -706,7 +706,7 @@ func (s *aztestsSuite) TestBlobPutBlockListMetadataEmpty(c *chk.C) {
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
 }
@@ -718,7 +718,7 @@ func (s *aztestsSuite) TestBlobPutBlockListMetadataNonEmpty(c *chk.C) {
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -730,7 +730,7 @@ func (s *aztestsSuite) TestBlobPutBlockListHTTPHeaders(c *chk.C) {
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, basicHeaders, nil, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	h := resp.NewHTTPHeaders()
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
@@ -745,7 +745,7 @@ func (s *aztestsSuite) TestBlobPutBlockListHTTPHeadersEmpty(c *chk.C) {
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentDisposition(), chk.Equals, "")
 }
@@ -866,7 +866,7 @@ func (s *aztestsSuite) TestBlobPutBlockListValidateData(c *chk.C) {
 
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
 
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(string(data), chk.Equals, blockBlobDefaultData)

@@ -78,7 +78,7 @@ func Example() {
 	}
 
 	// Download the blob's contents and verify that it worked correctly
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -109,7 +109,7 @@ func Example() {
 	}
 
 	// Delete the blob we created earlier.
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -499,11 +499,11 @@ func ExampleBlobAccessConditions() {
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: upload.LastModified()}}, false, nil, nil, nil))
 
 	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false, nil, nil, nil))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
 	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{},
@@ -512,7 +512,7 @@ func ExampleBlobAccessConditions() {
 
 	// Download content if it has changed since the version identified by ETag (fails):
 	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false))
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false, nil, nil, nil))
 
 	// Upload content if the blob doesn't already exist (fails):
 	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{},
@@ -592,7 +592,7 @@ func ExampleMetadata_blobs() {
 	}
 
 	// Query the blob's properties and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -643,7 +643,7 @@ func ExampleBlobHTTPHeaders() {
 	}
 
 	// GetMetadata returns the blob's properties, HTTP headers, and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -732,7 +732,7 @@ func ExampleBlockBlobURL() {
 
 	// Download the blob in its entirety; download operations do not take blocks into account.
 	// NOTE: For really large blobs, downloading them like allocates a lot of memory.
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -772,7 +772,7 @@ func ExampleAppendBlobURL() {
 	}
 
 	// Download the entire append blob's contents and show it.
-	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -839,7 +839,7 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -885,7 +885,7 @@ func Example_blobSnapshots() {
 		log.Fatal(err)
 	}
 
-	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	b := bytes.Buffer{}
 	reader := get.Body(RetryReaderOptions{})
 	b.ReadFrom(reader)
@@ -894,7 +894,7 @@ func Example_blobSnapshots() {
 
 	// Show snapshot blob via original blob URI & snapshot time:
 	snapshotBlobURL := baseBlobURL.WithSnapshot(snapshot)
-	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	b.Reset()
 	reader = get.Body(RetryReaderOptions{})
 	b.ReadFrom(reader)
@@ -937,7 +937,7 @@ func Example_blobSnapshots() {
 	// DeleteSnapshotsOptionOnly deletes all the base blob's snapshots but not the base blob itself
 	// DeleteSnapshotsOptionInclude deletes the base blob & all its snapshots.
 	// DeleteSnapshotOptionNone produces an error if the base blob has any snapshots.
-	_, err = baseBlobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err = baseBlobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -979,7 +979,7 @@ func Example_progressUploadDownload() {
 	}
 
 	// Here's how to read the blob's data with progress reporting:
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1022,7 +1022,7 @@ func ExampleBlobURL_startCopy() {
 	copyStatus := startCopy.CopyStatus()
 	for copyStatus == CopyStatusPending {
 		time.Sleep(time.Second * 2)
-		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, nil, nil, nil)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1105,7 +1105,7 @@ func ExampleBlobUrl_Download() {
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
 	// Download returns an intelligent retryable stream around a blob; it returns an io.ReadCloser.
-	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false)
+	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1306,7 +1306,7 @@ func ExampleListBlobsHierarchy() {
 	// Delete the blobs created by this example
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, nil, nil, nil)
 
 		if err != nil {
 			log.Fatal("an error occurred while deleting the blobs created by the example")

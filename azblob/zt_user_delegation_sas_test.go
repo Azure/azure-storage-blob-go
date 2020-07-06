@@ -57,7 +57,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		c.Fatal(err)
 	}
 
-	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	data := &bytes.Buffer{}
 	body := resp.Body(RetryReaderOptions{})
 	if body == nil {
@@ -73,7 +73,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	}
 
 	c.Assert(data.String(), chk.Equals, "hello world!")
-	_, err = bblob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = bblob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -136,7 +136,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	}
 
 	// Download data via User Delegation SAS URL; must succeed
-	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -153,7 +153,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	c.Assert(data, chk.Equals, downloadedData.String())
 
 	// Delete the item using the User Delegation SAS URL; must succeed
-	_, err = bSASURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err = bSASURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, nil, nil, nil)
 	if err != nil {
 		c.Fatal(err)
 	}

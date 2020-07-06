@@ -186,7 +186,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 			count = initialDownloadResponse.ContentLength() - offset // if we have the length, use it
 		} else {
 			// If we don't have the length at all, get it
-			dr, err := blobURL.Download(ctx, 0, CountToEnd, o.AccessConditions, false)
+			dr, err := blobURL.Download(ctx, 0, CountToEnd, o.AccessConditions, false, nil, nil, nil)
 			if err != nil {
 				return err
 			}
@@ -204,7 +204,7 @@ func downloadBlobToBuffer(ctx context.Context, blobURL BlobURL, offset int64, co
 		ChunkSize:     o.BlockSize,
 		Parallelism:   o.Parallelism,
 		Operation: func(chunkStart int64, count int64, ctx context.Context) error {
-			dr, err := blobURL.Download(ctx, chunkStart+offset, count, o.AccessConditions, false)
+			dr, err := blobURL.Download(ctx, chunkStart+offset, count, o.AccessConditions, false, nil, nil, nil)
 			if err != nil {
 				return err
 			}
@@ -250,7 +250,7 @@ func DownloadBlobToFile(ctx context.Context, blobURL BlobURL, offset int64, coun
 
 	if count == CountToEnd {
 		// Try to get Azure blob's size
-		props, err := blobURL.GetProperties(ctx, o.AccessConditions)
+		props, err := blobURL.GetProperties(ctx, o.AccessConditions, nil, nil, nil)
 		if err != nil {
 			return err
 		}

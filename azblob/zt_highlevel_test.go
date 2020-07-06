@@ -42,7 +42,7 @@ func performUploadStreamToBlockBlobTest(c *chk.C, blobSize, bufferSize, maxBuffe
 	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
 
 	// Download the blob to verify
-	downloadResponse, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	downloadResponse, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 
 	// Assert that the content is correct

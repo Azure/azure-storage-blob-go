@@ -67,7 +67,8 @@ func (r *DownloadResponse) Body(o RetryReaderOptions) io.ReadCloser {
 				BlobAccessConditions{
 					ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: getInfo.ETag},
 				},
-				false)
+				false,
+				nil, nil, nil)
 			if err != nil {
 				return nil, err
 			}

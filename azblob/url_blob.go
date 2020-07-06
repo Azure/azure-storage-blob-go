@@ -64,13 +64,14 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 // DownloadBlob reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
 // Passing azblob.CountToEnd (0) for count will download the blob from the offset to the end.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob.
-func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac BlobAccessConditions, rangeGetContentMD5 bool) (*DownloadResponse, error) {
+func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac BlobAccessConditions, rangeGetContentMD5 bool, snapshot *string, versionID *string, timeout *int32) (*DownloadResponse, error) {
 	var xRangeGetContentMD5 *bool
 	if rangeGetContentMD5 {
 		xRangeGetContentMD5 = &rangeGetContentMD5
 	}
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	dr, err := b.blobClient.Download(ctx, nil, nil, nil,
+	dr, err := b.blobClient.Download(ctx,
+		snapshot, versionID, timeout, // Optional URI Params to specify which blob snapshot to retrieve, which version of the blob to retrieve, and request timeout respectively
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
 		nil, nil, EncryptionAlgorithmNone, // CPK
@@ -91,9 +92,11 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 // DeleteBlob marks the specified blob or snapshot for deletion. The blob is later deleted during garbage collection.
 // Note that deleting a blob also deletes all its snapshots.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-blob.
-func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions) (*BlobDeleteResponse, error) {
+func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions, snapshot *string, versionID *string, timeout *int32) (*BlobDeleteResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	return b.blobClient.Delete(ctx, nil, nil, nil, ac.LeaseAccessConditions.pointers(), deleteOptions,
+	return b.blobClient.Delete(ctx,
+		snapshot, versionID, timeout, // Optional URI Params to specify which blob snapshot to retrieve, which version of the blob to retrieve, and request timeout respectively
+		ac.LeaseAccessConditions.pointers(), deleteOptions,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -111,19 +114,19 @@ func (b BlobURL) Undelete(ctx context.Context) (*BlobUndeleteResponse, error) {
 // bandwidth of the blob. A block blob's tier determines Hot/Cool/Archive storage type. This operation
 // does not update the blob's ETag.
 // For detailed information about block blob level tiering see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers.
-func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions) (*BlobSetTierResponse, error) {
-	return b.blobClient.SetTier(ctx, tier, nil,
-		nil, // Blob versioning
-		nil, RehydratePriorityNone, nil, lac.pointers())
+func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions, snapshot *string, versionID *string, timeout *int32) (*BlobSetTierResponse, error) {
+	return b.blobClient.SetTier(ctx, tier,
+		snapshot, versionID, timeout, // Optional URI Params to specify which blob snapshot to retrieve, which version of the blob to retrieve, and request timeout respectively
+		RehydratePriorityNone, nil, lac.pointers())
 }
 
 // GetBlobProperties returns the blob's properties.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob-properties.
-func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*BlobGetPropertiesResponse, error) {
+func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions, snapshot *string, versionID *string, timeout *int32) (*BlobGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	return b.blobClient.GetProperties(ctx, nil,
-		nil, // Blob versioning
-		nil, ac.LeaseAccessConditions.pointers(),
+	return b.blobClient.GetProperties(ctx,
+		snapshot, versionID, timeout, // Optional URI Params to specify which blob snapshot to retrieve, which version of the blob to retrieve, and request timeout respectively
+		ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
