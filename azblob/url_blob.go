@@ -46,6 +46,14 @@ func (b BlobURL) WithSnapshot(snapshot string) BlobURL {
 	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new BlobURL object identical to the source but with the specified version id.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (b BlobURL) WithVersionID(versionID string) BlobURL {
+	p := NewBlobURLParts(b.URL())
+	p.VersionID = versionID
+	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
+}
+
 // ToAppendBlobURL creates an AppendBlobURL using the source's URL and pipeline.
 func (b BlobURL) ToAppendBlobURL() AppendBlobURL {
 	return NewAppendBlobURL(b.URL(), b.blobClient.Pipeline())

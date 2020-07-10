@@ -8,6 +8,7 @@ import (
 
 const (
 	snapshot           = "snapshot"
+	versionid          = "versionid"
 	SnapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
@@ -23,6 +24,7 @@ type BlobURLParts struct {
 	Snapshot            string // "" if not a snapshot
 	SAS                 SASQueryParameters
 	UnparsedParams      string
+	VersionID           string
 }
 
 // IPEndpointStyleInfo is used for IP endpoint style URL when working with Azure storage emulator.
@@ -85,11 +87,18 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 	// Convert the query parameters to a case-sensitive map & trim whitespace
 	paramsMap := u.Query()
 
-	up.Snapshot = "" // Assume no snapshot
+	up.Snapshot = ""  // Assume no snapshot
+	up.VersionID = "" // Assume no versionID
 	if snapshotStr, ok := caseInsensitiveValues(paramsMap).Get(snapshot); ok {
 		up.Snapshot = snapshotStr[0]
 		// If we recognized the query parameter, remove it from the map
 		delete(paramsMap, snapshot)
+	}
+
+	if versionIDs, ok := caseInsensitiveValues(paramsMap).Get(versionid); ok {
+		up.VersionID = versionIDs[0]
+		// If we recognized the query parameter, remove it from the map
+		delete(paramsMap, versionid)
 	}
 	up.SAS = newSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
