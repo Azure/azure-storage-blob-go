@@ -135,7 +135,7 @@ func (up BlobURLParts) URL() url.URL {
 	rawQuery := up.UnparsedParams
 
 	// Check: Both snapshot and version id cannot be present in the request URL.
-	if up.Snapshot != null && up.Snapshot != "" && up.VersionID != null && up.VersionID != "" {
+	if up.Snapshot != "" && up.VersionID != "" {
 		log.Fatal("Snapshot and versioning cannot be enabled simultaneously.")
 	}
 

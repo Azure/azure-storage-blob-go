@@ -1686,3 +1686,7 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopyIfNoneMatchFalse(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
+
+func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
+	// TODO:Mohit Check if the upload response contains version id
+}
