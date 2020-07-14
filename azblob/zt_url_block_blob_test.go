@@ -171,7 +171,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobParts := NewBlobURLParts(srcBlob.URL())
 
 	srcBlobParts.SAS, err = BlobSASSignatureValues{
-		Protocol:      SASProtocolHTTPS,              // Users MUST use HTTPS (not HTTP)
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
 		ContainerName: srcBlobParts.ContainerName,
 		BlobName:      srcBlobParts.BlobName,
@@ -897,4 +897,67 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	c.Assert(resp.CommittedBlocks[0].Name, chk.Equals, "0001")
 	c.Assert(resp.CommittedBlocks[1].Name, chk.Equals, "0011")
 	c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
+}
+
+func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
+	bsu := getBSU()
+	containerURL, containerName := createNewContainer(c, bsu)
+	//defer deleteContainer(c, containerURL)
+	blobURL, blobName := createNewBlockBlob(c, containerURL)
+	fmt.Println(containerName, blobName)
+
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
+		basicMetadata, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	versionId1 := blockBlobUploadResp.VersionID()
+
+	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
+		basicMetadata, BlobAccessConditions{})
+	//blockBlobUploadResp.VersionID()
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(blockBlobUploadResp.VersionID(), chk.NotNil)
+	//c.Assert(versionId1, chk.Equals, versionId2)
+
+	// Deleting previous version snapshot created
+	blockBlobDeleteResp, err := blobURL.WithVersionID(versionId1).Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	fmt.Println(blockBlobDeleteResp)
+
+	listBlobsResp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true}})
+	c.Assert(err, chk.IsNil)
+	fmt.Println(listBlobsResp)
+}
+
+func (s *aztestsSuite) TestDownloadSpecificBlobVersion1(c *chk.C) {
+	bsu := getBSU()
+	containerURL, containerName := createNewContainer(c, bsu)
+	//defer deleteContainer(c, containerURL)
+	blobURL, blobName := createNewBlockBlob(c, containerURL)
+	fmt.Println(containerName, blobName)
+
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
+		basicMetadata, BlobAccessConditions{})
+	versionId1 := blockBlobUploadResp.VersionID()
+
+	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
+		basicMetadata, BlobAccessConditions{})
+	versionId2 := blockBlobUploadResp.VersionID()
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(blockBlobUploadResp.VersionID(), chk.NotNil)
+
+	// Download previous version of snapshot.
+	blobURL = blobURL.WithVersionID(versionId1)
+	blockBlobDeleteResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	data, err := ioutil.ReadAll(blockBlobDeleteResp.Response().Body)
+	c.Assert(string(data), chk.Equals, "data")
+
+	// Download current version of snapshot.
+	blobURL = blobURL.WithVersionID(versionId2)
+	blockBlobDeleteResp, err = blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	data, err = ioutil.ReadAll(blockBlobDeleteResp.Response().Body)
+	c.Assert(string(data), chk.Equals, "updated_data")
 }

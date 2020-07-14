@@ -44,6 +44,14 @@ func (pb PageBlobURL) WithSnapshot(snapshot string) PageBlobURL {
 	return NewPageBlobURL(p.URL(), pb.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new PageBlobURL object identical to the source but with the specified snapshot timestamp.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (pb PageBlobURL) WithVersionID(versionId string) PageBlobURL {
+	p := NewBlobURLParts(pb.URL())
+	p.VersionID = versionId
+	return NewPageBlobURL(p.URL(), pb.blobClient.Pipeline())
+}
+
 func (pb PageBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
 	return pb.blobClient.GetAccountInfo(ctx)
 }
