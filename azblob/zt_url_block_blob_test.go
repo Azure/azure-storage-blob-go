@@ -913,20 +913,21 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
 
 	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
 		basicMetadata, BlobAccessConditions{})
-	//blockBlobUploadResp.VersionID()
-
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.VersionID(), chk.NotNil)
-	//c.Assert(versionId1, chk.Equals, versionId2)
 
-	// Deleting previous version snapshot created
+	listBlobsResp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Versions: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobsResp.Segment.BlobItems, chk.HasLen, 3)
+
+	// Deleting previous version snapshot.
 	blockBlobDeleteResp, err := blobURL.WithVersionID(versionId1).Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	fmt.Println(blockBlobDeleteResp)
 
-	listBlobsResp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true}})
+	listBlobsResp, err = containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Versions: true}})
 	c.Assert(err, chk.IsNil)
-	fmt.Println(listBlobsResp)
+	c.Assert(listBlobsResp.Segment.BlobItems, chk.HasLen, 2)
 }
 
 func (s *aztestsSuite) TestDownloadSpecificBlobVersion1(c *chk.C) {
