@@ -1951,8 +1951,8 @@ func (s *aztestsSuite) TestBlobURLPartsSASQueryTimes(c *chk.C) {
 func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	bsu := getBSU()
 	cURL, _ := createNewContainer(c, bsu)
+	defer delContainer(c, cURL)
 	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
-
 	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
 
@@ -1987,4 +1987,24 @@ func (s *aztestsSuite) TestSetBlobMetadataReturnsVID(c *chk.C) {
 	c.Assert(listBlobResp.Segment.BlobItems[0].Name, chk.Equals, blobName)
 	c.Assert(listBlobResp.Segment.BlobItems[0].Metadata, chk.HasLen, 2)
 	c.Assert(listBlobResp.Segment.BlobItems[0].Metadata, chk.DeepEquals, metadata)
+}
+
+func (s *aztestsSuite) TestCreateBlobAndDownloadBlobSpecialCharactersWithVID(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	data := []rune("-._/()$=',~0123456789")
+	for i := 0; i < len(data); i++ {
+		blobName := strings.Join([]string{"a", "b", "c"}, string(data[i]))
+		blobURL := containerURL.NewBlockBlobURL(blobName)
+		resp, err := blobURL.Upload(ctx, strings.NewReader(string(data[i])), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+		c.Assert(err, chk.IsNil)
+		c.Assert(resp.VersionID(), chk.NotNil)
+
+		dResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+		d1, err := ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
+		c.Assert(err, chk.IsNil)
+		c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
+		c.Assert(string(d1), chk.DeepEquals, string(data[i]))
+	}
 }

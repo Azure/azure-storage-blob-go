@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"time"
 
@@ -166,7 +167,6 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
-	c.Assert(uploadSrcResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 
 	// Get source blob URL with SAS for StageFromURL.
 	srcBlobParts := NewBlobURLParts(srcBlob.URL())
@@ -195,7 +195,6 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	c.Assert(resp.CopyID(), chk.Not(chk.Equals), "")
 	c.Assert(resp.ContentMD5(), chk.DeepEquals, sourceDataMD5Value[:])
 	c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
-	c.Assert(resp.VersionID(), chk.NotNil)
 
 	// Check data integrity through downloading.
 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
@@ -203,7 +202,6 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
 	c.Assert(destData, chk.DeepEquals, sourceData)
-	c.Assert(downloadResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 
 	// Make sure the metadata got copied over
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
@@ -218,8 +216,6 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
-	c.Assert(resp.Response().Header.Get("x-ms-version"), chk.Equals, ServiceVersion)
-	c.Assert(resp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 }
 
 func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
@@ -904,6 +900,78 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
 }
 
+func (s *aztestsSuite) TestCopyBlockBlobFromURLReturnsVID(c *chk.C) {
+	bsu := getBSU()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 4 * 1024 * 1024 // 8MB
+	r, sourceData := getRandomDataAndReader(testSize)
+	sourceDataMD5Value := md5.Sum(sourceData)
+	ctx := context.Background() // Use default Background context
+	srcBlob := container.NewBlockBlobURL(generateBlobName())
+	destBlob := container.NewBlockBlobURL(generateBlobName())
+
+	// Prepare source blob for copy.
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
+	c.Assert(uploadSrcResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
+
+	// Get source blob URL with SAS for StageFromURL.
+	srcBlobParts := NewBlobURLParts(srcBlob.URL())
+
+	srcBlobParts.SAS, err = BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+		ContainerName: srcBlobParts.ContainerName,
+		BlobName:      srcBlobParts.BlobName,
+		Permissions:   BlobSASPermissions{Read: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	srcBlobURLWithSAS := srcBlobParts.URL()
+
+	// Invoke copy blob from URL.
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:])
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
+	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(resp.CopyID(), chk.Not(chk.Equals), "")
+	c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
+	c.Assert(resp.VersionID(), chk.NotNil)
+
+	// Check data integrity through downloading.
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
+	c.Assert(err, chk.IsNil)
+	c.Assert(destData, chk.DeepEquals, sourceData)
+	c.Assert(downloadResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
+
+	// Make sure the metadata got copied over
+	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
+
+	// Edge case 1: Provide bad MD5 and make sure the copy fails
+	_, badMD5 := getRandomDataAndReader(16)
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5)
+	c.Assert(err, chk.NotNil)
+
+	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
+	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
+	c.Assert(resp.Response().Header.Get("x-ms-version"), chk.Equals, ServiceVersion)
+	c.Assert(resp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
+}
+
 func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
@@ -932,6 +1000,7 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobsResp.Segment.BlobItems, chk.HasLen, 2)
 }
+
 func (s *aztestsSuite) TestDeleteSpecificBlobVersionWithBlobSAS(c *chk.C) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
@@ -1051,4 +1120,43 @@ func (s *aztestsSuite) TestCreateBlockBlobReturnsVID(c *chk.C) {
 	}
 	blobs := listBlobResp.Segment.BlobItems
 	c.Assert(blobs[0].Snapshot, chk.Equals, "")
+}
+
+func (s *aztestsSuite) TestPutBlockListReturnsVID(c *chk.C) {
+	blockIDIntToBase64 := func(blockID int) string {
+		binaryBlockID := (&[4]byte{})[:]
+		binary.LittleEndian.PutUint32(binaryBlockID, uint32(blockID))
+		return base64.StdEncoding.EncodeToString(binaryBlockID)
+	}
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer delContainer(c, containerURL)
+
+	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
+
+	data := []string{"Azure ", "Storage ", "Block ", "Blob."}
+	base64BlockIDs := make([]string, len(data))
+
+	for index, d := range data {
+		base64BlockIDs[index] = blockIDIntToBase64(index)
+		resp, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(d), LeaseAccessConditions{}, nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		c.Assert(resp.Response().StatusCode, chk.Equals, 201)
+		c.Assert(resp.Version(), chk.Not(chk.Equals), "")
+	}
+
+	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(commitResp.VersionID(), chk.NotNil)
+
+	contentResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	contentData, err := ioutil.ReadAll(contentResp.Body(RetryReaderOptions{}))
+	c.Assert(contentData, chk.DeepEquals, []uint8(strings.Join(data, "")))
+}
+
+func (s *aztestsSuite) TestSyncCopyBlobReturnsVID(c *chk.C) {
+
 }
