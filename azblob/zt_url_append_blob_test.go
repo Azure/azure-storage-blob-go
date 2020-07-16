@@ -638,5 +638,4 @@ func (s *aztestsSuite) TestGetBlobPropertiesUsingVID(c *chk.C) {
 	c.Assert(createResp.LastModified(), chk.DeepEquals, blobProp.LastModified())
 	c.Assert(createResp.ETag(), chk.Equals, blobProp.ETag())
 	c.Assert(blobProp.IsCurrentVersion(), chk.Equals, "true")
-
 }

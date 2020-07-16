@@ -153,7 +153,7 @@ func (up BlobURLParts) URL() url.URL {
 	}
 
 	// Concatenate blob version id query parameter (if it exists)
-	if up.VersionID != null && up.VersionID != "" {
+	if up.VersionID != "" {
 		if len(rawQuery) > 0 {
 			rawQuery += "&"
 		}
