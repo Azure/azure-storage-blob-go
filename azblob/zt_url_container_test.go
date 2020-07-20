@@ -125,7 +125,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
 	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	// Anonymous enumeration should be valid with container access
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -151,7 +151,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
 	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -174,7 +174,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
 	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -349,7 +349,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeMetadata(c *chk.C) {
 	defer deleteContainer(c, container)
 	_, blobNameNoMetadata := createBlockBlobWithPrefix(c, container, "a")
 	blobMetadata, blobNameMetadata := createBlockBlobWithPrefix(c, container, "b")
-	_, err := blobMetadata.SetMetadata(ctx, Metadata{"field": "value"}, BlobAccessConditions{})
+	_, err := blobMetadata.SetMetadata(ctx, Metadata{"field": "value"}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := container.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Metadata: true}})
@@ -366,7 +366,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeSnapshots(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blob, blobName := createNewBlockBlob(c, containerURL)
-	_, err := blob.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	_, err := blob.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -408,7 +408,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeUncommitted(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
+	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -449,7 +449,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	defer deleteContainer(c, containerURL)
 
 	blobURL, blobName := createBlockBlobWithPrefix(c, containerURL, "z")
-	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	blobURL2, blobName2 := createBlockBlobWithPrefix(c, containerURL, "copy")
 	resp2, err := blobURL2.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})

@@ -117,7 +117,7 @@ func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAcce
 		nil, RehydratePriorityNone, nil, lac.pointers())
 }
 
-// GetBlobProperties returns the blob's properties.
+// GetProperties returns the blob's properties.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob-properties.
 func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*BlobGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
@@ -130,7 +130,7 @@ func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*B
 		nil)
 }
 
-// SetBlobHTTPHeaders changes a blob's HTTP headers.
+// SetHTTPHeaders changes a blob's HTTP headers.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-blob-properties.
 func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobAccessConditions) (*BlobSetHTTPHeadersResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
@@ -141,13 +141,13 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 		&h.ContentDisposition, nil)
 }
 
-// SetBlobMetadata changes a blob's metadata.
-// https://docs.microsoft.com/rest/api/storageservices/set-blob-metadata.
-func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAccessConditions) (*BlobSetMetadataResponse, error) {
+// SetMetadata changes a blob's metadata.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/set-blob-metadata.
+func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobSetMetadataResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.SetMetadata(ctx, nil, metadata, ac.LeaseAccessConditions.pointers(),
-		nil, nil, EncryptionAlgorithmNone, // CPK-V
-		nil, // CPK-N
+	&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
+	&cpk.EncryptionScope, // ClientProvidedKey-Name
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -155,21 +155,21 @@ func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAcce
 
 // CreateSnapshot creates a read-only snapshot of a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/snapshot-blob.
-func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobAccessConditions) (*BlobCreateSnapshotResponse, error) {
+func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobCreateSnapshotResponse, error) {
 	// CreateSnapshot does NOT panic if the user tries to create a snapshot using a URL that already has a snapshot query parameter
 	// because checking this would be a performance hit for a VERY unusual path and I don't think the common case should suffer this
 	// performance hit.
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.CreateSnapshot(ctx, nil, metadata,
-		nil, nil, EncryptionAlgorithmNone, // CPK-V
-		nil, // CPK-N
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
+		&cpk.EncryptionScope, // ClientProvidedKey-Name
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		ac.LeaseAccessConditions.pointers(), nil)
 }
 
-// AcquireLease acquires a lease on the blob for write and delete operations. The lease duration must be between
-// 15 to 60 seconds, or infinite (-1).
+// AcquireLease acquires a lease on the blob for write and delete operations.
+// The lease duration must be between 15 to 60 seconds, or infinite (-1).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-blob.
 func (b BlobURL) AcquireLease(ctx context.Context, proposedID string, duration int32, ac ModifiedAccessConditions) (*BlobAcquireLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()

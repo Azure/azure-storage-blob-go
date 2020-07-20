@@ -86,7 +86,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body, o.Progress)
 		}
-		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
+		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, ClientProvidedKeyOptions{})
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)
@@ -122,7 +122,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 			// Block IDs are unique values to avoid issue if 2+ clients are uploading blocks
 			// at the same time causing PutBlockList to get a mix of blocks from all the clients.
 			blockIDList[blockNum] = base64.StdEncoding.EncodeToString(newUUID().bytes())
-			_, err := blockBlobURL.StageBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions, nil)
+			_, err := blockBlobURL.StageBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions, nil, ClientProvidedKeyOptions{})
 			return err
 		},
 	})
@@ -130,7 +130,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		return nil, err
 	}
 	// All put blocks were successful, call Put Block List to finalize the blob
-	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
+	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, ClientProvidedKeyOptions{})
 }
 
 // UploadFileToBlockBlob uploads a file in blocks to a block blob.
@@ -381,12 +381,13 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
 	o.defaults()
 
-	result, err := copyFromReader(ctx, reader, blockBlobURL, o)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
+	// TODO:Mohit Come back here to figure out why this is
+	// result, err := copyFromReader(ctx, reader, blockBlobURL, o)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//	return result, nil
+	return nil, nil
 }
 
 // UploadStreamOptions (defunct) was used internally. This will be removed or made private in a future version.
