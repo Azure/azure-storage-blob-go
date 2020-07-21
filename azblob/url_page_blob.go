@@ -14,7 +14,7 @@ const (
 	// PageBlobPageBytes indicates the number of bytes in a page (512).
 	PageBlobPageBytes = 512
 
-	// PageBlobMaxPutPagesBytes indicates the maximum number of bytes that can be sent in a call to PutPage.
+	// PageBlobMaxUploadPagesBytes indicates the maximum number of bytes that can be sent in a call to PutPage.
 	PageBlobMaxUploadPagesBytes = 4 * 1024 * 1024 // 4MB
 )
 
@@ -48,15 +48,15 @@ func (pb PageBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoRe
 	return pb.blobClient.GetAccountInfo(ctx)
 }
 
-// Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
+// Create creates a page blob of the specified length. Call PutPage to upload data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
 func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*PageBlobCreateResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Create(ctx, 0, size, nil, PremiumPageBlobAccessTierNone,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		&cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		&sequenceNumber, nil,
@@ -78,8 +78,8 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		&cpk.EncryptionScope, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
@@ -97,8 +97,8 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := destinationAccessConditions.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPagesFromURL(ctx, sourceURL.String(), *PageRange{Start: sourceOffset, End: sourceOffset + count - 1}.pointers(), 0,
 		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, nil,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		&cpk.EncryptionScope, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
@@ -114,8 +114,8 @@ func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64,
 	return pb.pbClient.ClearPages(ctx, 0, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionScope, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan,
 		ifSequenceNumberEqual, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
@@ -150,12 +150,12 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count
 func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*PageBlobResizeResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Resize(ctx, size, nil, ac.LeaseAccessConditions.pointers(),
-	&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-	&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 
-// SetSequenceNumber sets the page blob's sequence number.
+// UpdateSequenceNumber sets the page blob's sequence number.
 func (pb PageBlobURL) UpdateSequenceNumber(ctx context.Context, action SequenceNumberActionType, sequenceNumber int64,
 	ac BlobAccessConditions) (*PageBlobUpdateSequenceNumberResponse, error) {
 	sn := &sequenceNumber
@@ -168,7 +168,7 @@ func (pb PageBlobURL) UpdateSequenceNumber(ctx context.Context, action SequenceN
 		sn, nil)
 }
 
-// StartIncrementalCopy begins an operation to start an incremental copy from one page blob's snapshot to this page blob.
+// StartCopyIncremental begins an operation to start an incremental copy from one page blob's snapshot to this page blob.
 // The snapshot is copied such that only the differential changes between the previously copied snapshot are transferred to the destination.
 // The copied snapshots are complete copies of the original snapshot and can be read or copied from as usual.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/incremental-copy-blob and

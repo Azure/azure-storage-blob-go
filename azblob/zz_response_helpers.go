@@ -67,7 +67,7 @@ func (r *DownloadResponse) Body(o RetryReaderOptions) io.ReadCloser {
 				BlobAccessConditions{
 					ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: getInfo.ETag},
 				},
-				false)
+				false, ClientProvidedKeyOptions{})
 			if err != nil {
 				return nil, err
 			}

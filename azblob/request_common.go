@@ -8,9 +8,9 @@ type ClientProvidedKeyOptions struct {
 	EncryptionScope     string
 }
 
-// InitClientProvidedKeyOptions function. 
+// InitClientProvidedKeyOptions function.
 // By default the value of encryption algorithm params is "AES256" for service version 2019-02-02 or higher.
-func InitClientProvidedKeyOptions(ek string, eksha256 string, es string)  (cpk *ClientProvidedKeyOptions) {
+func InitClientProvidedKeyOptions(ek string, eksha256 string, es string) (cpk *ClientProvidedKeyOptions) {
 	cpk = new(ClientProvidedKeyOptions)
 	cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, cpk.EncryptionScope = ek, eksha256, EncryptionAlgorithmAES256, es
 	return cpk

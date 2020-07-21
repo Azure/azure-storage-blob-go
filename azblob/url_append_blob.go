@@ -53,8 +53,8 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 	return ab.abClient.Create(ctx, 0, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		&cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch,
 		nil, // Blob tags
 		nil,
@@ -78,8 +78,8 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		nil, // CRC
 		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -93,8 +93,8 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := destinationAccessConditions.AppendPositionAccessConditions.pointers()
 	return ab.abClient.AppendBlockFromURL(ctx, sourceURL.String(), 0, httpRange{offset: offset, count: count}.pointers(),
 		transactionalMD5, nil, nil, nil,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionScope, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,

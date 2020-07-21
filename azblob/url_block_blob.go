@@ -65,8 +65,8 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 	return bb.bbClient.Upload(ctx, body, count, nil, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		nil, nil, EncryptionAlgorithmNone,
+		nil,
 		AccessTierNone, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil,
@@ -83,8 +83,8 @@ func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, bod
 		return nil, err
 	}
 	return bb.bbClient.StageBlock(ctx, base64BlockID, count, body, transactionalMD5, nil, nil, ac.pointers(),
-	&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-	&cpk.EncryptionScope, // ClientProvidedKey-Name
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		nil)
 }
 
@@ -94,8 +94,8 @@ func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, bod
 func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID string, sourceURL url.URL, offset int64, count int64, destinationAccessConditions LeaseAccessConditions, sourceAccessConditions ModifiedAccessConditions, cpk ClientProvidedKeyOptions) (*BlockBlobStageBlockFromURLResponse, error) {
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, nil,
-	&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-	&cpk.EncryptionScope, // ClientProvidedKey-Name
+		nil, nil, EncryptionAlgorithmNone,
+		nil,
 		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
@@ -111,8 +111,8 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, nil, nil,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
-		&cpk.EncryptionScope, // CPK-N
+		nil, nil, EncryptionAlgorithmNone,
+		nil,
 		AccessTierNone,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags

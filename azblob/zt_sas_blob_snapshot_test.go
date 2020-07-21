@@ -69,7 +69,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	sburl := NewBlockBlobURL(snapParts.URL(), p)
 
 	//Test the snapshot
-	downloadResponse, err := sburl.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	downloadResponse, err := sburl.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}

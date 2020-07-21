@@ -373,7 +373,7 @@ func disableSoftDelete(c *chk.C, bsu ServiceURL) {
 }
 
 func validateUpload(c *chk.C, blobURL BlockBlobURL) {
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(data, chk.HasLen, 0)

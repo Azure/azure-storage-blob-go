@@ -61,10 +61,10 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 	return NewPageBlobURL(b.URL(), b.blobClient.Pipeline())
 }
 
-// DownloadBlob reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
+// Download reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
 // Passing azblob.CountToEnd (0) for count will download the blob from the offset to the end.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob.
-func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac BlobAccessConditions, rangeGetContentMD5 bool) (*DownloadResponse, error) {
+func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac BlobAccessConditions, rangeGetContentMD5 bool, cpk ClientProvidedKeyOptions) (*DownloadResponse, error) {
 	var xRangeGetContentMD5 *bool
 	if rangeGetContentMD5 {
 		xRangeGetContentMD5 = &rangeGetContentMD5
@@ -88,7 +88,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 	}, err
 }
 
-// DeleteBlob marks the specified blob or snapshot for deletion. The blob is later deleted during garbage collection.
+// Delete marks the specified blob or snapshot for deletion. The blob is later deleted during garbage collection.
 // Note that deleting a blob also deletes all its snapshots.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-blob.
 func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions) (*BlobDeleteResponse, error) {
@@ -119,7 +119,7 @@ func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAcce
 
 // GetProperties returns the blob's properties.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob-properties.
-func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*BlobGetPropertiesResponse, error) {
+func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.GetProperties(ctx, nil,
 		nil, // Blob versioning
@@ -142,12 +142,12 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 }
 
 // SetMetadata changes a blob's metadata.
-// For more information, see https://docs.microsoft.com/rest/api/storageservices/set-blob-metadata.
+// https://docs.microsoft.com/rest/api/storageservices/set-blob-metadata.
 func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobSetMetadataResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.SetMetadata(ctx, nil, metadata, ac.LeaseAccessConditions.pointers(),
-	&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-	&cpk.EncryptionScope, // ClientProvidedKey-Name
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -161,15 +161,15 @@ func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobA
 	// performance hit.
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.CreateSnapshot(ctx, nil, metadata,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // ClientProvidedKey-Value
-		&cpk.EncryptionScope, // ClientProvidedKey-Name
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		ac.LeaseAccessConditions.pointers(), nil)
 }
 
-// AcquireLease acquires a lease on the blob for write and delete operations.
-// The lease duration must be between 15 to 60 seconds, or infinite (-1).
+// AcquireLease acquires a lease on the blob for write and delete operations. The lease duration must be between
+// 15 to 60 seconds, or infinite (-1).
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/lease-blob.
 func (b BlobURL) AcquireLease(ctx context.Context, proposedID string, duration int32, ac ModifiedAccessConditions) (*BlobAcquireLeaseResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()

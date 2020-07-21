@@ -139,7 +139,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	c.Assert(appendFromURLResp.Date().IsZero(), chk.Equals, false)
 
 	// Check data integrity through downloading.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -211,7 +211,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	c.Assert(appendFromURLResp.Date().IsZero(), chk.Equals, false)
 
 	// Check data integrity through downloading.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -232,7 +232,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -246,7 +246,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataEmpty(c *chk.C) {
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
 }
@@ -270,14 +270,14 @@ func (s *aztestsSuite) TestBlobCreateAppendHTTPHeaders(c *chk.C) {
 	_, err := blobURL.Create(ctx, basicHeaders, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	h := resp.NewHTTPHeaders()
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
 
 func validateAppendBlobPut(c *chk.C, blobURL AppendBlobURL) {
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -344,7 +344,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata,
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
@@ -383,7 +383,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata,
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
@@ -422,7 +422,7 @@ func (s *aztestsSuite) TestBlobAppendBlockNonExistantBlob(c *chk.C) {
 }
 
 func validateBlockAppended(c *chk.C, blobURL AppendBlobURL, expectedSize int) {
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentLength(), chk.Equals, int64(expectedSize))
 }
@@ -486,7 +486,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
 		AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{})
@@ -525,7 +525,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData),
 		AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{})

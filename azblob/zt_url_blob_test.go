@@ -78,7 +78,7 @@ func waitForCopy(c *chk.C, copyBlobURL BlockBlobURL, blobCopyResponse *BlobStart
 	// Wait for the copy to finish. If the copy takes longer than a minute, we will fail
 	start := time.Now()
 	for status != CopyStatusSuccess {
-		props, _ := copyBlobURL.GetProperties(ctx, BlobAccessConditions{})
+		props, _ := copyBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 		status = props.CopyStatus()
 		currentTime := time.Now()
 		if currentTime.Sub(start) >= time.Minute {
@@ -98,7 +98,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestEmpty(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, copyBlobURL, blobCopyResponse)
 
-	resp, err := copyBlobURL.Download(ctx, 0, 20, BlobAccessConditions{}, false)
+	resp, err := copyBlobURL.Download(ctx, 0, 20, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	// Read the blob data to verify the copy
@@ -119,7 +119,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadata(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, copyBlobURL, resp)
 
-	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -141,7 +141,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataNil(c *chk.C) {
 
 	waitForCopy(c, copyBlobURL, resp)
 
-	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.HasLen, 0)
 }
@@ -163,7 +163,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataEmpty(c *chk.C) {
 
 	waitForCopy(c, copyBlobURL, resp)
 
-	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := copyBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.HasLen, 0)
 }
@@ -255,7 +255,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 
 	waitForCopy(c, copyBlobURL, resp)
 
-	resp2, err := copyBlobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false)
+	resp2, err := copyBlobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(resp2.Response().Body)
@@ -327,7 +327,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	// Allow copy to happen
 	waitForCopy(c, anonBlobURL, resp)
 
-	resp2, err := copyBlobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false)
+	resp2, err := copyBlobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(resp2.Response().Body)
@@ -351,7 +351,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfModifiedSinceTrue(c *chk.C) {
 		BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -385,7 +385,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfUnmodifiedSinceTrue(c *chk.C) {
 		BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -411,7 +411,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
@@ -421,7 +421,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfMatchTrue(c *chk.C) {
 		BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -451,7 +451,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfNoneMatchTrue(c *chk.C) {
 		BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -462,7 +462,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
@@ -486,7 +486,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfModifiedSinceTrue(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -520,7 +520,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfUnmodifiedSinceTrue(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -547,7 +547,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfMatchTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
-	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
@@ -555,7 +555,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfMatchTrue(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}})
 	c.Assert(err, chk.IsNil)
 
-	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -567,7 +567,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfMatchFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
-	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	destBlobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{}) // SetMetadata chances the blob's etag
@@ -584,7 +584,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfNoneMatchTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
-	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	destBlobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{}) // SetMetadata chances the blob's etag
@@ -593,7 +593,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfNoneMatchTrue(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}})
 	c.Assert(err, chk.IsNil)
 
-	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -605,7 +605,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfNoneMatchFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
-	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{},
@@ -653,7 +653,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 		c.Error("The test failed because the copy completed because it was aborted")
 	}
 
-	resp2, _ := copyBlobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, _ := copyBlobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(resp2.CopyStatus(), chk.Equals, CopyStatusAborted)
 }
 
@@ -679,7 +679,7 @@ func (s *aztestsSuite) TestBlobSnapshotMetadata(c *chk.C) {
 
 	// Since metadata is specified on the snapshot, the snapshot should have its own metadata different from the (empty) metadata on the source
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
-	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -698,7 +698,7 @@ func (s *aztestsSuite) TestBlobSnapshotMetadataEmpty(c *chk.C) {
 
 	// In this case, because no metadata was specified, it should copy the basicMetadata from the source
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
-	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -716,7 +716,7 @@ func (s *aztestsSuite) TestBlobSnapshotMetadataNil(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
-	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -814,7 +814,7 @@ func (s *aztestsSuite) TestBlobSnapshotIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	resp2, err := blobURL.CreateSnapshot(ctx, nil,
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
@@ -851,7 +851,7 @@ func (s *aztestsSuite) TestBlobSnapshotIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err = blobURL.CreateSnapshot(ctx, nil,
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
@@ -864,7 +864,7 @@ func (s *aztestsSuite) TestBlobDownloadDataNonExistantBlob(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	_, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeBlobNotFound)
 }
 
@@ -874,7 +874,7 @@ func (s *aztestsSuite) TestBlobDownloadDataNegativeOffset(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.Download(ctx, -1, 0, BlobAccessConditions{}, false)
+	_, err := blobURL.Download(ctx, -1, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 }
 
@@ -884,7 +884,7 @@ func (s *aztestsSuite) TestBlobDownloadDataOffsetOutOfRange(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.Download(ctx, int64(len(blockBlobDefaultData)), CountToEnd, BlobAccessConditions{}, false)
+	_, err := blobURL.Download(ctx, int64(len(blockBlobDefaultData)), CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeInvalidRange)
 }
 
@@ -894,7 +894,7 @@ func (s *aztestsSuite) TestBlobDownloadDataCountNegative(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.Download(ctx, 0, -2, BlobAccessConditions{}, false)
+	_, err := blobURL.Download(ctx, 0, -2, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 }
 
@@ -904,7 +904,7 @@ func (s *aztestsSuite) TestBlobDownloadDataCountZero(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	// Specifying a count of 0 results in the value being ignored
@@ -919,7 +919,7 @@ func (s *aztestsSuite) TestBlobDownloadDataCountExact(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, int64(len(blockBlobDefaultData)), BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(resp.Response().Body)
@@ -933,7 +933,7 @@ func (s *aztestsSuite) TestBlobDownloadDataCountOutOfRange(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.Download(ctx, 0, int64(len(blockBlobDefaultData))*2, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, int64(len(blockBlobDefaultData))*2, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(resp.Response().Body)
@@ -947,7 +947,7 @@ func (s *aztestsSuite) TestBlobDownloadDataEmptyRangeStruct(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(resp.Response().Body)
@@ -961,7 +961,7 @@ func (s *aztestsSuite) TestBlobDownloadDataContentMD5(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.Download(ctx, 10, 3, BlobAccessConditions{}, true)
+	resp, err := blobURL.Download(ctx, 10, 3, BlobAccessConditions{}, true, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	mdf := md5.Sum([]byte(blockBlobDefaultData)[10:13])
 	c.Assert(resp.ContentMD5(), chk.DeepEquals, mdf[:])
@@ -976,7 +976,7 @@ func (s *aztestsSuite) TestBlobDownloadDataIfModifiedSinceTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	resp, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentLength(), chk.Equals, int64(len(blockBlobDefaultData)))
 }
@@ -990,7 +990,7 @@ func (s *aztestsSuite) TestBlobDownloadDataIfModifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, false, ClientProvidedKeyOptions{})
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 304) // The server does not return the error in the body even though it is a GET
 }
@@ -1004,7 +1004,7 @@ func (s *aztestsSuite) TestBlobDownloadDataIfUnmodifiedSinceTrue(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	resp, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentLength(), chk.Equals, int64(len(blockBlobDefaultData)))
 }
@@ -1018,7 +1018,7 @@ func (s *aztestsSuite) TestBlobDownloadDataIfUnmodifiedSinceFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, false, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1028,12 +1028,12 @@ func (s *aztestsSuite) TestBlobDownloadDataIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
 	resp2, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.ContentLength(), chk.Equals, int64(len(blockBlobDefaultData)))
 }
@@ -1044,14 +1044,14 @@ func (s *aztestsSuite) TestBlobDownloadDataIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err = blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, false, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1061,14 +1061,14 @@ func (s *aztestsSuite) TestBlobDownloadDataIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	resp2, err := blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.ContentLength(), chk.Equals, int64(len(blockBlobDefaultData)))
 }
@@ -1079,12 +1079,12 @@ func (s *aztestsSuite) TestBlobDownloadDataIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	etag := resp.ETag()
 
 	_, err = blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, false)
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, false, ClientProvidedKeyOptions{})
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 304) // The server does not return the error in the body even though it is a GET
 }
@@ -1161,7 +1161,7 @@ func (s *aztestsSuite) TestBlobDeleteSnapshotsNoneWithSnapshots(c *chk.C) {
 }
 
 func validateBlobDeleted(c *chk.C, blobURL BlockBlobURL) {
-	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError) // Delete blob is a HEAD request and does not return a ServiceCode in the body
 	c.Assert(serr.Response().StatusCode, chk.Equals, 404)
@@ -1229,7 +1229,7 @@ func (s *aztestsSuite) TestBlobDeleteIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
@@ -1245,7 +1245,7 @@ func (s *aztestsSuite) TestBlobDeleteIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
@@ -1261,7 +1261,7 @@ func (s *aztestsSuite) TestBlobDeleteIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
@@ -1278,7 +1278,7 @@ func (s *aztestsSuite) TestBlobDeleteIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	etag := resp.ETag()
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
@@ -1298,7 +1298,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfModifiedSinceTrue(c *chk.C) 
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1315,7 +1315,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfModifiedSinceFalse(c *chk.C)
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err = blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 304) // No service code returned for a HEAD
@@ -1333,7 +1333,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfUnmodifiedSinceTrue(c *chk.C
 	currentTime := getRelativeTimeGMT(10)
 
 	resp, err := blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1350,7 +1350,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfUnmodifiedSinceFalse(c *chk.
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 412)
@@ -1366,7 +1366,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfMatchTrue(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	resp2, err := blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1377,7 +1377,7 @@ func (s *aztestsSuite) TestBlobGetPropsOnMissingBlob(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL := containerURL.NewBlobURL("MISSING")
 
-	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 404)
@@ -1391,7 +1391,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfMatchFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 412)
@@ -1407,7 +1407,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfNoneMatchTrue(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1422,7 +1422,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfNoneMatchFalse(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.GetProperties(ctx,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 304)
@@ -1437,7 +1437,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesBasic(c *chk.C) {
 	_, err := blobURL.SetHTTPHeaders(ctx, basicHeaders, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	h := resp.NewHTTPHeaders()
 	c.Assert(h, chk.DeepEquals, basicHeaders)
 }
@@ -1454,13 +1454,13 @@ func (s *aztestsSuite) TestBlobSetPropertiesEmptyValue(c *chk.C) {
 	_, err = blobURL.SetHTTPHeaders(ctx, BlobHTTPHeaders{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentType(), chk.Equals, "")
 }
 
 func validatePropertiesSet(c *chk.C, blobURL BlockBlobURL, disposition string) {
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ContentDisposition(), chk.Equals, disposition)
 }
@@ -1527,7 +1527,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.SetHTTPHeaders(ctx, BlobHTTPHeaders{ContentDisposition: "my_disposition"},
@@ -1567,7 +1567,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.SetHTTPHeaders(ctx, BlobHTTPHeaders{ContentDisposition: "my_disposition"},
@@ -1587,7 +1587,7 @@ func (s *aztestsSuite) TestBlobSetMetadataNil(c *chk.C) {
 	_, err = blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
 }
@@ -1604,7 +1604,7 @@ func (s *aztestsSuite) TestBlobSetMetadataEmpty(c *chk.C) {
 	_, err = blobURL.SetMetadata(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.HasLen, 0)
 }
@@ -1621,7 +1621,7 @@ func (s *aztestsSuite) TestBlobSetMetadataInvalidField(c *chk.C) {
 }
 
 func validateMetadataSet(c *chk.C, blobURL BlockBlobURL) {
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1688,7 +1688,7 @@ func (s *aztestsSuite) TestBlobSetMetadataIfMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.SetMetadata(ctx, basicMetadata,
@@ -1728,7 +1728,7 @@ func (s *aztestsSuite) TestBlobSetMetadataIfNoneMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.SetMetadata(ctx, basicMetadata,
@@ -1749,7 +1749,7 @@ func testBlobsUndeleteImpl(c *chk.C, bsu ServiceURL) error {
 		return err
 	}
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	if err != nil {
 		return errors.New(string(err.(StorageError).ServiceCode()))
 	}
@@ -1767,7 +1767,7 @@ func setAndCheckBlobTier(c *chk.C, containerURL ContainerURL, blobURL BlobURL, t
 	_, err := blobURL.SetTier(ctx, tier, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.AccessTier(), chk.Equals, string(tier))
 
@@ -1817,7 +1817,7 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.AccessTierInferred(), chk.Equals, "true")
 
@@ -1829,7 +1829,7 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 	_, err = blobURL.SetTier(ctx, AccessTierP4, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.AccessTierInferred(), chk.Equals, "")
 
@@ -1853,7 +1853,7 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 	_, err = blobURL.SetTier(ctx, AccessTierCool, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ArchiveStatus(), chk.Equals, string(ArchiveStatusRehydratePendingToCool))
 
@@ -1872,7 +1872,7 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 	_, err = blobURL.SetTier(ctx, AccessTierHot, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{})
+	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ArchiveStatus(), chk.Equals, string(ArchiveStatusRehydratePendingToHot))
 
@@ -1953,7 +1953,7 @@ func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	cURL, _ := createNewContainer(c, bsu)
 	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
 
-	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	// Verify that we can inject errors first.

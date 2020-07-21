@@ -57,7 +57,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		c.Fatal(err)
 	}
 
-	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	data := &bytes.Buffer{}
 	body := resp.Body(RetryReaderOptions{})
 	if body == nil {
@@ -136,7 +136,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	}
 
 	// Download data via User Delegation SAS URL; must succeed
-	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}
