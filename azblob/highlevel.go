@@ -381,7 +381,7 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
 	o.defaults()
 
-	result, err := copyFromReader(ctx, reader, blockBlobURL, o)
+	result, err := copyFromReader(ctx, reader, blockBlobURL, o, ClientProvidedKeyOptions{})
 	if err != nil {
 		return nil, err
 	}

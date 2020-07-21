@@ -37,7 +37,7 @@ func newFakeBlockWriter() *fakeBlockWriter {
 	return f
 }
 
-func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte) (*BlockBlobStageBlockResponse, error) {
+func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte, cpk ClientProvidedKeyOptions) (*BlockBlobStageBlockResponse, error) {
 	n := atomic.AddInt32(&f.block, 1)
 	if n == f.errOnBlock {
 		return nil, io.ErrNoProgress
@@ -58,7 +58,7 @@ func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.R
 	return &BlockBlobStageBlockResponse{}, nil
 }
 
-func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error) {
+func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	dst, err := os.OpenFile(filepath.Join(f.path, finalFileName), os.O_CREATE+os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -251,7 +251,7 @@ func TestCopyFromReader(t *testing.T) {
 			br.errOnBlock = 1
 		}
 
-		_, err = copyFromReader(test.ctx, from, br, test.o)
+		_, err = copyFromReader(test.ctx, from, br, test.o, ClientProvidedKeyOptions{})
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestCopyFromReader(%s): got err == nil, want err != nil", test.desc)

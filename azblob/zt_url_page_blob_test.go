@@ -518,7 +518,7 @@ func validateUploadPages(c *chk.C, blobURL PageBlobURL) {
 	// This will only validate a single put page at 0-PageBlobPageBytes-1
 	resp, err := blobURL.GetPageRanges(ctx, 0, 0, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.PageRange[0], chk.Equals, PageRange{Start: 0, End: PageBlobPageBytes - 1}, ClientProvidedKeyOptions{})
+	c.Assert(resp.PageRange[0], chk.Equals, PageRange{Start: 0, End: PageBlobPageBytes - 1})
 }
 
 func (s *aztestsSuite) TestBlobPutPagesIfModifiedSinceTrue(c *chk.C) {

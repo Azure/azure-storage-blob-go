@@ -156,7 +156,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
 	_, err = containerURL2.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{})
-	validateStorageError(c, err, ServiceCodeResourceNotFound) // Listing blobs is not publicly accessible
+	validateStorageError(c, err, ServiceCodeNoAuthenticationInformation) // Listing blobs is not publicly accessible
 
 	// Accessing blob specific data should be public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
@@ -180,14 +180,14 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
 	// Listing blobs is not public
 	_, err = containerURL2.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{})
-	validateStorageError(c, err, ServiceCodeResourceNotFound)
+	validateStorageError(c, err, ServiceCodeNoAuthenticationInformation)
 
 	// Blob data is not public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
 	_, err = blobURL2.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
-	c.Assert(serr.Response().StatusCode, chk.Equals, 404) // HEAD request does not return a status code
+	c.Assert(serr.Response().StatusCode, chk.Equals, 401) // HEAD request does not return a status code
 }
 
 func validateContainerDeleted(c *chk.C, containerURL ContainerURL) {
@@ -641,7 +641,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessNone(c *chk.C) {
 	resp, _ := containerURL.GetAccessPolicy(ctx, LeaseAccessConditions{})
 
 	// If we cannot access a blob's data, we will also not be able to enumerate blobs
-	validateStorageError(c, err, ServiceCodeResourceNotFound)
+	validateStorageError(c, err, ServiceCodeNoAuthenticationInformation)
 	c.Assert(resp.BlobPublicAccess(), chk.Equals, PublicAccessNone)
 }
 
@@ -718,7 +718,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 	anonymousBlobService := NewServiceURL(bsu.URL(), sasPipeline)
 	anonymousContainer := anonymousBlobService.NewContainerURL(containerName)
 	_, err = anonymousContainer.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{})
-	validateStorageError(c, err, ServiceCodeResourceNotFound)
+	validateStorageError(c, err, ServiceCodeNoAuthenticationInformation)
 }
 
 func (s *aztestsSuite) TestContainerSetPermissionsACLMoreThanFive(c *chk.C) {

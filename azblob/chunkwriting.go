@@ -16,8 +16,8 @@ import (
 // blockWriter provides methods to upload blocks that represent a file to a server and commit them.
 // This allows us to provide a local implementation that fakes the server for hermetic testing.
 type blockWriter interface {
-	StageBlock(context.Context, string, io.ReadSeeker, LeaseAccessConditions, []byte) (*BlockBlobStageBlockResponse, error)
-	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions) (*BlockBlobCommitBlockListResponse, error)
+	StageBlock(context.Context, string, io.ReadSeeker, LeaseAccessConditions, []byte, ClientProvidedKeyOptions) (*BlockBlobStageBlockResponse, error)
+	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions, ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error)
 }
 
 // copyFromReader copies a source io.Reader to blob storage using concurrent uploads.
@@ -28,7 +28,7 @@ type blockWriter interface {
 // well, 4 MiB or 8 MiB, and autoscale to as many goroutines within the memory limit. This gives a single dial to tweak and we can
 // choose a max value for the memory setting based on internal transfers within Azure (which will give us the maximum throughput model).
 // We can even provide a utility to dial this number in for customer networks to optimize their copies.
-func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions) (*BlockBlobCommitBlockListResponse, error) {
+func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	o.defaults()
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -184,7 +184,7 @@ func (c *copier) write(chunk copierChunk) error {
 		return err
 	}
 
-	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil)
+	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		return fmt.Errorf("write error: %w", err)
 	}
@@ -201,7 +201,7 @@ func (c *copier) close() error {
 	}
 
 	var err error
-	c.result, err = c.to.CommitBlockList(c.ctx, c.id.issued(), c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions)
+	c.result, err = c.to.CommitBlockList(c.ctx, c.id.issued(), c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions, ClientProvidedKeyOptions{})
 	return err
 }
 
