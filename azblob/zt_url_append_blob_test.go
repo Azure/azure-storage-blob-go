@@ -623,19 +623,3 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeFalse(c *chk.C) {
 	validateStorageError(c, err, ServiceCodeMaxBlobSizeConditionNotMet)
 }
 
-func (s *aztestsSuite) TestGetBlobPropertiesUsingVID(c *chk.C) {
-	bsu := getBSU()
-	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
-	blobURL, _ := createNewAppendBlob(c, containerURL)
-
-	blobProp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
-	createResp, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: blobProp.ETag()}})
-	c.Assert(err, chk.IsNil)
-	c.Assert(createResp.VersionID(), chk.NotNil)
-	blobProp, _ = blobURL.GetProperties(ctx, BlobAccessConditions{})
-	c.Assert(createResp.VersionID(), chk.Equals, blobProp.VersionID())
-	c.Assert(createResp.LastModified(), chk.DeepEquals, blobProp.LastModified())
-	c.Assert(createResp.ETag(), chk.Equals, blobProp.ETag())
-	c.Assert(blobProp.IsCurrentVersion(), chk.Equals, "true")
-}

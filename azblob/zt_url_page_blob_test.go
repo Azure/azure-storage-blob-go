@@ -1686,22 +1686,3 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopyIfNoneMatchFalse(c *chk.C) {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
-
-func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
-	bsu := getBSU()
-	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
-
-	blob, _ := createNewPageBlob(c, container)
-	putResp, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), PageBlobAccessConditions{}, nil)
-	c.Assert(err, chk.IsNil)
-	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
-	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(putResp.ETag(), chk.Not(chk.Equals), ETagNone)
-	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
-	c.Assert(putResp.rawResponse.Header.Get("x-ms-version-id"), chk.NotNil)
-
-	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{})
-	c.Assert(err, chk.IsNil)
-	c.Assert(gpResp, chk.NotNil)
-}
