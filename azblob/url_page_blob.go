@@ -55,8 +55,8 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 	return pb.pbClient.Create(ctx, 0, size, nil, PremiumPageBlobAccessTierNone,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		&sequenceNumber, nil,
@@ -78,8 +78,8 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		cpk.EncryptionScope, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
@@ -97,8 +97,8 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := destinationAccessConditions.SequenceNumberAccessConditions.pointers()
 	return pb.pbClient.UploadPagesFromURL(ctx, sourceURL.String(), *PageRange{Start: sourceOffset, End: sourceOffset + count - 1}.pointers(), 0,
 		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, nil,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		cpk.EncryptionScope, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
@@ -114,8 +114,8 @@ func (pb PageBlobURL) ClearPages(ctx context.Context, offset int64, count int64,
 	return pb.pbClient.ClearPages(ctx, 0, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		cpk.EncryptionScope, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan,
 		ifSequenceNumberEqual, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
@@ -150,8 +150,8 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count
 func (pb PageBlobURL) Resize(ctx context.Context, size int64, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*PageBlobResizeResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return pb.pbClient.Resize(ctx, size, nil, ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
 }
 

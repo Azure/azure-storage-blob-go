@@ -17,6 +17,7 @@ import (
 
 	"math/rand"
 
+	// chk "gopkg.in/check.v1"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 

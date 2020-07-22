@@ -73,7 +73,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 	dr, err := b.blobClient.Download(ctx, nil, nil, nil,
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -124,7 +124,7 @@ func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions, cpk
 	return b.blobClient.GetProperties(ctx, nil,
 		nil, // Blob versioning
 		nil, ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -146,8 +146,8 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobSetMetadataResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.SetMetadata(ctx, nil, metadata, ac.LeaseAccessConditions.pointers(),
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
@@ -161,8 +161,8 @@ func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobA
 	// performance hit.
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.CreateSnapshot(ctx, nil, metadata,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
-		&cpk.EncryptionScope, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
+		cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		ac.LeaseAccessConditions.pointers(), nil)
