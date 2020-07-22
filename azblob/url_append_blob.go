@@ -78,7 +78,7 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		nil, // CRC
 		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
 		&cpk.EncryptionScope, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
@@ -93,7 +93,7 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := destinationAccessConditions.AppendPositionAccessConditions.pointers()
 	return ab.abClient.AppendBlockFromURL(ctx, sourceURL.String(), 0, httpRange{offset: offset, count: count}.pointers(),
 		transactionalMD5, nil, nil, nil,
-		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		&cpk.EncryptionKey, &cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
 		&cpk.EncryptionScope, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
