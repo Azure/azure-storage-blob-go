@@ -175,10 +175,32 @@ func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, na
 	return
 }
 
+func createNewBlockBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProvidedKeyOptions) (blob BlockBlobURL, name string) {
+	blob, name = getBlockBlobURL(c, container)
+
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{}, cpk)
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(cResp.StatusCode(), chk.Equals, 201)
+
+	return
+}
+
 func createNewAppendBlob(c *chk.C, container ContainerURL) (blob AppendBlobURL, name string) {
 	blob, name = getAppendBlobURL(c, container)
 
 	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	return
+}
+
+func createNewAppendBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProvidedKeyOptions) (blob AppendBlobURL, name string) {
+	blob, name = getAppendBlobURL(c, container)
+
+	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, cpk)
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
@@ -201,6 +223,18 @@ func createNewPageBlobWithSize(c *chk.C, container ContainerURL, sizeInBytes int
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	return
+}
+
+func createNewPageBlobWithCPK(c *chk.C, container ContainerURL, sizeInBytes int64, cpk ClientProvidedKeyOptions) (blob PageBlobURL, name string) {
+	blob, name = getPageBlobURL(c, container)
+
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, cpk)
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	c.Assert(resp.EncryptionKeySha256(), chk.Equals, *(cpk.EncryptionKeySha256))
+	c.Assert(resp.IsServerEncrypted(), chk.Equals, "true")
 	return
 }
 
