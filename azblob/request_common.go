@@ -4,6 +4,8 @@ package azblob
 // or higher to encrypts the data on the service-side with the given key. Use of customer-provided keys
 // must be done over HTTPS. As the encryption key itself is provided in the request, a secure connection
 // must be established to transfer the key.
+// Note: Azure Storage does not store or manage customer provided encryption keys. Keys are securely discarded
+// as soon as possible after they’ve been used to encrypt or decrypt the blob data.
 type ClientProvidedKeyOptions struct {
 	EncryptionKey       *string                 // A Base64-encoded AES-256 encryption key value.
 	EncryptionKeySha256 *string                 // The Base64-encoded SHA256 of the encryption key.

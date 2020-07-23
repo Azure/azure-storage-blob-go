@@ -155,6 +155,10 @@ func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAcce
 
 // CreateSnapshot creates a read-only snapshot of a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/snapshot-blob.
+// Note: If customer provided keys are used on blobs with snapshots enabled, each snapshot can be provisioned
+// with different encryption key. You must keep track of snapshot and associated encryption key to pass
+// the correct key with blob operations. If you need to rotate the key associated with an object, you can
+// download the object and upload with new encryption key.
 func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobCreateSnapshotResponse, error) {
 	// CreateSnapshot does NOT panic if the user tries to create a snapshot using a URL that already has a snapshot query parameter
 	// because checking this would be a performance hit for a VERY unusual path and I don't think the common case should suffer this
