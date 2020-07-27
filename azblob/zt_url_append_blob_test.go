@@ -622,3 +622,4 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeFalse(c *chk.C) {
 		AppendBlobAccessConditions{AppendPositionAccessConditions: AppendPositionAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) - 1)}}, nil)
 	validateStorageError(c, err, ServiceCodeMaxBlobSizeConditionNotMet)
 }
+

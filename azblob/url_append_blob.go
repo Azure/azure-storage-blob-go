@@ -42,6 +42,14 @@ func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new AppendBlobURL object identical to the source but with the specified version id.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (ab AppendBlobURL) WithVersionID(versionId string) AppendBlobURL {
+	p := NewBlobURLParts(ab.URL())
+	p.VersionID = versionId
+	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
+}
+
 func (ab AppendBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
 	return ab.blobClient.GetAccountInfo(ctx)
 }
@@ -53,8 +61,13 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 	return ab.abClient.Create(ctx, 0, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
-		nil, nil, EncryptionAlgorithmNone, // CPK
-		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, nil)
+		nil, nil, EncryptionAlgorithmNone, // CPK-V
+		nil, // CPK-N
+		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch,
+		nil, // Blob tags
+		nil,
+		nil, // Blob tags
+	)
 }
 
 // AppendBlock writes a stream to a new block of data to the end of the existing append blob.
@@ -74,7 +87,10 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		ac.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		nil, nil, EncryptionAlgorithmNone, // CPK
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, nil)
+		nil, // CPK-N
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		nil)
 }
 
 // AppendBlockFromURL copies a new block of data from source URL to the end of the existing append blob.
@@ -86,9 +102,12 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 	return ab.abClient.AppendBlockFromURL(ctx, sourceURL.String(), 0, httpRange{offset: offset, count: count}.pointers(),
 		transactionalMD5, nil, nil, nil,
 		nil, nil, EncryptionAlgorithmNone, // CPK
+		nil, // CPK-N
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob tags
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
 type AppendBlobAccessConditions struct {
