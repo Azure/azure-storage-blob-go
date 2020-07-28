@@ -1737,25 +1737,6 @@ func (s *aztestsSuite) TestBlobSetMetadataIfNoneMatchFalse(c *chk.C) {
 }
 
 func testBlobsUndeleteImpl(c *chk.C, bsu ServiceURL) error {
-<<<<<<< HEAD
-	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
-	blobURL, _ := createNewBlockBlob(c, containerURL)
-
-	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
-	c.Assert(err, chk.IsNil) // This call will not have errors related to slow update of service properties, so we assert.
-
-	_, err = blobURL.Undelete(ctx)
-	if err != nil { // We want to give the wrapper method a chance to check if it was an error related to the service properties update.
-		return err
-	}
-
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
-	if err != nil {
-		return errors.New(string(err.(StorageError).ServiceCode()))
-	}
-	c.Assert(resp.BlobType(), chk.Equals, BlobBlockBlob) // We could check any property. This is just to double check it was undeleted.
-=======
 	//containerURL, _ := createNewContainer(c, bsu)
 	//defer deleteContainer(c, containerURL)
 	//blobURL, _ := createNewBlockBlob(c, containerURL)
@@ -1773,7 +1754,6 @@ func testBlobsUndeleteImpl(c *chk.C, bsu ServiceURL) error {
 	//	return errors.New(string(err.(StorageError).ServiceCode()))
 	//}
 	//c.Assert(resp.BlobType(), chk.Equals, BlobBlockBlob) // We could check any property. This is just to double check it was undeleted.
->>>>>>> 146595a6f8245e5c920d19266a4616f70d72f366
 	return nil
 }
 
@@ -1973,12 +1953,8 @@ func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	cURL, _ := createNewContainer(c, bsu)
 	defer delContainer(c, cURL)
 	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
-<<<<<<< HEAD
 
 	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-=======
-	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
->>>>>>> 146595a6f8245e5c920d19266a4616f70d72f366
 	c.Assert(err, chk.IsNil)
 
 	// Verify that we can inject errors first.
@@ -1995,4 +1971,3 @@ func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(buf, chk.DeepEquals, []byte(blockBlobDefaultData))
 }
-
