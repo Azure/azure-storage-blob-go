@@ -17,7 +17,6 @@ import (
 
 	"math/rand"
 
-	// chk "gopkg.in/check.v1"
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
@@ -1064,7 +1063,7 @@ func ExampleUploadFileToBlockBlobAndDownloadItBack() {
 			Progress: func(bytesTransferred int64) {
 				fmt.Printf("Uploaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
 			},
-		})
+		}, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -61,7 +61,7 @@ type UploadToBlockBlobOptions struct {
 
 // UploadBufferToBlockBlob uploads a buffer in blocks to a block blob.
 func UploadBufferToBlockBlob(ctx context.Context, b []byte,
-	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions) (CommonResponse, error) {
+	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions, cpk ClientProvidedKeyOptions) (CommonResponse, error) {
 	bufferSize := int64(len(b))
 	if o.BlockSize == 0 {
 		// If bufferSize > (BlockBlobMaxStageBlockBytes * BlockBlobMaxBlocks), then error
@@ -86,7 +86,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body, o.Progress)
 		}
-		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, ClientProvidedKeyOptions{})
+		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, cpk)
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)
@@ -135,7 +135,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 
 // UploadFileToBlockBlob uploads a file in blocks to a block blob.
 func UploadFileToBlockBlob(ctx context.Context, file *os.File,
-	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions) (CommonResponse, error) {
+	blockBlobURL BlockBlobURL, o UploadToBlockBlobOptions, cpk ClientProvidedKeyOptions) (CommonResponse, error) {
 
 	stat, err := file.Stat()
 	if err != nil {
@@ -149,7 +149,7 @@ func UploadFileToBlockBlob(ctx context.Context, file *os.File,
 		}
 		defer m.unmap()
 	}
-	return UploadBufferToBlockBlob(ctx, m, blockBlobURL, o)
+	return UploadBufferToBlockBlob(ctx, m, blockBlobURL, o, cpk)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -381,7 +381,7 @@ func UploadStreamToBlockBlob(ctx context.Context, reader io.Reader, blockBlobURL
 	o UploadStreamToBlockBlobOptions) (CommonResponse, error) {
 	o.defaults()
 
-	result, err := copyFromReader(ctx, reader, blockBlobURL, o, ClientProvidedKeyOptions{})
+	result, err := copyFromReader(ctx, reader, blockBlobURL, o)
 	if err != nil {
 		return nil, err
 	}

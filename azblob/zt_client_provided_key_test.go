@@ -22,7 +22,7 @@ Set Blob Properties, Set Blob Metadata, Get Blob, Get Blob Properties, Get Blob 
 var testEncryptedKey = "MDEyMzQ1NjcwMTIzNDU2NzAxMjM0NTY3MDEyMzQ1Njc="
 var testEncryptedHash = "3QFFFpRA5+XANHqwwbT4yXDmrT/2JaLt/FKHjzhOdoE="
 var testEncryptedScope = ""
-var testCPK = InitClientProvidedKeyOptions(&testEncryptedKey, &testEncryptedHash, &testEncryptedScope)
+var testCPK = NewClientProvidedKeyOptions(&testEncryptedKey, &testEncryptedHash, &testEncryptedScope)
 
 func blockIDBinaryToBase64(blockID []byte) string {
 	return base64.StdEncoding.EncodeToString(blockID)
@@ -55,16 +55,12 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 	base64BlockIDs := make([]string, len(words))
 	for index, word := range words {
 		base64BlockIDs[index] = blockIDIntToBase64(index)
-		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{}, nil, *testCPK)
-		if err != nil {
-			c.Fail()
-		}
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{}, nil, testCPK)
+		c.Assert(err, chk.IsNil)
 	}
 
-	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, *testCPK)
-	if err != nil {
-		c.Fail()
-	}
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
+	c.Assert(err, chk.IsNil)
 
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -73,20 +69,15 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 
 	// Get blob content without encryption key should fail the request.
 	_, err = blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-	if err == nil {
-		c.Fail()
-	}
+	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	getResp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, *testCPK)
-	if err != nil {
-		c.Fail()
-	}
+	getResp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, testCPK)
+	c.Assert(err, chk.IsNil)
 	b := bytes.Buffer{}
 	reader := getResp.Body(RetryReaderOptions{})
 	b.ReadFrom(reader)
 	reader.Close() // The client must close the response body when finished with it
-	// fmt.Println(b.String())
 	c.Assert(b.String(), chk.Equals, "AAA BBB CCC ")
 	c.Assert(getResp.ETag(), chk.Equals, resp.ETag())
 	c.Assert(getResp.LastModified(), chk.DeepEquals, resp.LastModified())
@@ -127,7 +118,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 	blockID1, blockID2 := blockIDIntToBase64(0), blockIDIntToBase64(1)
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, *testCPK)
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -136,7 +127,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 	c.Assert(stageResp1.IsServerEncrypted(), chk.Equals, "true")
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, *testCPK)
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -151,7 +142,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, *testCPK)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.IsServerEncrypted(), chk.Equals, "true")
@@ -164,12 +155,10 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 
 	// Get blob content without encryption key should fail the request.
 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-	if err == nil {
-		c.Fail()
-	}
+	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	downloadResp, err = destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err = destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -186,7 +175,7 @@ func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 	md5Val := md5.Sum(srcData)
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, *testCPK)
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -195,7 +184,7 @@ func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	downloadResp, err = blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err = blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(downloadResp.ContentMD5(), chk.DeepEquals, md5Val[:])
 	data, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
@@ -210,16 +199,14 @@ func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 
 	appendBlobURL := container.NewAppendBlobURL(generateBlobName())
 
-	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, *testCPK)
+	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
 	words := []string{"AAA ", "BBB ", "CCC "}
 	for index, word := range words {
-		resp, err := appendBlobURL.AppendBlock(context.Background(), strings.NewReader(word), AppendBlobAccessConditions{}, nil, *testCPK)
-		if err != nil {
-			c.Fail()
-		}
+		resp, err := appendBlobURL.AppendBlock(context.Background(), strings.NewReader(word), AppendBlobAccessConditions{}, nil, testCPK)
+		c.Assert(err, chk.IsNil)
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 		c.Assert(resp.BlobAppendOffset(), chk.Equals, strconv.Itoa(index*4))
@@ -236,12 +223,10 @@ func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 
 	// Get blob content without encryption key should fail the request.
 	_, err = appendBlobURL.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-	if err == nil {
-		c.Fail()
-	}
+	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	downloadResp, err := appendBlobURL.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err := appendBlobURL.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 
 	data, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
@@ -289,11 +274,11 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, *testCPK)
+	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
 
-	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, *testCPK)
+	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
@@ -301,12 +286,10 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 
 	// Get blob content without encryption key should fail the request.
 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-	if err == nil {
-		c.Fail()
-	}
+	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	downloadResp, err = destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err = destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -320,20 +303,18 @@ func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
-	blobURL, _ := createNewPageBlobWithCPK(c, container, int64(testSize), *testCPK)
+	blobURL, _ := createNewPageBlobWithCPK(c, container, int64(testSize), testCPK)
 
-	uploadResp, err := blobURL.UploadPages(ctx, 0, r, PageBlobAccessConditions{}, nil, *testCPK)
+	uploadResp, err := blobURL.UploadPages(ctx, 0, r, PageBlobAccessConditions{}, nil, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
 
 	// Get blob content without encryption key should fail the request.
 	downloadResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
-	if err == nil {
-		c.Fail()
-	}
+	c.Assert(err, chk.NotNil)
 
 	// Download blob to do data integrity check.
-	downloadResp, err = blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err = blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -353,7 +334,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 	r, srcData := getRandomDataAndReader(testSize)
 	ctx := context.Background() // Use default Background context
 	blobURL, _ := createNewPageBlobWithSize(c, container, int64(testSize))
-	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), *testCPK)
+	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), testCPK)
 
 	uploadResp, err := blobURL.UploadPages(ctx, 0, r, PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -373,7 +354,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, *testCPK)
+	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -381,7 +362,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 	c.Assert(resp.IsServerEncrypted(), chk.Equals, "true")
 
 	// Download blob to do data integrity check.
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(downloadResp.r.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
@@ -421,8 +402,8 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 	}
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
-	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), *testCPK)
-	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, *testCPK)
+	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), testCPK)
+	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.ETag(), chk.NotNil)
 	c.Assert(uploadResp.LastModified(), chk.NotNil)
@@ -430,7 +411,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 	c.Assert(uploadResp.ContentMD5(), chk.DeepEquals, md5Value[:])
 	c.Assert(uploadResp.BlobSequenceNumber(), chk.Equals, int64(0))
 
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(downloadResp.r.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
@@ -446,7 +427,7 @@ func (s *aztestsSuite) TestGetSetBlobMetadataWithCPK(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
-	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, *testCPK)
+	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
 
 	metadata := Metadata{"key": "value", "another_key": "1234"}
 
@@ -454,7 +435,7 @@ func (s *aztestsSuite) TestGetSetBlobMetadataWithCPK(c *chk.C) {
 	_, err := blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 
-	resp, err := blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{}, *testCPK)
+	resp, err := blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
 
@@ -462,15 +443,15 @@ func (s *aztestsSuite) TestGetSetBlobMetadataWithCPK(c *chk.C) {
 	getResp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 
-	getResp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, *testCPK)
+	getResp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(getResp.NewMetadata(), chk.HasLen, 2)
 	c.Assert(getResp.NewMetadata(), chk.DeepEquals, metadata)
 
-	_, err = blobURL.SetMetadata(ctx, Metadata{}, BlobAccessConditions{}, *testCPK)
+	_, err = blobURL.SetMetadata(ctx, Metadata{}, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 
-	getResp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, *testCPK)
+	getResp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(getResp.NewMetadata(), chk.HasLen, 0)
 }
@@ -479,19 +460,19 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPK(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
-	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, *testCPK)
-	_, err := blobURL.Upload(ctx, strings.NewReader("113333666666"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, *testCPK)
+	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
+	_, err := blobURL.Upload(ctx, strings.NewReader("113333666666"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
 
 	// Create Snapshot of an encrypted blob without encryption key should fail the request.
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 
-	resp, err = blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, *testCPK)
+	resp, err = blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.IsServerEncrypted(), chk.Equals, "false")
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
 
-	dResp, err := snapshotURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, *testCPK)
+	dResp, err := snapshotURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(dResp.r.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
 	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
