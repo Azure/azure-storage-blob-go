@@ -42,6 +42,14 @@ func (ab AppendBlobURL) WithSnapshot(snapshot string) AppendBlobURL {
 	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new AppendBlobURL object identical to the source but with the specified version id.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (ab AppendBlobURL) WithVersionID(versionId string) AppendBlobURL {
+	p := NewBlobURLParts(ab.URL())
+	p.VersionID = versionId
+	return NewAppendBlobURL(p.URL(), ab.blobClient.Pipeline())
+}
+
 func (ab AppendBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
 	return ab.blobClient.GetAccountInfo(ctx)
 }

@@ -486,7 +486,7 @@ var blockID string // a single blockID used in tests when only a single ID is ne
 
 func init() {
 	u := [64]byte{}
-	binary.BigEndian.PutUint32((u[len(guuid.UUID{}):]), math.MaxUint32)
+	binary.BigEndian.PutUint32(u[len(guuid.UUID{}):], math.MaxUint32)
 	blockID = base64.StdEncoding.EncodeToString(u[:])
 }
 
@@ -898,3 +898,4 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	c.Assert(resp.CommittedBlocks[1].Name, chk.Equals, "0011")
 	c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
 }
+

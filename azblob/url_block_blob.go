@@ -45,6 +45,14 @@ func (bb BlockBlobURL) WithSnapshot(snapshot string) BlockBlobURL {
 	return NewBlockBlobURL(p.URL(), bb.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new BlockBlobURRL object identical to the source but with the specified version id.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (bb BlockBlobURL) WithVersionID(versionId string) BlockBlobURL {
+	p := NewBlobURLParts(bb.URL())
+	p.VersionID = versionId
+	return NewBlockBlobURL(p.URL(), bb.blobClient.Pipeline())
+}
+
 func (bb BlockBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoResponse, error) {
 	return bb.blobClient.GetAccountInfo(ctx)
 }

@@ -76,7 +76,7 @@ func (v AccountSASSignatureValues) NewSASQueryParameters(sharedKeyCredential *Sh
 // The AccountSASPermissions type simplifies creating the permissions string for an Azure Storage Account SAS.
 // Initialize an instance of this type and then call its String method to set AccountSASSignatureValues's Permissions field.
 type AccountSASPermissions struct {
-	Read, Write, Delete, List, Add, Create, Update, Process bool
+	Read, Write, Delete, DeletePreviousVersion, List, Add, Create, Update, Process bool
 }
 
 // String produces the SAS permissions string for an Azure Storage account.
@@ -91,6 +91,9 @@ func (p AccountSASPermissions) String() string {
 	}
 	if p.Delete {
 		buffer.WriteRune('d')
+	}
+	if p.DeletePreviousVersion {
+		buffer.WriteRune('x')
 	}
 	if p.List {
 		buffer.WriteRune('l')
@@ -130,6 +133,8 @@ func (p *AccountSASPermissions) Parse(s string) error {
 		case 'u':
 			p.Update = true
 		case 'p':
+			p.Process = true
+		case 'x':
 			p.Process = true
 		default:
 			return fmt.Errorf("Invalid permission character: '%v'", r)

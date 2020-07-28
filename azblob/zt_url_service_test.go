@@ -18,6 +18,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// Test on a container
 	cURL := sa.NewContainerURL(generateContainerName())
+	defer delContainer(c, cURL)
 	_, err = cURL.Create(ctx, Metadata{}, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	cAccInfo, err := cURL.GetAccountInfo(ctx)

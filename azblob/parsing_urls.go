@@ -1,6 +1,7 @@
 package azblob
 
 import (
+	"errors"
 	"net"
 	"net/url"
 	"strings"
@@ -8,6 +9,7 @@ import (
 
 const (
 	snapshot           = "snapshot"
+	versionid          = "versionid"
 	SnapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
@@ -23,6 +25,7 @@ type BlobURLParts struct {
 	Snapshot            string // "" if not a snapshot
 	SAS                 SASQueryParameters
 	UnparsedParams      string
+	VersionID           string // "" if not versioning enabled
 }
 
 // IPEndpointStyleInfo is used for IP endpoint style URL when working with Azure storage emulator.
@@ -85,11 +88,18 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 	// Convert the query parameters to a case-sensitive map & trim whitespace
 	paramsMap := u.Query()
 
-	up.Snapshot = "" // Assume no snapshot
+	up.Snapshot = ""  // Assume no snapshot
+	up.VersionID = "" // Assume no versionID
 	if snapshotStr, ok := caseInsensitiveValues(paramsMap).Get(snapshot); ok {
 		up.Snapshot = snapshotStr[0]
 		// If we recognized the query parameter, remove it from the map
 		delete(paramsMap, snapshot)
+	}
+
+	if versionIDs, ok := caseInsensitiveValues(paramsMap).Get(versionid); ok {
+		up.VersionID = versionIDs[0]
+		// If we recognized the query parameter, remove it from the map
+		delete(paramsMap, versionid)
 	}
 	up.SAS = newSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
@@ -124,6 +134,11 @@ func (up BlobURLParts) URL() url.URL {
 
 	rawQuery := up.UnparsedParams
 
+	// Check: Both snapshot and version id cannot be present in the request URL.
+	if up.Snapshot != "" && up.VersionID != "" {
+		errors.New("Snapshot and versioning cannot be enabled simultaneously")
+	}
+
 	//If no snapshot is initially provided, fill it in from the SAS query properties to help the user
 	if up.Snapshot == "" && !up.SAS.snapshotTime.IsZero() {
 		up.Snapshot = up.SAS.snapshotTime.Format(SnapshotTimeFormat)
@@ -136,6 +151,15 @@ func (up BlobURLParts) URL() url.URL {
 		}
 		rawQuery += snapshot + "=" + up.Snapshot
 	}
+
+	// Concatenate blob version id query parameter (if it exists)
+	if up.VersionID != "" {
+		if len(rawQuery) > 0 {
+			rawQuery += "&"
+		}
+		rawQuery += versionid + "=" + up.VersionID
+	}
+
 	sas := up.SAS.Encode()
 	if sas != "" {
 		if len(rawQuery) > 0 {

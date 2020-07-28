@@ -46,6 +46,14 @@ func (b BlobURL) WithSnapshot(snapshot string) BlobURL {
 	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
 }
 
+// WithVersionID creates a new BlobURL object identical to the source but with the specified version id.
+// Pass "" to remove the snapshot returning a URL to the base blob.
+func (b BlobURL) WithVersionID(versionID string) BlobURL {
+	p := NewBlobURLParts(b.URL())
+	p.VersionID = versionID
+	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
+}
+
 // ToAppendBlobURL creates an AppendBlobURL using the source's URL and pipeline.
 func (b BlobURL) ToAppendBlobURL() AppendBlobURL {
 	return NewAppendBlobURL(b.URL(), b.blobClient.Pipeline())
@@ -63,6 +71,9 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 
 // Download reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
 // Passing azblob.CountToEnd (0) for count will download the blob from the offset to the end.
+// Note: Snapshot/VersionId are optional parameters which are part of request URL query params.
+// 	These parameters can be explicitly set by calling WithSnapshot(snapshot string)/WithVersionID(versionID string)
+// 	Therefore it not required to pass these here.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob.
 func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac BlobAccessConditions, rangeGetContentMD5 bool, cpk ClientProvidedKeyOptions) (*DownloadResponse, error) {
 	var xRangeGetContentMD5 *bool
@@ -89,7 +100,10 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 }
 
 // Delete marks the specified blob or snapshot for deletion. The blob is later deleted during garbage collection.
-// Note that deleting a blob also deletes all its snapshots.
+// Note 1: that deleting a blob also deletes all its snapshots.
+// Note 2: Snapshot/VersionId are optional parameters which are part of request URL query params.
+// 	These parameters can be explicitly set by calling WithSnapshot(snapshot string)/WithVersionID(versionID string)
+// 	Therefore it not required to pass these here.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-blob.
 func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions) (*BlobDeleteResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
@@ -105,11 +119,12 @@ func (b BlobURL) Undelete(ctx context.Context) (*BlobUndeleteResponse, error) {
 	return b.blobClient.Undelete(ctx, nil, nil)
 }
 
-// SetTier operation sets the tier on a blob. The operation is allowed on a page
-// blob in a premium storage account and on a block blob in a blob storage account (locally
-// redundant storage only). A premium page blob's tier determines the allowed size, IOPS, and
-// bandwidth of the blob. A block blob's tier determines Hot/Cool/Archive storage type. This operation
-// does not update the blob's ETag.
+// SetTier operation sets the tier on a blob. The operation is allowed on a page  blob in a premium storage account
+// and on a block blob in a blob storage account (locally redundant storage only).
+// A premium page blob's tier determines the allowed size, IOPS, and bandwidth of the blob.
+// A block blob's tier determines Hot/Cool/Archive storage type. This operation does not update the blob's ETag.
+// Note: VersionId is an optional parameter which is part of request URL query params.
+// It can be explicitly set by calling WithVersionID(versionID string) function and hence it not required to pass it here.
 // For detailed information about block blob level tiering see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers.
 func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions) (*BlobSetTierResponse, error) {
 	return b.blobClient.SetTier(ctx, tier, nil,
@@ -118,6 +133,9 @@ func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAcce
 }
 
 // GetProperties returns the blob's properties.
+// Note: Snapshot/VersionId are optional parameters which are part of request URL query params.
+// These parameters can be explicitly set by calling WithSnapshot(snapshot string)/WithVersionID(versionID string)
+// Therefore it not required to pass these here.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-blob-properties.
 func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlobGetPropertiesResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
