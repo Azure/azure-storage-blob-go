@@ -233,8 +233,6 @@ func createNewPageBlobWithCPK(c *chk.C, container ContainerURL, sizeInBytes int6
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
-	c.Assert(resp.EncryptionKeySha256(), chk.Equals, *(cpk.EncryptionKeySha256))
-	c.Assert(resp.IsServerEncrypted(), chk.Equals, "true")
 	return
 }
 
