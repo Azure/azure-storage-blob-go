@@ -58,11 +58,14 @@ const (
 	// that the operation for AppendBlob requires at least version 2015-02-21.
 	ServiceCodeFeatureVersionMismatch ServiceCodeType = "FeatureVersionMismatch"
 
+	// ServiceCodeFeatureEncryptionMismatch means the given customer specified encryption does not match the encryption used to encrypt the blob.
+	ServiceCodeFeatureEncryptionMismatch ServiceCodeType = "BlobCustomerSpecifiedEncryptionMismatch"
+
 	// ServiceCodeIncrementalCopyBlobMismatch means the specified source blob is different than the copy source of the existing incremental copy blob.
 	ServiceCodeIncrementalCopyBlobMismatch ServiceCodeType = "IncrementalCopyBlobMismatch"
 
-	// ServiceCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed means the specified snapshot is earlier than the last snapshot copied into the incremental copy blob.
-	ServiceCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed ServiceCodeType = "IncrementalCopyOfEralierVersionSnapshotNotAllowed"
+	// ServiceCodeIncrementalCopyOfEarlierVersionSnapshotNotAllowed means the specified snapshot is earlier than the last snapshot copied into the incremental copy blob.
+	ServiceCodeIncrementalCopyOfEarlierVersionSnapshotNotAllowed ServiceCodeType = "IncrementalCopyOfEralierVersionSnapshotNotAllowed"
 
 	// ServiceCodeIncrementalCopySourceMustBeSnapshot means the source for incremental copy request must be a snapshot.
 	ServiceCodeIncrementalCopySourceMustBeSnapshot ServiceCodeType = "IncrementalCopySourceMustBeSnapshot"

@@ -24,6 +24,9 @@ var testEncryptedHash = "3QFFFpRA5+XANHqwwbT4yXDmrT/2JaLt/FKHjzhOdoE="
 var testEncryptedScope = ""
 var testCPK = NewClientProvidedKeyOptions(&testEncryptedKey, &testEncryptedHash, &testEncryptedScope)
 
+var testEncryptedScope1 = "blobgokeytestscope"
+var testCPK1 = ClientProvidedKeyOptions{EncryptionScope: &testEncryptedScope1}
+
 func blockIDBinaryToBase64(blockID []byte) string {
 	return base64.StdEncoding.EncodeToString(blockID)
 }
@@ -81,7 +84,59 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 	c.Assert(b.String(), chk.Equals, "AAA BBB CCC ")
 	c.Assert(getResp.ETag(), chk.Equals, resp.ETag())
 	c.Assert(getResp.LastModified(), chk.DeepEquals, resp.LastModified())
-	c.Assert(getResp.r.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
+}
+
+func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPKByScope(c *chk.C) {
+	bsu := getBSU()
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	blobURL := container.NewBlockBlobURL(generateBlobName())
+
+	words := []string{"AAA ", "BBB ", "CCC "}
+	base64BlockIDs := make([]string, len(words))
+	for index, word := range words {
+		base64BlockIDs[index] = blockIDIntToBase64(index)
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{}, nil, testCPK1)
+		c.Assert(err, chk.IsNil)
+	}
+
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK1)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.ETag(), chk.NotNil)
+	c.Assert(resp.LastModified(), chk.NotNil)
+	c.Assert(resp.IsServerEncrypted(), chk.Equals, "true")
+	c.Assert(resp.EncryptionScope(), chk.Equals, *(testCPK1.EncryptionScope))
+
+	getResp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, testCPK)
+	c.Assert(err, chk.NotNil)
+	serr := err.(StorageError)
+	c.Assert(serr.Response().StatusCode, chk.Equals, 409)
+	c.Assert(serr.ServiceCode(), chk.Equals, ServiceCodeFeatureEncryptionMismatch)
+
+	getResp, err = blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	b := bytes.Buffer{}
+	reader := getResp.Body(RetryReaderOptions{})
+	b.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
+	c.Assert(b.String(), chk.Equals, "AAA BBB CCC ")
+	c.Assert(getResp.ETag(), chk.Equals, resp.ETag())
+	c.Assert(getResp.LastModified(), chk.DeepEquals, resp.LastModified())
+	c.Assert(getResp.LastModified(), chk.DeepEquals, resp.LastModified())
+	c.Assert(getResp.r.rawResponse.Header.Get("x-ms-encryption-scope"), chk.Equals, *(testCPK1.EncryptionScope))
+
+	// Download blob to do data integrity check.
+	getResp, err = blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, testCPK1)
+	c.Assert(err, chk.IsNil)
+	b = bytes.Buffer{}
+	reader = getResp.Body(RetryReaderOptions{})
+	b.ReadFrom(reader)
+	reader.Close() // The client must close the response body when finished with it
+	c.Assert(b.String(), chk.Equals, "AAA BBB CCC ")
+	c.Assert(getResp.ETag(), chk.Equals, resp.ETag())
+	c.Assert(getResp.LastModified(), chk.DeepEquals, resp.LastModified())
+	c.Assert(getResp.r.rawResponse.Header.Get("x-ms-encryption-scope"), chk.Equals, *(testCPK1.EncryptionScope))
 }
 
 func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
