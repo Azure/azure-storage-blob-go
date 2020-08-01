@@ -9,7 +9,7 @@ import (
 
 const (
 	snapshot           = "snapshot"
-	versionId          = "versionId"
+	versionId          = "versionid"
 	SnapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
 )
 

@@ -63,8 +63,8 @@ func (s *aztestsSuite) TestCreateAndDownloadBlobSpecialCharactersWithVID(c *chk.
 		c.Assert(resp.VersionID(), chk.NotNil)
 
 		dResp, err := blobURL.WithVersionID(resp.VersionID()).Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
-		d1, err := ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
 		c.Assert(err, chk.IsNil)
+		d1, err := ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
 		c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
 		c.Assert(string(d1), chk.DeepEquals, string(data[i]))
 		versionId := dResp.r.rawResponse.Header.Get("x-ms-version-id")
