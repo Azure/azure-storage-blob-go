@@ -3242,7 +3242,7 @@ type Block struct {
 	// Name - The base64 encoded block ID.
 	Name string `xml:"Name"`
 	// Size - The block size in bytes.
-	Size int32 `xml:"Size"`
+	Size int64 `xml:"Size"`
 }
 
 // BlockBlobCommitBlockListResponse ...
