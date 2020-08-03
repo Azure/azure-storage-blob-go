@@ -2311,13 +2311,13 @@ type BlobHierarchyListSegment struct {
 // BlobItemInternal - An Azure Storage blob
 type BlobItemInternal struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName          xml.Name               `xml:"Blob"`
-	Name             string                 `xml:"Name"`
-	Deleted          bool                   `xml:"Deleted"`
-	Snapshot         string                 `xml:"Snapshot"`
-	VersionID        *string                `xml:"VersionId"`
-	IsCurrentVersion *bool                  `xml:"IsCurrentVersion"`
-	Properties       BlobPropertiesInternal `xml:"Properties"`
+	XMLName          xml.Name       `xml:"Blob"`
+	Name             string         `xml:"Name"`
+	Deleted          bool           `xml:"Deleted"`
+	Snapshot         string         `xml:"Snapshot"`
+	VersionID        *string        `xml:"VersionId"`
+	IsCurrentVersion *bool          `xml:"IsCurrentVersion"`
+	Properties       BlobProperties `xml:"Properties"`
 
 	// TODO funky generator type -> *BlobMetadata
 	Metadata                  Metadata          `xml:"Metadata"`
@@ -2339,8 +2339,8 @@ type BlobPrefix struct {
 	Name string `xml:"Name"`
 }
 
-// BlobPropertiesInternal - Properties of a blob
-type BlobPropertiesInternal struct {
+// BlobProperties - Properties of a blob
+type BlobProperties struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName      xml.Name   `xml:"Properties"`
 	CreationTime *time.Time `xml:"Creation-Time"`
@@ -2391,15 +2391,15 @@ type BlobPropertiesInternal struct {
 	RehydratePriority RehydratePriorityType `xml:"RehydratePriority"`
 }
 
-// MarshalXML implements the xml.Marshaler interface for BlobPropertiesInternal.
-func (bpi BlobPropertiesInternal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	bpi2 := (*blobPropertiesInternal)(unsafe.Pointer(&bpi))
+// MarshalXML implements the xml.Marshaler interface for BlobProperties.
+func (bpi BlobProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	bpi2 := (*blobProperties)(unsafe.Pointer(&bpi))
 	return e.EncodeElement(*bpi2, start)
 }
 
-// UnmarshalXML implements the xml.Unmarshaler interface for BlobPropertiesInternal.
-func (bpi *BlobPropertiesInternal) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	bpi2 := (*blobPropertiesInternal)(unsafe.Pointer(bpi))
+// UnmarshalXML implements the xml.Unmarshaler interface for BlobProperties.
+func (bpi *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	bpi2 := (*blobProperties)(unsafe.Pointer(bpi))
 	return d.DecodeElement(bpi2, &start)
 }
 
@@ -3242,7 +3242,7 @@ type Block struct {
 	// Name - The base64 encoded block ID.
 	Name string `xml:"Name"`
 	// Size - The block size in bytes.
-	Size int32 `xml:"Size"`
+	Size int64 `xml:"Size"`
 }
 
 // BlockBlobCommitBlockListResponse ...
@@ -7265,8 +7265,8 @@ func init() {
 	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
 		validateError(errors.New("size mismatch between AccessPolicy and accessPolicy"))
 	}
-	if reflect.TypeOf((*BlobPropertiesInternal)(nil)).Elem().Size() != reflect.TypeOf((*blobPropertiesInternal)(nil)).Elem().Size() {
-		validateError(errors.New("size mismatch between BlobPropertiesInternal and blobPropertiesInternal"))
+	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between BlobProperties and blobProperties"))
 	}
 	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
 		validateError(errors.New("size mismatch between ContainerProperties and containerProperties"))
@@ -7355,7 +7355,7 @@ type accessPolicy struct {
 }
 
 // internal type used for marshalling
-type blobPropertiesInternal struct {
+type blobProperties struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName                   xml.Name              `xml:"Properties"`
 	CreationTime              *timeRFC1123          `xml:"Creation-Time"`
