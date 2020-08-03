@@ -44,7 +44,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 			return SASQueryParameters{}, err
 		}
 		v.Permissions = perms.String()
-	} else if v.Version != null && v.Version != "" {
+	} else if v.Version != "" {
 		resource = "bv"
 		//Make sure the permission characters are in the correct order
 		perms := &BlobSASPermissions{}
