@@ -8,7 +8,7 @@ import (
 
 const (
 	snapshot           = "snapshot"
-	versionid          = "versionid"
+	versionId          = "versionid"
 	SnapshotTimeFormat = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
@@ -95,10 +95,10 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 		delete(paramsMap, snapshot)
 	}
 
-	if versionIDs, ok := caseInsensitiveValues(paramsMap).Get(versionid); ok {
+	if versionIDs, ok := caseInsensitiveValues(paramsMap).Get(versionId); ok {
 		up.VersionID = versionIDs[0]
 		// If we recognized the query parameter, remove it from the map
-		delete(paramsMap, versionid)
+		delete(paramsMap, versionId)
 	}
 	up.SAS = newSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
@@ -151,7 +151,7 @@ func (up BlobURLParts) URL() url.URL {
 		if len(rawQuery) > 0 {
 			rawQuery += "&"
 		}
-		rawQuery += versionid + "=" + up.VersionID
+		rawQuery += versionId + "=" + up.VersionID
 	}
 
 	sas := up.SAS.Encode()
