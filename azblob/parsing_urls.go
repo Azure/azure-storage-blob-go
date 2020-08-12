@@ -99,7 +99,8 @@ func NewBlobURLParts(u url.URL) BlobURLParts {
 	if versionIDs, ok := caseInsensitiveValues(paramsMap).Get(versionId); ok {
 		up.VersionID = versionIDs[0]
 		// If we recognized the query parameter, remove it from the map
-		delete(paramsMap, versionId)
+		delete(paramsMap, versionId)   // delete "versionid" from paramsMap
+		delete(paramsMap, "versionId") // delete "versionId" from paramsMap
 	}
 	up.SAS = newSASQueryParameters(paramsMap, true)
 	up.UnparsedParams = paramsMap.Encode()
