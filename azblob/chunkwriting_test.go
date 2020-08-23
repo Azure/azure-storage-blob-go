@@ -251,7 +251,7 @@ func TestCopyFromReader(t *testing.T) {
 			br.errOnBlock = 1
 		}
 
-		_, err = copyFromReader(test.ctx, from, br, test.o)
+		_, err = copyFromReader(test.ctx, from, br, test.o, ClientProvidedKeyOptions{})
 		switch {
 		case err == nil && test.err:
 			t.Errorf("TestCopyFromReader(%s): got err == nil, want err != nil", test.desc)

@@ -1154,7 +1154,7 @@ func ExampleUploadStreamToBlockBlob() {
 	bufferSize := 2 * 1024 * 1024 // Configure the size of the rotating buffers that are used when uploading
 	maxBuffers := 3               // Configure the number of rotating buffers that are used when uploading
 	_, err = UploadStreamToBlockBlob(ctx, bytes.NewReader(data), blockBlobURL,
-		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
+		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers}, ClientProvidedKeyOptions{})
 
 	// Verify that upload was successful
 	if err != nil {

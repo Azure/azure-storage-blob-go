@@ -28,7 +28,7 @@ type blockWriter interface {
 // well, 4 MiB or 8 MiB, and autoscale to as many goroutines within the memory limit. This gives a single dial to tweak and we can
 // choose a max value for the memory setting based on internal transfers within Azure (which will give us the maximum throughput model).
 // We can even provide a utility to dial this number in for customer networks to optimize their copies.
-func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions) (*BlockBlobCommitBlockListResponse, error) {
+func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o UploadStreamToBlockBlobOptions, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	o.defaults()
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -39,6 +39,7 @@ func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o Uploa
 		cancel: cancel,
 		reader: from,
 		to:     to,
+		cpk:    cpk,
 		id:     newID(),
 		o:      o,
 		ch:     make(chan copierChunk, 1),
@@ -88,6 +89,8 @@ type copier struct {
 	reader io.Reader
 	// to is the location we are writing our chunks to.
 	to blockWriter
+	// server-side encryption options
+	cpk ClientProvidedKeyOptions
 
 	id *id
 	o  UploadStreamToBlockBlobOptions
@@ -184,7 +187,7 @@ func (c *copier) write(chunk copierChunk) error {
 		return err
 	}
 
-	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil, c.cpk)
 	if err != nil {
 		return fmt.Errorf("write error: %w", err)
 	}
@@ -201,7 +204,7 @@ func (c *copier) close() error {
 	}
 
 	var err error
-	c.result, err = c.to.CommitBlockList(c.ctx, c.id.issued(), c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions, ClientProvidedKeyOptions{})
+	c.result, err = c.to.CommitBlockList(c.ctx, c.id.issued(), c.o.BlobHTTPHeaders, c.o.Metadata, c.o.AccessConditions, c.cpk)
 	return err
 }
 

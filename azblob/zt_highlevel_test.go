@@ -35,7 +35,7 @@ func performUploadStreamToBlockBlobTest(c *chk.C, blobSize, bufferSize, maxBuffe
 
 	// Perform UploadStreamToBlockBlob
 	uploadResp, err := UploadStreamToBlockBlob(ctx, blobContentReader, blobURL,
-		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
+		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers}, ClientProvidedKeyOptions{})
 
 	// Assert that upload was successful
 	c.Assert(err, chk.Equals, nil)
