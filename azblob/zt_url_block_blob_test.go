@@ -934,3 +934,53 @@ func (s *aztestsSuite) TestBlobSetTierOnCommit(c *chk.C) {
 		c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
 	}
 }
+
+func (s *aztestsSuite) TestSetTierOnCopyBlockBlobFromURL(c *chk.C) {
+	bsu := getBSU()
+
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 1 * 1024 * 1024
+	r, sourceData := getRandomDataAndReader(testSize)
+	sourceDataMD5Value := md5.Sum(sourceData)
+	ctx := context.Background()
+	srcBlob := container.NewBlockBlobURL(generateBlobName())
+
+	// Setting blob tier as "cool"
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, AccessTierCool)
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
+
+	// Get source blob URL with SAS for StageFromURL.
+	srcBlobParts := NewBlobURLParts(srcBlob.URL())
+
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	srcBlobParts.SAS, err = BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,
+		ExpiryTime:    time.Now().UTC().Add(2 * time.Hour),
+		ContainerName: srcBlobParts.ContainerName,
+		BlobName:      srcBlobParts.BlobName,
+		Permissions:   BlobSASPermissions{Read: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	srcBlobURLWithSAS := srcBlobParts.URL()
+	for _, tier := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
+		destBlob := container.NewBlockBlobURL(generateBlobName())
+		resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], tier)
+		c.Assert(err, chk.IsNil)
+		c.Assert(resp.Response().StatusCode, chk.Equals, 202)
+		c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
+
+		destBlobPropResp, err := destBlob.GetProperties(ctx, BlobAccessConditions{})
+		c.Assert(err, chk.IsNil)
+		c.Assert(destBlobPropResp.AccessTier(), chk.Equals, string(tier))
+
+	}
+}
