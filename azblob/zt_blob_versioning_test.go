@@ -256,7 +256,7 @@ func (s *aztestsSuite) TestCopyBlobFromURLWithSASReturnsVID(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:])
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
@@ -272,10 +272,10 @@ func (s *aztestsSuite) TestCopyBlobFromURLWithSASReturnsVID(c *chk.C) {
 	c.Assert(downloadResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5)
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier)
 	c.Assert(err, chk.NotNil)
 
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil)
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
@@ -352,7 +352,7 @@ func (s *aztestsSuite) TestPutBlockListReturnsVID(c *chk.C) {
 		c.Assert(resp.Version(), chk.Not(chk.Equals), "")
 	}
 
-	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(commitResp.VersionID(), chk.NotNil)
 

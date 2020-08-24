@@ -716,7 +716,7 @@ func ExampleBlockBlobURL() {
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -800,7 +800,7 @@ func ExamplePageBlobURL() {
 
 	ctx := context.Background() // This example uses a never-expiring context
 	_, err = blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{},
-		Metadata{}, BlobAccessConditions{})
+		Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -928,7 +928,7 @@ func Example_blobSnapshots() {
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1013,7 +1013,7 @@ func ExampleBlobURL_startCopy() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, ModifiedAccessConditions{}, BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
 	if err != nil {
 		log.Fatal(err)
 	}

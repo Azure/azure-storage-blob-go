@@ -48,7 +48,7 @@ func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 1)
 
-	listResp, err := blob.CommitBlockList(context.Background(), []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	listResp, err := blob.CommitBlockList(context.Background(), []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.LastModified().IsZero(), chk.Equals, false)
@@ -134,7 +134,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 
 	// Commit block list.
-	listResp, err := destBlob.CommitBlockList(context.Background(), []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	listResp, err := destBlob.CommitBlockList(context.Background(), []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 
@@ -184,7 +184,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke copy blob from URL.
-	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:])
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -207,11 +207,11 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 
 	// Edge case 1: Provide bad MD5 and make sure the copy fails
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5)
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier)
 	c.Assert(err, chk.NotNil)
 
 	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil)
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
@@ -529,7 +529,7 @@ func (s *aztestsSuite) TestBlobGetBlockListCommitted(c *chk.C) {
 	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.CommitBlockList(ctx, []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 
 	resp, err := blobURL.GetBlockList(ctx, BlockListCommitted, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -575,7 +575,7 @@ func (s *aztestsSuite) TestBlobGetBlockListBothNotEmpty(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	_, err = blobURL.StageBlock(ctx, id.next(), strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.CommitBlockList(ctx, id.issued(), BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, id.issued(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	// Put two uncommitted blocks
@@ -613,7 +613,7 @@ func (s *aztestsSuite) TestBlobGetBlockListSnapshot(c *chk.C) {
 
 	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.CommitBlockList(ctx, []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{})
@@ -671,7 +671,7 @@ func (s *aztestsSuite) TestBlobPutBlockListInvalidID(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id[:2]}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id[:2]}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeInvalidBlockID)
 }
 
@@ -679,7 +679,7 @@ func (s *aztestsSuite) TestBlobPutBlockListDuplicateBlocks(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id, id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id, id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetBlockList(ctx, BlockListAll, LeaseAccessConditions{})
@@ -691,7 +691,7 @@ func (s *aztestsSuite) TestBlobPutBlockListEmptyList(c *chk.C) {
 	containerURL, blobURL, _ := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{}, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{}, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetBlockList(ctx, BlockListAll, LeaseAccessConditions{})
@@ -703,7 +703,7 @@ func (s *aztestsSuite) TestBlobPutBlockListMetadataEmpty(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -715,7 +715,7 @@ func (s *aztestsSuite) TestBlobPutBlockListMetadataNonEmpty(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -727,7 +727,7 @@ func (s *aztestsSuite) TestBlobPutBlockListHTTPHeaders(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, basicHeaders, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, basicHeaders, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -739,10 +739,10 @@ func (s *aztestsSuite) TestBlobPutBlockListHTTPHeadersEmpty(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{ContentDisposition: "my_disposition"}, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{ContentDisposition: "my_disposition"}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -759,13 +759,13 @@ func validateBlobCommitted(c *chk.C, blobURL BlockBlobURL) {
 func (s *aztestsSuite) TestBlobPutBlockListIfModifiedSinceTrue(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	currentTime := getRelativeTimeGMT(-10)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobCommitted(c, blobURL)
@@ -778,20 +778,20 @@ func (s *aztestsSuite) TestBlobPutBlockListIfModifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
 func (s *aztestsSuite) TestBlobPutBlockListIfUnmodifiedSinceTrue(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobCommitted(c, blobURL)
@@ -799,13 +799,13 @@ func (s *aztestsSuite) TestBlobPutBlockListIfUnmodifiedSinceTrue(c *chk.C) {
 
 func (s *aztestsSuite) TestBlobPutBlockListIfUnmodifiedSinceFalse(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
-	blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	defer deleteContainer(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(-10)
 
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
@@ -813,11 +813,11 @@ func (s *aztestsSuite) TestBlobPutBlockListIfUnmodifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobPutBlockListIfMatchTrue(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	resp, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	resp, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobCommitted(c, blobURL)
@@ -826,11 +826,11 @@ func (s *aztestsSuite) TestBlobPutBlockListIfMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobPutBlockListIfMatchFalse(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, DefaultAccessTier)
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
@@ -838,11 +838,11 @@ func (s *aztestsSuite) TestBlobPutBlockListIfMatchFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobPutBlockListIfNoneMatchTrue(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobCommitted(c, blobURL)
@@ -851,11 +851,11 @@ func (s *aztestsSuite) TestBlobPutBlockListIfNoneMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobPutBlockListIfNoneMatchFalse(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
-	resp, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}) // The blob must actually exist to have a modifed time
+	resp, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, DefaultAccessTier)
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
@@ -864,7 +864,7 @@ func (s *aztestsSuite) TestBlobPutBlockListValidateData(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 
 	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
 	c.Assert(err, chk.IsNil)
@@ -876,7 +876,7 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	containerURL, blobURL, id := setupPutBlockListTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.StageBlock(ctx, "0001", bytes.NewReader([]byte("new data")), LeaseAccessConditions{}, nil)
@@ -888,7 +888,7 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	_, err = blobURL.StageBlock(ctx, "0100", bytes.NewReader([]byte("new data")), LeaseAccessConditions{}, nil)
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.CommitBlockList(ctx, []string{"0001", "0011"}, BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{"0001", "0011"}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetBlockList(ctx, BlockListAll, LeaseAccessConditions{})
@@ -903,14 +903,34 @@ func (s *aztestsSuite) TestSetTierOnBlobUpload(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
-	for _, val := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
+	for _, tier := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
 		blobURL, _ := getBlockBlobURL(c, containerURL)
 
-		_, err := blobURL.Upload(ctx, strings.NewReader("Test Data"), basicHeaders, nil, BlobAccessConditions{}, val)
+		_, err := blobURL.Upload(ctx, strings.NewReader("Test Data"), basicHeaders, nil, BlobAccessConditions{}, tier)
 		c.Assert(err, chk.IsNil)
 
 		resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
 		c.Assert(err, chk.IsNil)
-		c.Assert(resp.AccessTier(), chk.Equals, string(val))
+		c.Assert(resp.AccessTier(), chk.Equals, string(tier))
+	}
+}
+
+func (s *aztestsSuite) TestBlobSetTierOnCommit(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+
+	for _, tier := range []AccessTierType{AccessTierCool, AccessTierHot} {
+		blobURL, _ := getBlockBlobURL(c, containerURL)
+
+		_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
+		c.Assert(err, chk.IsNil)
+
+		_, err = blobURL.CommitBlockList(ctx, []string{blockID}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, tier)
+
+		resp, err := blobURL.GetBlockList(ctx, BlockListCommitted, LeaseAccessConditions{})
+		c.Assert(err, chk.IsNil)
+		c.Assert(resp.CommittedBlocks, chk.HasLen, 1)
+		c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
 	}
 }

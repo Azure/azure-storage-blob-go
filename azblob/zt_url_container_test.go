@@ -383,7 +383,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeCopy(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
 	blobCopyURL, blobCopyName := createBlockBlobWithPrefix(c, containerURL, "copy")
-	_, err := blobCopyURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})
+	_, err := blobCopyURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -457,7 +457,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	blobURL2, _ := createBlockBlobWithPrefix(c, containerURL, "copy")
-	resp2, err := blobURL2.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})
+	resp2, err := blobURL2.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, blobURL2, resp2)
 	blobURL3, _ := createBlockBlobWithPrefix(c, containerURL, "deleted")

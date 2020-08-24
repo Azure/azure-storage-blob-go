@@ -130,7 +130,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		return nil, err
 	}
 	// All put blocks were successful, call Put Block List to finalize the blob
-	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
+	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, DefaultAccessTier)
 }
 
 // UploadFileToBlockBlob uploads a file in blocks to a block blob.
@@ -363,6 +363,7 @@ type UploadStreamToBlockBlobOptions struct {
 	BlobHTTPHeaders  BlobHTTPHeaders
 	Metadata         Metadata
 	AccessConditions BlobAccessConditions
+	BlobAccessTier   AccessTierType
 }
 
 func (u *UploadStreamToBlockBlobOptions) defaults() {
