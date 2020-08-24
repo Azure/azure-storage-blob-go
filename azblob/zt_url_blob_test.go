@@ -133,7 +133,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataNil(c *chk.C) {
 
 	// Have the destination start with metadata so we ensure the nil metadata passed later takes effect
 	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{})
@@ -155,7 +155,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataEmpty(c *chk.C) {
 
 	// Have the destination start with metadata so we ensure the empty metadata passed later takes effect
 	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})
@@ -625,7 +625,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 	for i := range blobData {
 		blobData[i] = byte('a' + i%26)
 	}
-	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	containerURL.SetAccessPolicy(ctx, PublicAccessBlob, nil, ContainerAccessConditions{}) // So that we don't have to create a SAS
 
@@ -1970,4 +1970,3 @@ func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(buf, chk.DeepEquals, []byte(blockBlobDefaultData))
 }
-

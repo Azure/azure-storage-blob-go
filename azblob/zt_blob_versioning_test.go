@@ -58,7 +58,7 @@ func (s *aztestsSuite) TestCreateAndDownloadBlobSpecialCharactersWithVID(c *chk.
 	for i := 0; i < len(data); i++ {
 		blobName := "abc" + string(data[i])
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		resp, err := blobURL.Upload(ctx, strings.NewReader(string(data[i])), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+		resp, err := blobURL.Upload(ctx, strings.NewReader(string(data[i])), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.VersionID(), chk.NotNil)
 
@@ -80,13 +80,13 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
 	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.VersionID(), chk.NotNil)
 	versionID1 := blockBlobUploadResp.VersionID()
 
 	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.VersionID(), chk.NotNil)
 
@@ -118,13 +118,13 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersionWithBlobSAS(c *chk.C) {
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 
 	resp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	versionId := resp.VersionID()
 	c.Assert(versionId, chk.NotNil)
 
 	resp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.VersionID(), chk.NotNil)
 
@@ -159,13 +159,13 @@ func (s *aztestsSuite) TestDownloadSpecificBlobVersion(c *chk.C) {
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
 	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp, chk.NotNil)
 	versionId1 := blockBlobUploadResp.VersionID()
 
 	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp, chk.NotNil)
 	versionId2 := blockBlobUploadResp.VersionID()
@@ -192,7 +192,7 @@ func (s *aztestsSuite) TestCreateBlobSnapshotReturnsVID(c *chk.C) {
 	defer delContainer(c, containerURL)
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 	uploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.VersionID(), chk.NotNil)
 
@@ -236,7 +236,7 @@ func (s *aztestsSuite) TestCopyBlobFromURLWithSASReturnsVID(c *chk.C) {
 	srcBlob := container.NewBlockBlobURL(generateBlobName())
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(uploadSrcResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
@@ -294,7 +294,7 @@ func (s *aztestsSuite) TestCreateBlockBlobReturnsVID(c *chk.C) {
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for copy.
-	uploadResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	uploadResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(uploadResp.rawResponse.Header.Get("x-ms-version"), chk.Equals, ServiceVersion)

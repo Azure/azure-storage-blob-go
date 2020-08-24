@@ -52,7 +52,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	cSASURL := NewContainerURL(cURL, p)
 
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -130,7 +130,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 		c.Fatal(err)
 	}
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	if err != nil {
 		c.Fatal(err)
 	}

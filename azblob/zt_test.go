@@ -167,7 +167,7 @@ func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, na
 	blob, name = getBlockBlobURL(c, container)
 
 	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
-		nil, BlobAccessConditions{})
+		nil, BlobAccessConditions{}, DefaultAccessTier)
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -209,7 +209,7 @@ func createBlockBlobWithPrefix(c *chk.C, container ContainerURL, prefix string) 
 	blob = container.NewBlockBlobURL(name)
 
 	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
-		nil, BlobAccessConditions{})
+		nil, BlobAccessConditions{}, DefaultAccessTier)
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)

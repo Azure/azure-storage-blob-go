@@ -12,6 +12,8 @@ type BlobURL struct {
 	blobClient blobClient
 }
 
+var DefaultAccessTier AccessTierType = AccessTierHot
+
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
 	blobClient := newBlobClient(url, p)

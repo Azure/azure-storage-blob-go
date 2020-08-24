@@ -124,8 +124,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 
 	// Anonymous enumeration should be valid with container access
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -150,8 +149,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -173,8 +171,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{})
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))

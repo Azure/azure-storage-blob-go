@@ -86,7 +86,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body, o.Progress)
 		}
-		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions)
+		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, DefaultAccessTier)
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)

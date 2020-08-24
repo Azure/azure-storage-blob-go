@@ -88,7 +88,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for copy.
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -163,7 +163,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for copy.
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -231,7 +231,7 @@ func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 	ctx := context.Background() // Use default Background context
 	blob := container.NewBlockBlobURL(generateBlobName())
 
-	uploadResp, err := blob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	uploadResp, err := blob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.Response().StatusCode, chk.Equals, 201)
 
@@ -303,7 +303,7 @@ func (s *aztestsSuite) TestBlobPutBlobNonEmptyBody(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
@@ -318,7 +318,7 @@ func (s *aztestsSuite) TestBlobPutBlobHTTPHeaders(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), basicHeaders, nil, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), basicHeaders, nil, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -334,7 +334,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataNotEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -348,7 +348,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -362,7 +362,7 @@ func (s *aztestsSuite) TestBlobPutBlobMetadataInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Upload(ctx, nil, BlobHTTPHeaders{}, Metadata{"In valid!": "bar"}, BlobAccessConditions{})
+	_, err := blobURL.Upload(ctx, nil, BlobHTTPHeaders{}, Metadata{"In valid!": "bar"}, BlobAccessConditions{}, DefaultAccessTier)
 	c.Assert(strings.Contains(err.Error(), validationErrorSubstring), chk.Equals, true)
 }
 
@@ -375,7 +375,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfModifiedSinceTrue(c *chk.C) {
 	currentTime := getRelativeTimeGMT(-10)
 
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateUpload(c, blobURL)
@@ -390,7 +390,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfModifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -403,7 +403,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfUnmodifiedSinceTrue(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateUpload(c, blobURL)
@@ -418,7 +418,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfUnmodifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(-10)
 
 	_, err := blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -432,7 +432,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchTrue(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateUpload(c, blobURL)
@@ -448,7 +448,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchFalse(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -462,7 +462,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchTrue(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, DefaultAccessTier)
 	c.Assert(err, chk.IsNil)
 
 	validateUpload(c, blobURL)
@@ -478,7 +478,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchFalse(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, DefaultAccessTier)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -899,3 +899,18 @@ func (s *aztestsSuite) TestBlobPutBlockListModifyBlob(c *chk.C) {
 	c.Assert(resp.UncommittedBlocks, chk.HasLen, 0)
 }
 
+func (s *aztestsSuite) TestSetTierOnBlobUpload(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL)
+	for _, val := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
+		blobURL, _ := getBlockBlobURL(c, containerURL)
+
+		_, err := blobURL.Upload(ctx, strings.NewReader("Test Data"), basicHeaders, nil, BlobAccessConditions{}, val)
+		c.Assert(err, chk.IsNil)
+
+		resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+		c.Assert(err, chk.IsNil)
+		c.Assert(resp.AccessTier(), chk.Equals, string(val))
+	}
+}
