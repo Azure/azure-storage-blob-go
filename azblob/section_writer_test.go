@@ -34,6 +34,8 @@ func (s *aztestsSuite) TestSectionWriter(c *chk.C) {
 	c.Assert(section.position, chk.Equals, int64(5))
 	c.Assert(b, chk.Equals, [10]byte{1, 2, 3, 4, 5, 0, 0, 0, 0, 0})
 
+	// Intentionally create a section writer which will attempt to write
+	// outside the bounds of the buffer.
 	section = newSectionWriter(buffer, 5, 6)
 	c.Assert(section.count, chk.Equals, int64(6))
 	c.Assert(section.offset, chk.Equals, int64(5))
@@ -45,12 +47,16 @@ func (s *aztestsSuite) TestSectionWriter(c *chk.C) {
 	c.Assert(section.position, chk.Equals, int64(3))
 	c.Assert(b, chk.Equals, [10]byte{1, 2, 3, 4, 5, 6, 7, 8, 0, 0})
 
+	// Attempt to write past the end of the section. Since the underlying
+	// buffer rejects the write it gives the same error as in the normal case.
 	count, err = section.Write([]byte{9, 10, 11})
 	c.Assert(err, chk.ErrorMatches, "Not enough space for all bytes")
 	c.Assert(count, chk.Equals, 2)
 	c.Assert(section.position, chk.Equals, int64(5))
 	c.Assert(b, chk.Equals, [10]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 
+	// Attempt to write past the end of the buffer. In this case the buffer
+	// rejects the write completely since it falls completely out of bounds.
 	count, err = section.Write([]byte{11, 12, 13})
 	c.Assert(err, chk.ErrorMatches, "Offset value is out of range")
 	c.Assert(count, chk.Equals, 0)
