@@ -939,7 +939,7 @@ func (s *aztestsSuite) TestSetTierOnCopyBlockBlobFromURL(c *chk.C) {
 	bsu := getBSU()
 
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	//defer delContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -983,4 +983,84 @@ func (s *aztestsSuite) TestSetTierOnCopyBlockBlobFromURL(c *chk.C) {
 		c.Assert(destBlobPropResp.AccessTier(), chk.Equals, string(tier))
 
 	}
+}
+
+func (s *aztestsSuite) TestSetTierOnStageBlockFromURL(c *chk.C) {
+	bsu := getBSU()
+	credential, err := getGenericCredential("")
+	if err != nil {
+		c.Fatal("Invalid credential")
+	}
+	container, _ := createNewContainer(c, bsu)
+	defer delContainer(c, container)
+
+	testSize := 8 * 1024 * 1024 // 8MB
+	r, sourceData := getRandomDataAndReader(testSize)
+	ctx := context.Background() // Use default Background context
+	srcBlob := container.NewBlockBlobURL(generateBlobName())
+	destBlob := container.NewBlockBlobURL(generateBlobName())
+	tier := AccessTierCool
+
+	// Prepare source blob for copy.
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, tier)
+	c.Assert(err, chk.IsNil)
+	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
+
+	// Get source blob URL with SAS for StageFromURL.
+	srcBlobParts := NewBlobURLParts(srcBlob.URL())
+
+	srcBlobParts.SAS, err = BlobSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,                     // Users MUST use HTTPS (not HTTP)
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour), // 48-hours before expiration
+		ContainerName: srcBlobParts.ContainerName,
+		BlobName:      srcBlobParts.BlobName,
+		Permissions:   BlobSASPermissions{Read: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	srcBlobURLWithSAS := srcBlobParts.URL()
+
+	// Stage blocks from URL.
+	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
+	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp1.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
+
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
+	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp2.RequestID(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp2.Version(), chk.Not(chk.Equals), "")
+	c.Assert(stageResp2.Date().IsZero(), chk.Equals, false)
+
+	// Check block list.
+	blockList, err := destBlob.GetBlockList(context.Background(), BlockListAll, LeaseAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(blockList.Response().StatusCode, chk.Equals, 200)
+	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
+	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
+
+	// Commit block list.
+	listResp, err := destBlob.CommitBlockList(context.Background(), []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, tier)
+	c.Assert(err, chk.IsNil)
+	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
+
+	// Check data integrity through downloading.
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	c.Assert(err, chk.IsNil)
+	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
+	c.Assert(err, chk.IsNil)
+	c.Assert(destData, chk.DeepEquals, sourceData)
+
+	// Get properties to validate the tier
+	destBlobPropResp, err := destBlob.GetProperties(ctx, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(destBlobPropResp.AccessTier(), chk.Equals, string(tier))
 }
