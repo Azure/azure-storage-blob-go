@@ -55,6 +55,9 @@ type UploadToBlockBlobOptions struct {
 	// AccessConditions indicates the access conditions for the block blob.
 	AccessConditions BlobAccessConditions
 
+	// BlobAccessTier indicates the tier of blob
+	BlobAccessTier AccessTierType
+
 	// Parallelism indicates the maximum number of blocks to upload in parallel (0=default)
 	Parallelism uint16
 }
@@ -86,7 +89,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body, o.Progress)
 		}
-		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, cpk)
+		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, o.BlobAccessTier, cpk)
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)
@@ -122,7 +125,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 			// Block IDs are unique values to avoid issue if 2+ clients are uploading blocks
 			// at the same time causing PutBlockList to get a mix of blocks from all the clients.
 			blockIDList[blockNum] = base64.StdEncoding.EncodeToString(newUUID().bytes())
-			_, err := blockBlobURL.StageBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions, nil, ClientProvidedKeyOptions{})
+			_, err := blockBlobURL.StageBlock(ctx, blockIDList[blockNum], body, o.AccessConditions.LeaseAccessConditions, nil, cpk)
 			return err
 		},
 	})
@@ -130,7 +133,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		return nil, err
 	}
 	// All put blocks were successful, call Put Block List to finalize the blob
-	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, ClientProvidedKeyOptions{})
+	return blockBlobURL.CommitBlockList(ctx, blockIDList, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, o.BlobAccessTier, cpk)
 }
 
 // UploadFileToBlockBlob uploads a file in blocks to a block blob.
@@ -363,6 +366,7 @@ type UploadStreamToBlockBlobOptions struct {
 	BlobHTTPHeaders  BlobHTTPHeaders
 	Metadata         Metadata
 	AccessConditions BlobAccessConditions
+	BlobAccessTier   AccessTierType
 }
 
 func (u *UploadStreamToBlockBlobOptions) defaults() {

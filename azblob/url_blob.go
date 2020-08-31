@@ -12,6 +12,9 @@ type BlobURL struct {
 	blobClient blobClient
 }
 
+var DefaultAccessTier AccessTierType = AccessTierNone
+var DefaultPremiumBlobAccessTier PremiumPageBlobAccessTierType = PremiumPageBlobAccessTierNone
+
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
 	blobClient := newBlobClient(url, p)
@@ -254,13 +257,13 @@ func leasePeriodPointer(period int32) (p *int32) {
 
 // StartCopyFromURL copies the data at the source URL to a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/copy-blob.
-func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions) (*BlobStartCopyFromURLResponse, error) {
+func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, tier AccessTierType) (*BlobStartCopyFromURLResponse, error) {
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 
 	return b.blobClient.StartCopyFromURL(ctx, source.String(), nil, metadata,
-		AccessTierNone, RehydratePriorityNone, srcIfModifiedSince, srcIfUnmodifiedSince,
+		tier, RehydratePriorityNone, srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
 		nil, // Blob tags
 		dstIfModifiedSince, dstIfUnmodifiedSince,

@@ -64,7 +64,7 @@ func (bb BlockBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoR
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlockBlobUploadResponse, error) {
+func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, cpk ClientProvidedKeyOptions) (*BlockBlobUploadResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	count, err := validateSeekableStreamAt0AndGetCount(body)
 	if err != nil {
@@ -75,7 +75,7 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, //CPK-V
 		cpk.EncryptionScope, // CPK-N
-		AccessTierNone, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		tier, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil,
 		nil, // Blob tags
@@ -114,14 +114,14 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 // blocks together. Any blocks not specified in the block list and permanently deleted.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
 func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
-	metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
+	metadata Metadata, ac BlobAccessConditions, tier AccessTierType, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, nil, nil,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, //CPK-V
 		cpk.EncryptionScope, // CPK-N
-		AccessTierNone,
+		tier,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil,
@@ -140,13 +140,13 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 // CopyFromURL synchronously copies the data at the source URL to a block blob, with sizes up to 256 MB.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/copy-blob-from-url.
 func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata,
-	srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte) (*BlobCopyFromURLResponse, error) {
+	srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType) (*BlobCopyFromURLResponse, error) {
 
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 
-	return bb.blobClient.CopyFromURL(ctx, source.String(), nil, metadata, AccessTierNone,
+	return bb.blobClient.CopyFromURL(ctx, source.String(), nil, metadata, tier,
 		srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,

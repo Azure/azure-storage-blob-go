@@ -58,9 +58,9 @@ func (pb PageBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoRe
 
 // Create creates a page blob of the specified length. Call PutPage to upload data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, cpk ClientProvidedKeyOptions) (*PageBlobCreateResponse, error) {
+func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier PremiumPageBlobAccessTierType, cpk ClientProvidedKeyOptions) (*PageBlobCreateResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
-	return pb.pbClient.Create(ctx, 0, size, nil, PremiumPageBlobAccessTierNone,
+	return pb.pbClient.Create(ctx, 0, size, nil, tier,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V

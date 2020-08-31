@@ -167,7 +167,7 @@ func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, na
 	blob, name = getBlockBlobURL(c, container)
 
 	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
-		nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+		nil, BlobAccessConditions{}, DefaultAccessTier, ClientProvidedKeyOptions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -179,7 +179,7 @@ func createNewBlockBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProvi
 	blob, name = getBlockBlobURL(c, container)
 
 	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
-		nil, BlobAccessConditions{}, cpk)
+		nil, BlobAccessConditions{}, DefaultAccessTier, cpk)
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -210,7 +210,7 @@ func createNewAppendBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProv
 func createNewPageBlob(c *chk.C, container ContainerURL) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
@@ -219,7 +219,7 @@ func createNewPageBlob(c *chk.C, container ContainerURL) (blob PageBlobURL, name
 func createNewPageBlobWithSize(c *chk.C, container ContainerURL, sizeInBytes int64) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, ClientProvidedKeyOptions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
@@ -229,7 +229,7 @@ func createNewPageBlobWithSize(c *chk.C, container ContainerURL, sizeInBytes int
 func createNewPageBlobWithCPK(c *chk.C, container ContainerURL, sizeInBytes int64, cpk ClientProvidedKeyOptions) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, cpk)
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, cpk)
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
@@ -241,7 +241,7 @@ func createBlockBlobWithPrefix(c *chk.C, container ContainerURL, prefix string) 
 	blob = container.NewBlockBlobURL(name)
 
 	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
-		nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+		nil, BlobAccessConditions{}, DefaultAccessTier, ClientProvidedKeyOptions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)

@@ -62,7 +62,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 		c.Assert(err, chk.IsNil)
 	}
 
-	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, testCPK)
 	c.Assert(err, chk.IsNil)
 
 	c.Assert(resp.ETag(), chk.NotNil)
@@ -101,7 +101,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPKByScope(c *chk.C) {
 		c.Assert(err, chk.IsNil)
 	}
 
-	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK1)
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, testCPK1)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -153,7 +153,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	ctx := context.Background()
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -197,7 +197,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, testCPK)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.IsServerEncrypted(), chk.Equals, "true")
@@ -234,7 +234,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	ctx := context.Background()
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -278,7 +278,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, testCPK1)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, testCPK1)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.IsServerEncrypted(), chk.Equals, "true")
@@ -309,7 +309,7 @@ func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 	md5Val := md5.Sum(srcData)
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -686,7 +686,7 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPK(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
-	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK)
+	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, testCPK)
 
 	// Create Snapshot of an encrypted blob without encryption key should fail the request.
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -714,7 +714,7 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPKByScope(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
-	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, testCPK1)
+	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, testCPK1)
 
 	// Create Snapshot of an encrypted blob without encryption key should fail the request.
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
