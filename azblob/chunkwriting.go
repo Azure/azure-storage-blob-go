@@ -184,7 +184,7 @@ func (c *copier) write(chunk copierChunk) error {
 		return err
 	}
 
-	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), LeaseAccessConditions{}, nil, c.o.ClientProvidedKeyOptions)
 	if err != nil {
 		return fmt.Errorf("write error: %w", err)
 	}
@@ -205,7 +205,7 @@ func (c *copier) close() error {
 	return err
 }
 
-// id allows the creation of unique IDs based on UUID4 + an int32. This autoincrements.
+// id allows the creation of unique IDs based on UUID4 + an int32. This autoincrement.
 type id struct {
 	u   [64]byte
 	num uint32

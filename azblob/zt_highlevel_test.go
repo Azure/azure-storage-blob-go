@@ -115,7 +115,8 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 			Progress: func(bytesTransferred int64) {
 				c.Assert(bytesTransferred > 0 && bytesTransferred <= int64(fileSize), chk.Equals, true)
 			},
-		}, ClientProvidedKeyOptions{})
+			ClientProvidedKeyOptions: ClientProvidedKeyOptions{},
+		})
 	c.Assert(err, chk.Equals, nil)
 	c.Assert(response.Response().StatusCode, chk.Equals, 201)
 
@@ -240,7 +241,8 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 			Progress: func(bytesTransferred int64) {
 				c.Assert(bytesTransferred > 0 && bytesTransferred <= int64(blobSize), chk.Equals, true)
 			},
-		}, ClientProvidedKeyOptions{})
+			ClientProvidedKeyOptions: ClientProvidedKeyOptions{},
+		})
 	c.Assert(err, chk.Equals, nil)
 	c.Assert(response.Response().StatusCode, chk.Equals, 201)
 

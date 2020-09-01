@@ -1063,7 +1063,8 @@ func ExampleUploadFileToBlockBlobAndDownloadItBack() {
 			Progress: func(bytesTransferred int64) {
 				fmt.Printf("Uploaded %d of %d bytes.\n", bytesTransferred, fileSize.Size())
 			},
-		}, ClientProvidedKeyOptions{})
+			ClientProvidedKeyOptions: ClientProvidedKeyOptions{},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1154,7 +1155,7 @@ func ExampleUploadStreamToBlockBlob() {
 	bufferSize := 2 * 1024 * 1024 // Configure the size of the rotating buffers that are used when uploading
 	maxBuffers := 3               // Configure the number of rotating buffers that are used when uploading
 	_, err = UploadStreamToBlockBlob(ctx, bytes.NewReader(data), blockBlobURL,
-		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers})
+		UploadStreamToBlockBlobOptions{BufferSize: bufferSize, MaxBuffers: maxBuffers, ClientProvidedKeyOptions: ClientProvidedKeyOptions{}})
 
 	// Verify that upload was successful
 	if err != nil {
