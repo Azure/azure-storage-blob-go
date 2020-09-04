@@ -10,7 +10,7 @@ import (
 
 const (
 	// BlockBlobMaxUploadBlobBytes indicates the maximum number of bytes that can be sent in a call to Upload.
-	BlockBlobMaxUploadBlobBytes = 64 * 1024 * 1024 // 256MB
+	BlockBlobMaxUploadBlobBytes = 64 * 1024 * 1024 // 64MB
 
 	// BlockBlobMaxStageBlockBytes indicates the maximum number of bytes that can be sent in a call to StageBlock.
 	BlockBlobMaxStageBlockBytes = 4000 * 1024 * 1024 // 4000MiB
