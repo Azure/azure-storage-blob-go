@@ -94,7 +94,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestEmpty(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
-	blobCopyResponse, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	blobCopyResponse, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, copyBlobURL, blobCopyResponse)
 
@@ -115,7 +115,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadata(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
-	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 	waitForCopy(c, copyBlobURL, resp)
 
@@ -132,11 +132,10 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataNil(c *chk.C) {
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Have the destination start with metadata so we ensure the nil metadata passed later takes effect
-	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
+	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
-	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	waitForCopy(c, copyBlobURL, resp)
@@ -154,11 +153,10 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataEmpty(c *chk.C) {
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Have the destination start with metadata so we ensure the empty metadata passed later takes effect
-	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{},
-		basicMetadata, BlobAccessConditions{}, DefaultAccessTier)
+	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
-	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	waitForCopy(c, copyBlobURL, resp)
@@ -175,7 +173,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataInvalidField(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{"I nvalid.": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	_, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{"I nvalid.": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.NotNil)
 	c.Assert(strings.Contains(err.Error(), invalidHeaderErrorSubstring), chk.Equals, true)
 }
@@ -187,7 +185,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceNonExistant(c *chk.C) {
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	_, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeBlobNotFound)
 }
 
@@ -211,7 +209,7 @@ func (s *aztestsSuite) TestBlobStartCopySourcePrivate(c *chk.C) {
 	if bsu.String() == bsu2.String() {
 		c.Skip("Test not valid because primary and secondary accounts are the same")
 	}
-	_, err = copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	_, err = copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeCannotVerifyCopySource)
 }
 
@@ -250,7 +248,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASSrc(c *chk.C) {
 	defer deleteContainer(c, copyContainerURL)
 	copyBlobURL, _ := getBlockBlobURL(c, copyContainerURL)
 
-	resp, err := copyBlobURL.StartCopyFromURL(ctx, sasURL, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := copyBlobURL.StartCopyFromURL(ctx, sasURL, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	waitForCopy(c, copyBlobURL, resp)
@@ -321,7 +319,7 @@ func (s *aztestsSuite) TestBlobStartCopyUsingSASDest(c *chk.C) {
 	srcBlobWithSasURL := blobURL.URL()
 	srcBlobWithSasURL.RawQuery = queryParams.Encode()
 
-	resp, err := anonBlobURL.StartCopyFromURL(ctx, srcBlobWithSasURL, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := anonBlobURL.StartCopyFromURL(ctx, srcBlobWithSasURL, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	// Allow copy to happen
@@ -346,9 +344,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfModifiedSinceTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{IfModifiedSince: currentTime},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{IfModifiedSince: currentTime}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -365,9 +361,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfModifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil,
-		ModifiedAccessConditions{IfModifiedSince: currentTime},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{IfModifiedSince: currentTime}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeSourceConditionNotMet)
 }
 
@@ -380,9 +374,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfUnmodifiedSinceTrue(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{IfUnmodifiedSince: currentTime},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{IfUnmodifiedSince: currentTime}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -399,9 +391,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfUnmodifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(-10)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil,
-		ModifiedAccessConditions{IfUnmodifiedSince: currentTime},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{IfUnmodifiedSince: currentTime}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeSourceConditionNotMet)
 }
 
@@ -416,9 +406,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfMatchTrue(c *chk.C) {
 	etag := resp.ETag()
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err = destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{IfMatch: etag},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err = destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{IfMatch: etag}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -433,9 +421,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfMatchFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{IfMatch: "a"},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{IfMatch: "a"}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeSourceConditionNotMet)
 }
 
@@ -446,9 +432,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfNoneMatchTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{IfNoneMatch: "a"},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{IfNoneMatch: "a"}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp2, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -467,9 +451,7 @@ func (s *aztestsSuite) TestBlobStartCopySourceIfNoneMatchFalse(c *chk.C) {
 	etag := resp.ETag()
 
 	destBlobURL, _ := getBlockBlobURL(c, containerURL)
-	_, err = destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil,
-		ModifiedAccessConditions{IfNoneMatch: etag},
-		BlobAccessConditions{}, DefaultAccessTier)
+	_, err = destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{IfNoneMatch: etag}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeSourceConditionNotMet)
 }
 
@@ -481,9 +463,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfModifiedSinceTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	destBlobURL, _ := createNewBlockBlob(c, containerURL) // The blob must exist to have a last-modified time
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -500,9 +480,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfModifiedSinceFalse(c *chk.C) {
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil,
-		ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeTargetConditionNotMet)
 }
 
@@ -515,9 +493,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfUnmodifiedSinceTrue(c *chk.C) {
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -534,9 +510,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfUnmodifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(-10)
 	destBlobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil,
-		ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeTargetConditionNotMet)
 }
 
@@ -550,9 +524,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfMatchTrue(c *chk.C) {
 	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
 	etag := resp.ETag()
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata,
-		ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -572,8 +544,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfMatchFalse(c *chk.C) {
 
 	destBlobURL.SetMetadata(ctx, nil, BlobAccessConditions{}) // SetMetadata chances the blob's etag
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeTargetConditionNotMet)
 }
 
@@ -589,8 +560,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfNoneMatchTrue(c *chk.C) {
 
 	destBlobURL.SetMetadata(ctx, nil, BlobAccessConditions{}) // SetMetadata chances the blob's etag
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = destBlobURL.GetProperties(ctx, BlobAccessConditions{})
@@ -608,8 +578,7 @@ func (s *aztestsSuite) TestBlobStartCopyDestIfNoneMatchFalse(c *chk.C) {
 	resp, _ := destBlobURL.GetProperties(ctx, BlobAccessConditions{})
 	etag := resp.ETag()
 
-	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, DefaultAccessTier)
+	_, err := destBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, DefaultAccessTier, nil)
 	validateStorageError(c, err, ServiceCodeTargetConditionNotMet)
 }
 
@@ -625,7 +594,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 	for i := range blobData {
 		blobData[i] = byte('a' + i%26)
 	}
-	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier)
+	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 	containerURL.SetAccessPolicy(ctx, PublicAccessBlob, nil, ContainerAccessConditions{}) // So that we don't have to create a SAS
 
@@ -641,7 +610,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 
 	defer deleteContainer(c, copyContainerURL)
 
-	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier)
+	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.CopyStatus(), chk.Equals, CopyStatusPending)
 

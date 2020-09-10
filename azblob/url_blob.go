@@ -3,6 +3,7 @@ package azblob
 import (
 	"context"
 	"net/url"
+	"strings"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
@@ -72,6 +73,19 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 	return NewPageBlobURL(b.URL(), b.blobClient.Pipeline())
 }
 
+func (b BlobURL) SerializeBlobTagsHeader(tags BlobTags) (BlobTagsString *string) {
+	return nil
+}
+
+func (b BlobURL) SerializeBlobTags(blobTagsMap map[string]string) (BlobTagsString *string) {
+	tags := make([]string, 0, len(blobTagsMap))
+	for key, val := range blobTagsMap {
+		tags = append(tags, key+"="+val)
+	}
+	blobTagsString := url.QueryEscape(strings.Join(tags, "&"))
+	return &blobTagsString
+}
+
 // DownloadBlob reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
 // Passing azblob.CountToEnd (0) for count will download the blob from the offset to the end.
 // Note: Snapshot/VersionId are optional parameters which are part of request URL query params.
@@ -114,6 +128,20 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		nil)
+}
+
+// The Set Tags operation enables users to set tags on a blob or specific blob version, but not snapshot.
+// Each call to this operation replaces all existing tags attached to the blob.
+// To remove all tags from the blob, call this operation with no tags set.
+// https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
+func (b BlobURL) SetTags(ctx context.Context, timeout *int32, versionID *string, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, requestID *string, ifTags *string, tags *BlobTags) (*BlobSetTagsResponse, error) {
+	return b.blobClient.SetTags(ctx, timeout, versionID, transactionalContentMD5, transactionalContentCrc64, requestID, ifTags, tags)
+}
+
+// The Get Tags operation enables users to get tags on a blob or specific blob version, or snapshot.
+// https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags
+func (b BlobURL) GetTags(ctx context.Context, timeout *int32, requestID *string, snapshot *string, versionID *string, ifTags *string) (*BlobTags, error) {
+	return b.blobClient.GetTags(ctx, timeout, requestID, snapshot, versionID, ifTags)
 }
 
 // Undelete restores the contents and metadata of a soft-deleted blob and any associated soft-deleted snapshots.
@@ -253,7 +281,7 @@ func leasePeriodPointer(period int32) (p *int32) {
 
 // StartCopyFromURL copies the data at the source URL to a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/copy-blob.
-func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, tier AccessTierType) (*BlobStartCopyFromURLResponse, error) {
+func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, tier AccessTierType, blobTagsString *string) (*BlobStartCopyFromURLResponse, error) {
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
@@ -267,7 +295,7 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		nil, // Blob tags
 		dstLeaseID,
 		nil,
-		nil, // Blob tags
+		blobTagsString, // Blob tags
 		nil)
 }
 
