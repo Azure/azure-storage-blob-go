@@ -56,8 +56,9 @@ func (ab AppendBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfo
 
 // Create creates a 0-length append blob. Call AppendBlock to append data to an append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, blobTagsString *string) (*AppendBlobCreateResponse, error) {
+func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, blobTagsMap map[string]string) (*AppendBlobCreateResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch := ac.ModifiedAccessConditions.pointers()
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	return ab.abClient.Create(ctx, 0, nil,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5,
 		&h.CacheControl, metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,

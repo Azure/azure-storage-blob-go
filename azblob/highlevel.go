@@ -58,8 +58,8 @@ type UploadToBlockBlobOptions struct {
 	// BlobAccessTier indicates the tier of blob
 	BlobAccessTier AccessTierType
 
-	// BlobTagsString
-	BlobTagsString *string
+	// BlobTagsStg
+	BlobTagsMap map[string]string
 
 	// Parallelism indicates the maximum number of blocks to upload in parallel (0=default)
 	Parallelism uint16
@@ -92,7 +92,7 @@ func UploadBufferToBlockBlob(ctx context.Context, b []byte,
 		if o.Progress != nil {
 			body = pipeline.NewRequestBodyProgress(body, o.Progress)
 		}
-		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, o.BlobAccessTier, o.BlobTagsString)
+		return blockBlobURL.Upload(ctx, body, o.BlobHTTPHeaders, o.Metadata, o.AccessConditions, o.BlobAccessTier, o.BlobTagsMap)
 	}
 
 	var numBlocks = uint16(((bufferSize - 1) / o.BlockSize) + 1)
@@ -370,7 +370,7 @@ type UploadStreamToBlockBlobOptions struct {
 	Metadata         Metadata
 	AccessConditions BlobAccessConditions
 	BlobAccessTier   AccessTierType
-	BlobTagsString   *string
+	BlobTagsMap      map[string]string
 }
 
 func (u *UploadStreamToBlockBlobOptions) defaults() {
