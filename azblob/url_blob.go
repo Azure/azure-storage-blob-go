@@ -73,6 +73,9 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 }
 
 func SerializeBlobTagsHeader(blobTagsMap map[string]string) *string {
+	if blobTagsMap == nil {
+		return nil
+	}
 	tags := make([]string, 0)
 	for key, val := range blobTagsMap {
 		tags = append(tags, url.QueryEscape(key)+"="+url.QueryEscape(val))
@@ -83,6 +86,9 @@ func SerializeBlobTagsHeader(blobTagsMap map[string]string) *string {
 }
 
 func SerializeBlobTags(blobTagsMap map[string]string) BlobTags {
+	if blobTagsMap == nil {
+		return BlobTags{}
+	}
 	blobTagSet := make([]BlobTag, 0, len(blobTagsMap))
 	for key, val := range blobTagsMap {
 		blobTagSet = append(blobTagSet, BlobTag{Key: key, Value: val})

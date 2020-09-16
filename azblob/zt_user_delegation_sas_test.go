@@ -28,6 +28,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		c.Fatal(err)
 	}
 
+	// Prepare User Delegation SAS query
 	cSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
@@ -35,6 +36,9 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		Permissions:   "racwdl",
 		ContainerName: containerName,
 	}.NewSASQueryParameters(cudk)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	// Create anonymous pipeline
 	p = NewPipeline(NewAnonymousCredential(), PipelineOptions{})
