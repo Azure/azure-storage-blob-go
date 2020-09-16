@@ -17,7 +17,7 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
 		"blob":  "sdk",
 		"sdk":   "go",
@@ -25,7 +25,7 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
-	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags)
+	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
@@ -34,7 +34,7 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResponse.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 }
 
@@ -43,7 +43,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
 		"Python":     "CSharp",
 		"Javascript": "Android",
@@ -58,7 +58,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId2 := blockBlobUploadResp.VersionID()
 
-	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, &versionId1, nil, nil, nil, nil, blobTags)
+	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, &versionId1, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
@@ -67,7 +67,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResponse.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 
 	blobGetTagsResponse, err = blobURL.GetTags(ctx, nil, nil, nil, &versionId2, nil)
@@ -92,7 +92,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId2 := blockBlobUploadResp.VersionID()
 
-	blobTags1 := map[string]string{
+	blobTags1 := BlobTagsMap{
 		"Go":         "CPlusPlus",
 		"Python":     "CSharp",
 		"Javascript": "Android",
@@ -110,7 +110,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 		c.Assert(blobTags1[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 
-	blobTags2 := map[string]string{
+	blobTags2 := BlobTagsMap{
 		"a123": "321a",
 		"b234": "432b",
 	}
@@ -132,12 +132,12 @@ func (s *aztestsSuite) TestUploadBlockBlobWithSpecialCharactersInTags(c *chk.C) 
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"+-./:=_ ": "firsttag",
 		"tag2":     "+-./:=_",
 		"+-./:=_1": "+-./:=_",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 
@@ -146,7 +146,7 @@ func (s *aztestsSuite) TestUploadBlockBlobWithSpecialCharactersInTags(c *chk.C) 
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResponse.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 }
 
@@ -175,12 +175,12 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 		c.Assert(resp.Version(), chk.Not(chk.Equals), "")
 	}
 
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(commitResp.VersionID(), chk.NotNil)
 	versionId := commitResp.VersionID()
@@ -195,7 +195,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 	c.Assert(blobGetTagsResp, chk.NotNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResp.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 
 	blobGetTagsResp, err = blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
@@ -203,7 +203,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 	c.Assert(blobGetTagsResp, chk.NotNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResp.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 }
 
@@ -222,13 +222,13 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	srcBlob := container.NewBlockBlobURL("sourceBlob")
 	destBlob := container.NewBlockBlobURL("destBlob")
 
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
 		"Python":     "CSharp",
 		"Javascript": "Android",
 	}
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -271,7 +271,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	//versionId := listResp.VersionID()
@@ -286,7 +286,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResp.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 }
 
@@ -305,13 +305,13 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 	srcBlob := container.NewBlockBlobURL("srcBlob")
 	destBlob := container.NewBlockBlobURL("destBlob")
 
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
 		"Python":     "CSharp",
 		"Javascript": "Android",
 	}
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -351,10 +351,10 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
 
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, blobTags)
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.NotNil)
 
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, blobTags)
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
@@ -365,12 +365,12 @@ func (s *aztestsSuite) TestGetPropertiesReturnsTagsCount(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTags)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 
@@ -389,12 +389,12 @@ func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"Microsoft Azure": "Azure Storage",
 		"Storage+SDK":     "SDK/GO",
 		"GO ":             ".Net",
 	}
-	_, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags)
+	_, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{})
@@ -411,7 +411,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	defer delContainer(c, container)
 
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
 		"blob":  "sdk",
 		"sdk":   "go",
@@ -425,7 +425,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.rawResponse.Header.Get("x-ms-version-id"), chk.NotNil)
 
-	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags)
+	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
@@ -434,7 +434,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
 
-	modifiedBlobTags := map[string]string{
+	modifiedBlobTags := BlobTagsMap{
 		"a0z1u2r3e4": "b0l1o2b3",
 		"b0l1o2b3":   "s0d1k2",
 	}
@@ -455,12 +455,12 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 	defer delContainer(c, container)
 
 	blob, _ := getPageBlobURL(c, container)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, blobTags)
+	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
@@ -469,7 +469,7 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
 
-	modifiedBlobTags := map[string]string{
+	modifiedBlobTags := BlobTagsMap{
 		"a0z1u2r3e4": "b0l1o2b3",
 		"b0l1o2b3":   "s0d1k2",
 	}
@@ -506,12 +506,12 @@ func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
-	blobTags := map[string]string{
+	blobTagsMap := BlobTagsMap{
 		"+-./:=_ ": "firsttag",
 		"tag2":     "+-./:=_",
 		"+-./:=_1": "+-./:=_",
 	}
-	resp, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags)
+	resp, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 204)
 
@@ -521,7 +521,7 @@ func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 	c.Assert(listBlobResp.Segment.BlobItems[0].Name, chk.Equals, blobName)
 	c.Assert(listBlobResp.Segment.BlobItems[0].BlobTags.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range listBlobResp.Segment.BlobItems[0].BlobTags.BlobTagSet {
-		c.Assert(blobTags[blobTag.Key], chk.Equals, blobTag.Value)
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 }
 

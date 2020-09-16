@@ -59,7 +59,7 @@ type UploadToBlockBlobOptions struct {
 	BlobAccessTier AccessTierType
 
 	// BlobTagsStg
-	BlobTagsMap map[string]string
+	BlobTagsMap BlobTagsMap
 
 	// Parallelism indicates the maximum number of blocks to upload in parallel (0=default)
 	Parallelism uint16
@@ -370,7 +370,7 @@ type UploadStreamToBlockBlobOptions struct {
 	Metadata         Metadata
 	AccessConditions BlobAccessConditions
 	BlobAccessTier   AccessTierType
-	BlobTagsMap      map[string]string
+	BlobTagsMap      BlobTagsMap
 }
 
 func (u *UploadStreamToBlockBlobOptions) defaults() {

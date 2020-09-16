@@ -61,6 +61,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	if err != nil {
 		c.Fatal(err)
 	}
+	time.Sleep(time.Second * 2)
 
 	//Attach SAS query to block blob URL
 	p := NewPipeline(NewAnonymousCredential(), PipelineOptions{})

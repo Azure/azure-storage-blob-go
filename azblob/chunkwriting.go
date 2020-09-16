@@ -17,7 +17,7 @@ import (
 // This allows us to provide a local implementation that fakes the server for hermetic testing.
 type blockWriter interface {
 	StageBlock(context.Context, string, io.ReadSeeker, LeaseAccessConditions, []byte) (*BlockBlobStageBlockResponse, error)
-	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions, AccessTierType, map[string]string) (*BlockBlobCommitBlockListResponse, error)
+	CommitBlockList(context.Context, []string, BlobHTTPHeaders, Metadata, BlobAccessConditions, AccessTierType, BlobTagsMap) (*BlockBlobCommitBlockListResponse, error)
 }
 
 // copyFromReader copies a source io.Reader to blob storage using concurrent uploads.
