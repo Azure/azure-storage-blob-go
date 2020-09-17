@@ -525,6 +525,48 @@ func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 	}
 }
 
-func (s *aztestsSuite) TestFindBlobByTags(c *chk.C) {
-	// Code Pending
+func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
+	//bsu := getBSU()
+	//containerURL1, _ := createNewContainer(c, bsu)
+	//defer deleteContainer(c, containerURL1)
+	//containerURL2, _ := createNewContainer(c, bsu)
+	//defer deleteContainer(c, containerURL2)
+	//containerURL3, _ := createNewContainer(c, bsu)
+	//defer deleteContainer(c, containerURL3)
+	//
+	//blobTagsMap1 := BlobTagsMap{
+	//	"tag2":  "tagsecond",
+	//	"tag3":   "tagthird",
+	//}
+	//blobTagsMap2 := BlobTagsMap{
+	//	"tag1": "firsttag",
+	//	"tag2":  "secondtag",
+	//	"tag3":   "thirdtag",
+	//}
+	//blobURL11, _ := getBlockBlobURL(c, containerURL1)
+	//_, err := blobURL11.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap1)
+	//c.Assert(err, chk.IsNil)
+	//blobURL12, _ := getBlockBlobURL(c, containerURL1)
+	//_, err = blobURL12.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2)
+	//c.Assert(err, chk.IsNil)
+	//
+	//blobURL21, _ := getBlockBlobURL(c, containerURL2)
+	//_, err = blobURL21.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	//c.Assert(err, chk.IsNil)
+	//blobURL22, _ := getBlockBlobURL(c, containerURL2)
+	//_, err = blobURL22.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2)
+	//c.Assert(err, chk.IsNil)
+	//
+	//blobURL31, _ := getBlockBlobURL(c, containerURL3)
+	//_, err = blobURL31.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	//c.Assert(err, chk.IsNil)
+	//
+	//
+	//where := "tag1='firsttag'"
+	//
+	//lResp, err := bsu.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)
+	//c.Assert(err, chk.IsNil)
+	//_ = lResp
+
+	// Testcase pending
 }
