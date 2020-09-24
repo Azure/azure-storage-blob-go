@@ -77,7 +77,7 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		tier, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
 	)
@@ -124,7 +124,7 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 		nil, // CPK-N
 		tier,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
 	)
@@ -134,7 +134,7 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-block-list.
 func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType, ac LeaseAccessConditions) (*BlockList, error) {
 	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(),
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -151,7 +151,7 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
 		nil,            // seal Blob

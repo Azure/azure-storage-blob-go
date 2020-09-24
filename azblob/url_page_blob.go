@@ -91,7 +91,7 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 		nil, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -111,7 +111,7 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
@@ -137,7 +137,7 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -150,7 +150,7 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 

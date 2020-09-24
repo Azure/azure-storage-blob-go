@@ -65,7 +65,7 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
 	)
@@ -90,7 +90,7 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -107,7 +107,7 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 

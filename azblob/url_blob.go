@@ -115,7 +115,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.Delete(ctx, nil, nil, nil, ac.LeaseAccessConditions.pointers(), deleteOptions,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -188,7 +188,7 @@ func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*B
 		nil, ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -199,7 +199,7 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 	return b.blobClient.SetHTTPHeaders(ctx, nil,
 		&h.CacheControl, &h.ContentType, h.ContentMD5, &h.ContentEncoding, &h.ContentLanguage,
 		ac.LeaseAccessConditions.pointers(), ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		&h.ContentDisposition, nil)
 }
 
@@ -211,7 +211,7 @@ func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAcce
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -226,7 +226,7 @@ func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobA
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		ac.LeaseAccessConditions.pointers(), nil)
 }
 
@@ -237,7 +237,7 @@ func (b BlobURL) AcquireLease(ctx context.Context, proposedID string, duration i
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.AcquireLease(ctx, nil, &duration, &proposedID,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -247,7 +247,7 @@ func (b BlobURL) RenewLease(ctx context.Context, leaseID string, ac ModifiedAcce
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.RenewLease(ctx, leaseID, nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -257,7 +257,7 @@ func (b BlobURL) ReleaseLease(ctx context.Context, leaseID string, ac ModifiedAc
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.ReleaseLease(ctx, leaseID, nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -268,7 +268,7 @@ func (b BlobURL) BreakLease(ctx context.Context, breakPeriodInSeconds int32, ac 
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.BreakLease(ctx, nil, leasePeriodPointer(breakPeriodInSeconds),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -278,7 +278,7 @@ func (b BlobURL) ChangeLease(ctx context.Context, leaseID string, proposedID str
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.ChangeLease(ctx, leaseID, proposedID,
 		nil, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -302,10 +302,10 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 	return b.blobClient.StartCopyFromURL(ctx, source.String(), nil, metadata,
 		tier, RehydratePriorityNone, srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // source ifTags
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		dstLeaseID,
 		nil,
 		blobTagsString, // Blob tags
