@@ -28,6 +28,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		c.Fatal(err)
 	}
 
+	// Prepare User Delegation SAS query
 	cSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
@@ -35,6 +36,9 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 		Permissions:   "racwdl",
 		ContainerName: containerName,
 	}.NewSASQueryParameters(cudk)
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	// Create anonymous pipeline
 	p = NewPipeline(NewAnonymousCredential(), PipelineOptions{})
@@ -52,7 +56,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	cSASURL := NewContainerURL(cURL, p)
 
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -130,7 +134,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 		c.Fatal(err)
 	}
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier)
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		c.Fatal(err)
 	}

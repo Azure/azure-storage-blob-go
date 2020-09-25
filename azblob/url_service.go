@@ -163,3 +163,10 @@ func (bsu ServiceURL) SetProperties(ctx context.Context, properties StorageServi
 func (bsu ServiceURL) GetStatistics(ctx context.Context) (*StorageServiceStats, error) {
 	return bsu.client.GetStatistics(ctx, nil, nil)
 }
+
+// FindBlobsByTags operation finds all blobs in the storage account whose tags match a given search expression.
+// Filter blobs searches across all containers within a storage account but can be scoped within the expression to a single container.
+// https://docs.microsoft.com/en-us/rest/api/storageservices/find-blobs-by-tags
+func (bsu ServiceURL) FindBlobsByTags(ctx context.Context, timeout *int32, requestID *string, where *string, marker Marker, maxResults *int32) (*FilterBlobSegment, error) {
+	return bsu.client.FilterBlobs(ctx, timeout, requestID, where, marker.Val, maxResults)
+}

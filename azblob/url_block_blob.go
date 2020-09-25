@@ -64,9 +64,10 @@ func (bb BlockBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoR
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType) (*BlockBlobUploadResponse, error) {
+func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlockBlobUploadResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	count, err := validateSeekableStreamAt0AndGetCount(body)
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	if err != nil {
 		return nil, err
 	}
@@ -76,9 +77,9 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		tier, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil,
-		nil, // Blob tags
+		blobTagsString, // Blob tags
 	)
 }
 
@@ -113,9 +114,9 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 // by uploading only those blocks that have changed, then committing the new and existing
 // blocks together. Any blocks not specified in the block list and permanently deleted.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
-func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders,
-	metadata Metadata, ac BlobAccessConditions, tier AccessTierType) (*BlockBlobCommitBlockListResponse, error) {
+func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlockBlobCommitBlockListResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, nil, nil,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
@@ -123,9 +124,9 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 		nil, // CPK-N
 		tier,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil,
-		nil, // Blob tags
+		blobTagsString, // Blob tags
 	)
 }
 
@@ -133,27 +134,26 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-block-list.
 func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType, ac LeaseAccessConditions) (*BlockList, error) {
 	return bb.bbClient.GetBlockList(ctx, listType, nil, nil, ac.pointers(),
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
 // CopyFromURL synchronously copies the data at the source URL to a block blob, with sizes up to 256 MB.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/copy-blob-from-url.
-func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata,
-	srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType) (*BlobCopyFromURLResponse, error) {
+func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlobCopyFromURLResponse, error) {
 
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
-
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	return bb.blobClient.CopyFromURL(ctx, source.String(), nil, metadata, tier,
 		srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		dstLeaseID, nil, srcContentMD5,
-		nil, // Blob tags
-		nil, // seal Blob
+		blobTagsString, // Blob tags
+		nil,            // seal Blob
 	)
 }

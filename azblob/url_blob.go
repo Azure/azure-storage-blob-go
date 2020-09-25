@@ -2,15 +2,17 @@ package azblob
 
 import (
 	"context"
-	"net/url"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
+	"net/url"
+	"strings"
 )
 
 // A BlobURL represents a URL to an Azure Storage blob; the blob may be a block blob, append blob, or page blob.
 type BlobURL struct {
 	blobClient blobClient
 }
+
+type BlobTagsMap map[string]string
 
 var DefaultAccessTier AccessTierType = AccessTierNone
 var DefaultPremiumBlobAccessTier PremiumPageBlobAccessTierType = PremiumPageBlobAccessTierNone
@@ -72,6 +74,30 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 	return NewPageBlobURL(b.URL(), b.blobClient.Pipeline())
 }
 
+func SerializeBlobTagsHeader(blobTagsMap BlobTagsMap) *string {
+	if blobTagsMap == nil {
+		return nil
+	}
+	tags := make([]string, 0)
+	for key, val := range blobTagsMap {
+		tags = append(tags, url.QueryEscape(key)+"="+url.QueryEscape(val))
+	}
+	//tags = tags[:len(tags)-1]
+	blobTagsString := strings.Join(tags, "&")
+	return &blobTagsString
+}
+
+func SerializeBlobTags(blobTagsMap BlobTagsMap) BlobTags {
+	if blobTagsMap == nil {
+		return BlobTags{}
+	}
+	blobTagSet := make([]BlobTag, 0, len(blobTagsMap))
+	for key, val := range blobTagsMap {
+		blobTagSet = append(blobTagSet, BlobTag{Key: key, Value: val})
+	}
+	return BlobTags{BlobTagSet: blobTagSet}
+}
+
 // DownloadBlob reads a range of bytes from a blob. The response also includes the blob's properties and metadata.
 // Passing azblob.CountToEnd (0) for count will download the blob from the offset to the end.
 // Note: Snapshot/VersionId are optional parameters which are part of request URL query params.
@@ -89,7 +115,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 	if err != nil {
 		return nil, err
@@ -112,8 +138,23 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.Delete(ctx, nil, nil, nil, ac.LeaseAccessConditions.pointers(), deleteOptions,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
+}
+
+// The Set Tags operation enables users to set tags on a blob or specific blob version, but not snapshot.
+// Each call to this operation replaces all existing tags attached to the blob.
+// To remove all tags from the blob, call this operation with no tags set.
+// https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
+func (b BlobURL) SetTags(ctx context.Context, timeout *int32, versionID *string, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, requestID *string, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
+	tags := SerializeBlobTags(blobTagsMap)
+	return b.blobClient.SetTags(ctx, timeout, versionID, transactionalContentMD5, transactionalContentCrc64, requestID, ifTags, &tags)
+}
+
+// The Get Tags operation enables users to get tags on a blob or specific blob version, or snapshot.
+// https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags
+func (b BlobURL) GetTags(ctx context.Context, timeout *int32, requestID *string, snapshot *string, versionID *string, ifTags *string) (*BlobTags, error) {
+	return b.blobClient.GetTags(ctx, timeout, requestID, snapshot, versionID, ifTags)
 }
 
 // Undelete restores the contents and metadata of a soft-deleted blob and any associated soft-deleted snapshots.
@@ -147,7 +188,7 @@ func (b BlobURL) GetProperties(ctx context.Context, ac BlobAccessConditions) (*B
 		nil, ac.LeaseAccessConditions.pointers(),
 		nil, nil, EncryptionAlgorithmNone, // CPK
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -158,7 +199,7 @@ func (b BlobURL) SetHTTPHeaders(ctx context.Context, h BlobHTTPHeaders, ac BlobA
 	return b.blobClient.SetHTTPHeaders(ctx, nil,
 		&h.CacheControl, &h.ContentType, h.ContentMD5, &h.ContentEncoding, &h.ContentLanguage,
 		ac.LeaseAccessConditions.pointers(), ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		&h.ContentDisposition, nil)
 }
 
@@ -170,7 +211,7 @@ func (b BlobURL) SetMetadata(ctx context.Context, metadata Metadata, ac BlobAcce
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -185,7 +226,7 @@ func (b BlobURL) CreateSnapshot(ctx context.Context, metadata Metadata, ac BlobA
 		nil, nil, EncryptionAlgorithmNone, // CPK-V
 		nil, // CPK-N
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		ac.LeaseAccessConditions.pointers(), nil)
 }
 
@@ -196,7 +237,7 @@ func (b BlobURL) AcquireLease(ctx context.Context, proposedID string, duration i
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.AcquireLease(ctx, nil, &duration, &proposedID,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -206,7 +247,7 @@ func (b BlobURL) RenewLease(ctx context.Context, leaseID string, ac ModifiedAcce
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.RenewLease(ctx, leaseID, nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -216,7 +257,7 @@ func (b BlobURL) ReleaseLease(ctx context.Context, leaseID string, ac ModifiedAc
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.ReleaseLease(ctx, leaseID, nil,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -227,7 +268,7 @@ func (b BlobURL) BreakLease(ctx context.Context, breakPeriodInSeconds int32, ac 
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.BreakLease(ctx, nil, leasePeriodPointer(breakPeriodInSeconds),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -237,7 +278,7 @@ func (b BlobURL) ChangeLease(ctx context.Context, leaseID string, proposedID str
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.pointers()
 	return b.blobClient.ChangeLease(ctx, leaseID, proposedID,
 		nil, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -253,21 +294,21 @@ func leasePeriodPointer(period int32) (p *int32) {
 
 // StartCopyFromURL copies the data at the source URL to a blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/copy-blob.
-func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, tier AccessTierType) (*BlobStartCopyFromURLResponse, error) {
+func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlobStartCopyFromURLResponse, error) {
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
-
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	return b.blobClient.StartCopyFromURL(ctx, source.String(), nil, metadata,
 		tier, RehydratePriorityNone, srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // source ifTags
 		dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		dstLeaseID,
 		nil,
-		nil, // Blob tags
+		blobTagsString, // Blob tags
 		nil)
 }
 

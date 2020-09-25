@@ -58,8 +58,9 @@ func (pb PageBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoRe
 
 // Create creates a page blob of the specified length. Call PutPage to upload data data to a page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier PremiumPageBlobAccessTierType) (*PageBlobCreateResponse, error) {
+func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int64, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier PremiumPageBlobAccessTierType, blobTagsMap BlobTagsMap) (*PageBlobCreateResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
 	return pb.pbClient.Create(ctx, 0, size, nil, tier,
 		&h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, &h.CacheControl,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
@@ -68,7 +69,7 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob tags
 		&sequenceNumber, nil,
-		nil, // Blob tags
+		blobTagsString, // Blob tags
 	)
 }
 
@@ -90,7 +91,7 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 		nil, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -110,7 +111,7 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 		destinationAccessConditions.LeaseAccessConditions.pointers(),
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
 }
 
@@ -136,7 +137,7 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
@@ -149,7 +150,7 @@ func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
-		nil, // Blob tags
+		nil, // Blob ifTags
 		nil)
 }
 
