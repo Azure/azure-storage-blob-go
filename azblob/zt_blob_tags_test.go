@@ -568,7 +568,7 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 
 	//where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND\"@container\"='"+ containerName1 + "'"
 	//TODO: Figure out how to do a composite query based on container.
-	where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'"
+	where = "\"tag1\"='firsttag' and \"tag2\"='secondtag'"
 
 	lResp, err = bsu.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)
 	c.Assert(err, chk.IsNil)
