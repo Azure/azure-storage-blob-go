@@ -133,7 +133,7 @@ type ListContainersDetail struct {
 	Metadata bool
 
 	// Show containers that have been deleted when the soft-delete feature is enabled.
-	Deleted bool
+	// Deleted bool
 }
 
 // string produces the Include query parameter's value.
@@ -143,9 +143,9 @@ func (d *ListContainersDetail) string() string {
 	if d.Metadata {
 		items = append(items, string(ListContainersIncludeMetadata))
 	}
-	if d.Deleted {
-		items = append(items, string(ListContainersIncludeDeleted))
-	}
+	// if d.Deleted {
+	// 	 items = append(items, string(ListContainersIncludeDeleted))
+	// }
 	if len(items) > 0 {
 		return strings.Join(items, ",")
 	}
@@ -167,6 +167,8 @@ func (bsu ServiceURL) GetStatistics(ctx context.Context) (*StorageServiceStats, 
 // FindBlobsByTags operation finds all blobs in the storage account whose tags match a given search expression.
 // Filter blobs searches across all containers within a storage account but can be scoped within the expression to a single container.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/find-blobs-by-tags
+// eg. "dog='germanshepherd' and penguin='emperorpenguin'"
+// To specify a container, eg. "@container=’containerName’ and Name = ‘C’"
 func (bsu ServiceURL) FindBlobsByTags(ctx context.Context, timeout *int32, requestID *string, where *string, marker Marker, maxResults *int32) (*FilterBlobSegment, error) {
 	return bsu.client.FilterBlobs(ctx, timeout, requestID, where, marker.Val, maxResults)
 }

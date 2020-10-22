@@ -163,7 +163,7 @@ func getCanonicalName(account string, containerName string, blobName string) str
 // The ContainerSASPermissions type simplifies creating the permissions string for an Azure Storage container SAS.
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
 type ContainerSASPermissions struct {
-	Read, Add, Create, Write, Delete, List bool
+	Read, Add, Create, Write, Delete, DeletePreviousVersion, List, Tag bool
 }
 
 // String produces the SAS permissions string for an Azure Storage container.
@@ -185,8 +185,14 @@ func (p ContainerSASPermissions) String() string {
 	if p.Delete {
 		b.WriteRune('d')
 	}
+	if p.DeletePreviousVersion {
+		b.WriteRune('x')
+	}
 	if p.List {
 		b.WriteRune('l')
+	}
+	if p.Tag {
+		b.WriteRune('t')
 	}
 	return b.String()
 }
@@ -206,10 +212,14 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 			p.Write = true
 		case 'd':
 			p.Delete = true
+		case 'x':
+			p.DeletePreviousVersion = true
 		case 'l':
 			p.List = true
+		case 't':
+			p.Tag = true
 		default:
-			return fmt.Errorf("Invalid permission: '%v'", r)
+			return fmt.Errorf("invalid permission: '%v'", r)
 		}
 	}
 	return nil
@@ -217,7 +227,7 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 
 // The BlobSASPermissions type simplifies creating the permissions string for an Azure Storage blob SAS.
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
-type BlobSASPermissions struct{ Read, Add, Create, Write, Delete, DeletePreviousVersion bool }
+type BlobSASPermissions struct{ Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag bool }
 
 // String produces the SAS permissions string for an Azure Storage blob.
 // Call this method to set BlobSASSignatureValues's Permissions field.
@@ -241,6 +251,9 @@ func (p BlobSASPermissions) String() string {
 	if p.DeletePreviousVersion {
 		b.WriteRune('x')
 	}
+	if p.Tag {
+		b.WriteRune('t')
+	}
 	return b.String()
 }
 
@@ -261,8 +274,10 @@ func (p *BlobSASPermissions) Parse(s string) error {
 			p.Delete = true
 		case 'x':
 			p.DeletePreviousVersion = true
+		case 't':
+			p.Tag = true
 		default:
-			return fmt.Errorf("Invalid permission: '%v'", r)
+			return fmt.Errorf("invalid permission: '%v'", r)
 		}
 	}
 	return nil
