@@ -8,6 +8,8 @@ import (
 	"fmt"
 	chk "gopkg.in/check.v1"
 	"io/ioutil"
+	"log"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -568,7 +570,7 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 
 	//where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND\"@container\"='"+ containerName1 + "'"
 	//TODO: Figure out how to do a composite query based on container.
-	where = "\"tag1\"='firsttag' and \"tag2\"='secondtag'"
+	where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'"
 
 	lResp, err = bsu.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)
 	c.Assert(err, chk.IsNil)
@@ -576,4 +578,61 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 	for _, blob := range lResp.Blobs {
 		c.Assert(blob.TagValue, chk.Equals, "firsttag")
 	}
+}
+
+func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
+	accountName, accountKey := accountInfo()
+	credential, err := NewSharedKeyCredential(accountName, accountKey)
+	if err != nil {
+		c.Fail()
+	}
+
+	sasQueryParams, err := AccountSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,
+		ExpiryTime:    time.Now().UTC().Add(2 * time.Hour),
+		Permissions:   AccountSASPermissions{Read: true, List: true, Write: true, DeletePreviousVersion: true, Tag: true, FilterByTags: true, Create: true}.String(),
+		Services:      AccountSASServices{Blob: true}.String(),
+		ResourceTypes: AccountSASResourceTypes{Service: true, Container: true, Object: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	qp := sasQueryParams.Encode()
+	urlToSendToSomeone := fmt.Sprintf("https://%s.blob.core.windows.net?%s", accountName, qp)
+	u, _ := url.Parse(urlToSendToSomeone)
+	serviceURL := NewServiceURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+
+	containerName := generateContainerName()
+	containerURL := serviceURL.NewContainerURL(containerName)
+	_, err = containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	blobURL := containerURL.NewBlockBlobURL("temp")
+	_, err = blobURL.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	if err != nil {
+		c.Fail()
+	}
+
+	blobTagsMap := BlobTagsMap{"tag1": "firsttag", "tag2": "secondtag", "tag3": "thirdtag"}
+	setBlobTagsResp, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
+	c.Assert(err, chk.IsNil)
+	c.Assert(setBlobTagsResp.StatusCode(), chk.Equals, 204)
+
+	blobGetTagsResp, err := blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(blobGetTagsResp.StatusCode(), chk.Equals, 200)
+	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
+	for _, blobTag := range blobGetTagsResp.BlobTagSet {
+		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
+	}
+
+	time.Sleep(5 * time.Second)
+	where := "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND@container='" + containerName + "'"
+	blobListResp, err := serviceURL.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(blobListResp.Blobs, chk.HasLen, 1)
 }
