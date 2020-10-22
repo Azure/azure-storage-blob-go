@@ -589,7 +589,7 @@ func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
 
 	sasQueryParams, err := AccountSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
-		ExpiryTime:    time.Now().UTC().Add(2 * time.Hour),
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour),
 		Permissions:   AccountSASPermissions{Read: true, List: true, Write: true, DeletePreviousVersion: true, Tag: true, FilterByTags: true, Create: true}.String(),
 		Services:      AccountSASServices{Blob: true}.String(),
 		ResourceTypes: AccountSASResourceTypes{Service: true, Container: true, Object: true}.String(),
@@ -630,7 +630,7 @@ func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
 		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(30 * time.Second)
 	where := "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND@container='" + containerName + "'"
 	blobListResp, err := serviceURL.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)
 	c.Assert(err, chk.IsNil)
