@@ -141,6 +141,20 @@ func (pb PageBlobURL) GetPageRanges(ctx context.Context, offset int64, count int
 		nil)
 }
 
+// GetManagedDiskPageRangesDiff gets the collection of page ranges that differ between a specified snapshot and this page blob representing managed disk.
+// For more information, see https://docs.microsoft.com/rest/api/storageservices/get-page-ranges.
+func (pb PageBlobURL) GetManagedDiskPageRangesDiff(ctx context.Context, offset int64, count int64, prevSnapshot *string, prevSnapshotURL *string, ac BlobAccessConditions) (*PageList, error) {
+	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
+
+	return pb.pbClient.GetPageRangesDiff(ctx, nil, nil, prevSnapshot,
+		prevSnapshotURL, // Get managed disk diff
+		httpRange{offset: offset, count: count}.pointers(),
+		ac.LeaseAccessConditions.pointers(),
+		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		nil, // Blob ifTags
+		nil)
+}
+
 // GetPageRangesDiff gets the collection of page ranges that differ between a specified snapshot and this page blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/get-page-ranges.
 func (pb PageBlobURL) GetPageRangesDiff(ctx context.Context, offset int64, count int64, prevSnapshot string, ac BlobAccessConditions) (*PageList, error) {
