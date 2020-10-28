@@ -24,7 +24,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	burl := containerURL.NewBlockBlobURL(blobName)
 	data := "Hello world!"
 
-	_, err = burl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = burl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -61,6 +61,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	if err != nil {
 		c.Fatal(err)
 	}
+	time.Sleep(time.Second * 2)
 
 	//Attach SAS query to block blob URL
 	p := NewPipeline(NewAnonymousCredential(), PipelineOptions{})
@@ -91,7 +92,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	//If this succeeds, it means a normal SAS token was created.
 
 	fsburl := containerURL.NewBlockBlobURL("failsnap")
-	_, err = fsburl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = fsburl.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		c.Fatal(err) //should succeed to create the blob via normal auth means
 	}

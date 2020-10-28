@@ -72,7 +72,7 @@ func Example() {
 
 	// Create the blob with string (plain text) content.
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -429,8 +429,7 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 	blobURL := containerURL.NewBlockBlobURL("HelloWorld.txt") // Blob names can be mixed case
 
 	// Create the blob and put some text in it
-	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"},
-		Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -494,7 +493,7 @@ func ExampleBlobAccessConditions() {
 	}
 
 	// Create the blob (unconditionally; succeeds)
-	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	showResult(upload, err)
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
@@ -506,8 +505,7 @@ func ExampleBlobAccessConditions() {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
-	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: upload.ETag()}})
+	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: upload.ETag()}}, DefaultAccessTier, nil)
 	showResult(upload, err)
 
 	// Download content if it has changed since the version identified by ETag (fails):
@@ -515,8 +513,7 @@ func ExampleBlobAccessConditions() {
 		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false))
 
 	// Upload content if the blob doesn't already exist (fails):
-	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETagAny}}))
+	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETagAny}}, DefaultAccessTier, nil))
 }
 
 // This examples shows how to create a container with metadata and then how to read & update the metadata.
@@ -585,8 +582,7 @@ func ExampleMetadata_blobs() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{},
-		Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -633,11 +629,10 @@ func ExampleBlobHTTPHeaders() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create a blob with HTTP headers
-	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"),
-		BlobHTTPHeaders{
-			ContentType:        "text/html; charset=utf-8",
-			ContentDisposition: "attachment",
-		}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{
+		ContentType:        "text/html; charset=utf-8",
+		ContentDisposition: "attachment",
+	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -716,7 +711,7 @@ func ExampleBlockBlobURL() {
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -759,7 +754,7 @@ func ExampleAppendBlobURL() {
 	appendBlobURL := NewAppendBlobURL(*u, NewPipeline(credential, PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err = appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -799,8 +794,7 @@ func ExamplePageBlobURL() {
 	blobURL := NewPageBlobURL(*u, NewPipeline(credential, PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err = blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{},
-		Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -870,7 +864,7 @@ func Example_blobSnapshots() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create the original blob:
-	_, err = baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -880,7 +874,7 @@ func Example_blobSnapshots() {
 	snapshot := createSnapshot.Snapshot()
 
 	// Modify the original blob & show it:
-	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{})
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -928,7 +922,7 @@ func Example_blobSnapshots() {
 	}
 
 	// Promote read-only snapshot to writable base blob:
-	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{})
+	_, err = baseBlobURL.StartCopyFromURL(ctx, snapshotBlobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -966,14 +960,12 @@ func Example_progressUploadDownload() {
 	requestBody := strings.NewReader("Some text to write")
 
 	// Wrap the request body in a RequestBodyProgress and pass a callback function for progress reporting.
-	_, err = blobURL.Upload(ctx,
-		pipeline.NewRequestBodyProgress(requestBody, func(bytesTransferred int64) {
-			fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Size())
-		}),
-		BlobHTTPHeaders{
-			ContentType:        "text/html; charset=utf-8",
-			ContentDisposition: "attachment",
-		}, Metadata{}, BlobAccessConditions{})
+	_, err = blobURL.Upload(ctx, pipeline.NewRequestBodyProgress(requestBody, func(bytesTransferred int64) {
+		fmt.Printf("Wrote %d of %d bytes.", bytesTransferred, requestBody.Size())
+	}), BlobHTTPHeaders{
+		ContentType:        "text/html; charset=utf-8",
+		ContentDisposition: "attachment",
+	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1013,7 +1005,7 @@ func ExampleBlobURL_startCopy() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	src, _ := url.Parse("https://cdn2.auth0.com/docs/media/addons/azure_blob.svg")
-	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, ModifiedAccessConditions{}, BlobAccessConditions{})
+	startCopy, err := blobURL.StartCopyFromURL(ctx, *src, nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1259,7 +1251,7 @@ func ExampleListBlobsHierarchy() {
 	blobNames := []string{"a/1", "a/2", "b/1", "boaty_mcboatface"}
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{}, nil, BlobAccessConditions{})
+		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil)
 
 		if err != nil {
 			log.Fatal("an error occurred while creating blobs for the example setup")
