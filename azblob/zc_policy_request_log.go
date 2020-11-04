@@ -66,14 +66,14 @@ func NewRequestLogPolicyFactory(o RequestLogOptions) pipeline.Factory {
 			if err == nil { // We got a valid response from the service
 				sc = response.Response().StatusCode
 			} else { // We got an error, so we should inspect if we got a response
-				if r := err.(StorageError).Response(); r != nil {
-					sc = r.StatusCode
-				} else {
-					sc = -1
+				if se, ok := err.(StorageError); ok {
+					if r := se.Response(); r != nil {
+						sc = r.StatusCode
+					}
 				}
 			}
 
-			if ((sc >= 400 && sc <= 499) && sc != http.StatusNotFound && sc != http.StatusConflict && sc != http.StatusPreconditionFailed && sc != http.StatusRequestedRangeNotSatisfiable) || (sc >= 500 && sc <= 599) || sc == -1 {
+			if sc == 0 || ((sc >= 400 && sc <= 499) && sc != http.StatusNotFound && sc != http.StatusConflict && sc != http.StatusPreconditionFailed && sc != http.StatusRequestedRangeNotSatisfiable) || (sc >= 500 && sc <= 599) {
 				logLevel, forceLog = pipeline.LogError, true // Promote to Error any 4xx (except those listed is an error) or any 5xx
 			} else {
 				// For other status codes, we leave the level as is.
