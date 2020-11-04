@@ -72,13 +72,13 @@ func Example() {
 
 	// Create the blob with string (plain text) content.
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Download the blob's contents and verify that it worked correctly
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -429,7 +429,7 @@ func ExampleContainerURL_SetContainerAccessPolicy() {
 	blobURL := containerURL.NewBlockBlobURL("HelloWorld.txt") // Blob names can be mixed case
 
 	// Create the blob and put some text in it
-	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -493,27 +493,24 @@ func ExampleBlobAccessConditions() {
 	}
 
 	// Create the blob (unconditionally; succeeds)
-	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	upload, err := blobURL.Upload(ctx, strings.NewReader("Text-1"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	showResult(upload, err)
 
 	// Download blob content if the blob has been modified since we uploaded it (fails):
-	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: upload.LastModified()}}, false))
+	showResult(blobURL.Download(ctx, 0, 0, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: upload.LastModified()}}, false, ClientProvidedKeyOptions{}))
 
 	// Download blob content if the blob hasn't been modified in the last 24 hours (fails):
-	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false))
+	showResult(blobURL.Download(ctx, 0, 0, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: time.Now().UTC().Add(time.Hour * -24)}}, false, ClientProvidedKeyOptions{}))
 
 	// Upload new content if the blob hasn't changed since the version identified by ETag (succeeds):
-	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: upload.ETag()}}, DefaultAccessTier, nil)
+	upload, err = blobURL.Upload(ctx, strings.NewReader("Text-2"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: upload.ETag()}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	showResult(upload, err)
 
 	// Download content if it has changed since the version identified by ETag (fails):
-	showResult(blobURL.Download(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false))
+	showResult(blobURL.Download(ctx, 0, 0, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false, ClientProvidedKeyOptions{}))
 
 	// Upload content if the blob doesn't already exist (fails):
-	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETagAny}}, DefaultAccessTier, nil))
+	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETagAny}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}))
 }
 
 // This examples shows how to create a container with metadata and then how to read & update the metadata.
@@ -582,13 +579,13 @@ func ExampleMetadata_blobs() {
 	// NOTE: Metadata key names are always converted to lowercase before being sent to the Storage Service.
 	// Therefore, you should always use lowercase letters; especially when querying a map for a metadata key.
 	creatingApp, _ := os.Executable()
-	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{"author": "Jeffrey", "app": creatingApp}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Query the blob's properties and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -604,7 +601,7 @@ func ExampleMetadata_blobs() {
 
 	// Update the blob's metadata and write it back to the blob
 	metadata["editor"] = "Grant" // Add a new key/value; NOTE: The keyname is in all lowercase letters
-	_, err = blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{})
+	_, err = blobURL.SetMetadata(ctx, metadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -632,13 +629,13 @@ func ExampleBlobHTTPHeaders() {
 	_, err = blobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{
 		ContentType:        "text/html; charset=utf-8",
 		ContentDisposition: "attachment",
-	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// GetMetadata returns the blob's properties, HTTP headers, and metadata
-	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	get, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -704,14 +701,14 @@ func ExampleBlockBlobURL() {
 		base64BlockIDs[index] = blockIDIntToBase64(index) // Some people use UUIDs for block IDs
 
 		// Upload a block to this blob specifying the Block ID and its content (up to 100MB); this block is uncommitted.
-		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{}, nil)
+		_, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(word), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// After all the blocks are uploaded, atomically commit them to the blob.
-	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -727,7 +724,7 @@ func ExampleBlockBlobURL() {
 
 	// Download the blob in its entirety; download operations do not take blocks into account.
 	// NOTE: For really large blobs, downloading them like allocates a lot of memory.
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -754,20 +751,20 @@ func ExampleAppendBlobURL() {
 	appendBlobURL := NewAppendBlobURL(*u, NewPipeline(credential, PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err = appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil)
+	_, err = appendBlobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i := 0; i < 5; i++ { // Append 5 blocks to the append blob
-		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), AppendBlobAccessConditions{}, nil)
+		_, err := appendBlobURL.AppendBlock(ctx, strings.NewReader(fmt.Sprintf("Appending block #%d\n", i)), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// Download the entire append blob's contents and show it.
-	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := appendBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -794,20 +791,20 @@ func ExamplePageBlobURL() {
 	blobURL := NewPageBlobURL(*u, NewPipeline(credential, PipelineOptions{}))
 
 	ctx := context.Background() // This example uses a never-expiring context
-	_, err = blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil)
+	_, err = blobURL.Create(ctx, PageBlobPageBytes*4, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	page := [PageBlobPageBytes]byte{}
 	copy(page[:], "Page 0")
-	_, err = blobURL.UploadPages(ctx, 0*PageBlobPageBytes, bytes.NewReader(page[:]), PageBlobAccessConditions{}, nil)
+	_, err = blobURL.UploadPages(ctx, 0*PageBlobPageBytes, bytes.NewReader(page[:]), PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	copy(page[:], "Page 1")
-	_, err = blobURL.UploadPages(ctx, 2*PageBlobPageBytes, bytes.NewReader(page[:]), PageBlobAccessConditions{}, nil)
+	_, err = blobURL.UploadPages(ctx, 2*PageBlobPageBytes, bytes.NewReader(page[:]), PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -820,7 +817,7 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	_, err = blobURL.ClearPages(ctx, 0*PageBlobPageBytes, 1*PageBlobPageBytes, PageBlobAccessConditions{})
+	_, err = blobURL.ClearPages(ctx, 0*PageBlobPageBytes, 1*PageBlobPageBytes, PageBlobAccessConditions{}, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -833,7 +830,7 @@ func ExamplePageBlobURL() {
 		fmt.Printf("Start=%d, End=%d\n", pr.Start, pr.End)
 	}
 
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -864,22 +861,22 @@ func Example_blobSnapshots() {
 	ctx := context.Background() // This example uses a never-expiring context
 
 	// Create the original blob:
-	_, err = baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("Some text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Create a snapshot of the original blob & save its timestamp:
-	createSnapshot, err := baseBlobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	createSnapshot, err := baseBlobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	snapshot := createSnapshot.Snapshot()
 
 	// Modify the original blob & show it:
-	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = baseBlobURL.Upload(ctx, strings.NewReader("New text"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := baseBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	b := bytes.Buffer{}
 	reader := get.Body(RetryReaderOptions{})
 	b.ReadFrom(reader)
@@ -888,7 +885,7 @@ func Example_blobSnapshots() {
 
 	// Show snapshot blob via original blob URI & snapshot time:
 	snapshotBlobURL := baseBlobURL.WithSnapshot(snapshot)
-	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err = snapshotBlobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	b.Reset()
 	reader = get.Body(RetryReaderOptions{})
 	b.ReadFrom(reader)
@@ -965,13 +962,13 @@ func Example_progressUploadDownload() {
 	}), BlobHTTPHeaders{
 		ContentType:        "text/html; charset=utf-8",
 		ContentDisposition: "attachment",
-	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Here's how to read the blob's data with progress reporting:
-	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	get, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1014,7 +1011,7 @@ func ExampleBlobURL_startCopy() {
 	copyStatus := startCopy.CopyStatus()
 	for copyStatus == CopyStatusPending {
 		time.Sleep(time.Second * 2)
-		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+		getMetadata, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -1097,7 +1094,7 @@ func ExampleBlobUrl_Download() {
 	contentLength := int64(0) // Used for progress reporting to report the total number of bytes being downloaded.
 
 	// Download returns an intelligent retryable stream around a blob; it returns an io.ReadCloser.
-	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false)
+	dr, err := blobURL.Download(context.TODO(), 0, -1, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1251,7 +1248,7 @@ func ExampleListBlobsHierarchy() {
 	blobNames := []string{"a/1", "a/2", "b/1", "boaty_mcboatface"}
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil)
+		_, err := blobURL.Upload(ctx, strings.NewReader("test"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 		if err != nil {
 			log.Fatal("an error occurred while creating blobs for the example setup")

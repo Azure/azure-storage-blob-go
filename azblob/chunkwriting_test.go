@@ -37,7 +37,7 @@ func newFakeBlockWriter() *fakeBlockWriter {
 	return f
 }
 
-func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte) (*BlockBlobStageBlockResponse, error) {
+func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte, cpk ClientProvidedKeyOptions) (*BlockBlobStageBlockResponse, error) {
 	n := atomic.AddInt32(&f.block, 1)
 	if n == f.errOnBlock {
 		return nil, io.ErrNoProgress
@@ -58,7 +58,7 @@ func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.R
 	return &BlockBlobStageBlockResponse{}, nil
 }
 
-func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlockBlobCommitBlockListResponse, error) {
+func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, options ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	dst, err := os.OpenFile(filepath.Join(f.path, finalFileName), os.O_CREATE+os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err

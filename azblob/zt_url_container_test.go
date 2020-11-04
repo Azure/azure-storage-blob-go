@@ -124,7 +124,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	// Anonymous enumeration should be valid with container access
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -135,7 +135,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 
 	// Getting blob data anonymously should still be valid with container access
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -149,7 +149,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -158,7 +158,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 
 	// Accessing blob specific data should be public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	resp, err := blobURL2.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -171,7 +171,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
-	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	// Reference the same container URL but with anonymous credentials
 	containerURL2 := NewContainerURL(containerURL.URL(), NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
@@ -181,7 +181,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 
 	// Blob data is not public
 	blobURL2 := containerURL2.NewBlockBlobURL(blobPrefix)
-	_, err = blobURL2.GetProperties(ctx, BlobAccessConditions{})
+	_, err = blobURL2.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 401) // HEAD request does not return a status code
@@ -346,7 +346,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeMetadata(c *chk.C) {
 	defer deleteContainer(c, container)
 	_, blobNameNoMetadata := createBlockBlobWithPrefix(c, container, "a")
 	blobMetadata, blobNameMetadata := createBlockBlobWithPrefix(c, container, "b")
-	_, err := blobMetadata.SetMetadata(ctx, Metadata{"field": "value"}, BlobAccessConditions{})
+	_, err := blobMetadata.SetMetadata(ctx, Metadata{"field": "value"}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := container.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Metadata: true}})
@@ -363,7 +363,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeSnapshots(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blob, blobName := createNewBlockBlob(c, containerURL)
-	_, err := blob.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	_, err := blob.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -405,7 +405,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeUncommitted(c *chk.C) {
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil)
+	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -454,7 +454,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	defer deleteContainer(c, containerURL)
 
 	blobURL, _ := createBlockBlobWithPrefix(c, containerURL, "z")
-	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{})
+	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	blobURL2, _ := createBlockBlobWithPrefix(c, containerURL, "copy")
 	resp2, err := blobURL2.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
@@ -640,7 +640,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessNone(c *chk.C) {
 	bsu2 := NewServiceURL(bsu.URL(), pipeline)
 	containerURL2 := bsu2.NewContainerURL(containerName)
 	blobURL2 := containerURL2.NewBlockBlobURL(blobName)
-	_, err = blobURL2.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	_, err = blobURL2.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 
 	// Get permissions via the original container URL so the request succeeds
 	resp, _ := containerURL.GetAccessPolicy(ctx, LeaseAccessConditions{})
