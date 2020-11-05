@@ -87,8 +87,8 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 	return pb.pbClient.UploadPages(ctx, body, count, transactionalMD5, nil, nil,
 		PageRange{Start: offset, End: offset + count - 1}.pointers(),
 		ac.LeaseAccessConditions.pointers(),
-		nil, nil, EncryptionAlgorithmNone, // CPK
-		nil, // CPK-N
+		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
+		cpk.EncryptionScope, // CPK-N
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
