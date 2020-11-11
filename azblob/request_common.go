@@ -6,11 +6,22 @@ package azblob
 // must be established to transfer the key.
 // Note: Azure Storage does not store or manage customer provided encryption keys. Keys are securely discarded
 // as soon as possible after they’ve been used to encrypt or decrypt the blob data.
+// https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption
+// https://docs.microsoft.com/en-us/azure/storage/common/customer-managed-keys-overview
 type ClientProvidedKeyOptions struct {
-	EncryptionKey       *string                 // A Base64-encoded AES-256 encryption key value.
-	EncryptionKeySha256 *string                 // The Base64-encoded SHA256 of the encryption key.
-	EncryptionAlgorithm EncryptionAlgorithmType // Specifies the algorithm to use when encrypting data using the given key. Must be AES256.
-	EncryptionScope     *string
+	// A Base64-encoded AES-256 encryption key value.
+	EncryptionKey *string
+
+	// The Base64-encoded SHA256 of the encryption key.
+	EncryptionKeySha256 *string
+
+	// Specifies the algorithm to use when encrypting data using the given key. Must be AES256.
+	EncryptionAlgorithm EncryptionAlgorithmType
+
+	// Specifies the name of the encryption scope to use to encrypt the data provided in the request
+	// https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-overview
+	// https://docs.microsoft.com/en-us/azure/key-vault/general/overview
+	EncryptionScope *string
 }
 
 // NewClientProvidedKeyOptions function.
