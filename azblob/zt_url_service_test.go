@@ -27,7 +27,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// test on a block blob URL. They all call the same thing on the base URL, so only one test is needed for that.
 	bbURL := cURL.NewBlockBlobURL(generateBlobName())
-	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	bAccInfo, err := bbURL.GetAccountInfo(ctx)
 	c.Assert(err, chk.IsNil)

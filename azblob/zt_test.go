@@ -166,7 +166,7 @@ func createNewContainerWithSuffix(c *chk.C, bsu ServiceURL, suffix string) (cont
 func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, name string) {
 	blob, name = getBlockBlobURL(c, container)
 
-	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil)
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -174,11 +174,30 @@ func createNewBlockBlob(c *chk.C, container ContainerURL) (blob BlockBlobURL, na
 	return
 }
 
+func createNewBlockBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProvidedKeyOptions) (blob BlockBlobURL, name string) {
+	blob, name = getBlockBlobURL(c, container)
+
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{}, DefaultAccessTier, nil, cpk)
+	c.Assert(err, chk.IsNil)
+	c.Assert(cResp.StatusCode(), chk.Equals, 201)
+	return
+}
+
 func createNewAppendBlob(c *chk.C, container ContainerURL) (blob AppendBlobURL, name string) {
 	blob, name = getAppendBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil)
+	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	return
+}
+
+func createNewAppendBlobWithCPK(c *chk.C, container ContainerURL, cpk ClientProvidedKeyOptions) (blob AppendBlobURL, name string) {
+	blob, name = getAppendBlobURL(c, container)
+
+	resp, err := blob.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, cpk)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
@@ -187,7 +206,7 @@ func createNewAppendBlob(c *chk.C, container ContainerURL) (blob AppendBlobURL, 
 func createNewPageBlob(c *chk.C, container ContainerURL) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil)
+	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
@@ -196,8 +215,16 @@ func createNewPageBlob(c *chk.C, container ContainerURL) (blob PageBlobURL, name
 func createNewPageBlobWithSize(c *chk.C, container ContainerURL, sizeInBytes int64) (blob PageBlobURL, name string) {
 	blob, name = getPageBlobURL(c, container)
 
-	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil)
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.StatusCode(), chk.Equals, 201)
+	return
+}
 
+func createNewPageBlobWithCPK(c *chk.C, container ContainerURL, sizeInBytes int64, cpk ClientProvidedKeyOptions) (blob PageBlobURL, name string) {
+	blob, name = getPageBlobURL(c, container)
+
+	resp, err := blob.Create(ctx, sizeInBytes, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, cpk)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 	return
@@ -207,7 +234,7 @@ func createBlockBlobWithPrefix(c *chk.C, container ContainerURL, prefix string) 
 	name = prefix + generateName(blobPrefix)
 	blob = container.NewBlockBlobURL(name)
 
-	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil)
+	cResp, err := blob.Upload(ctx, strings.NewReader(blockBlobDefaultData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
@@ -371,7 +398,7 @@ func disableSoftDelete(c *chk.C, bsu ServiceURL) {
 }
 
 func validateUpload(c *chk.C, blobURL BlockBlobURL) {
-	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	data, _ := ioutil.ReadAll(resp.Response().Body)
 	c.Assert(data, chk.HasLen, 0)

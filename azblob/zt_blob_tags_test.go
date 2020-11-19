@@ -24,7 +24,7 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
@@ -50,12 +50,12 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 		"Python":     "CSharp",
 		"Javascript": "Android",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId1 := blockBlobUploadResp.VersionID()
 
-	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId2 := blockBlobUploadResp.VersionID()
@@ -84,12 +84,12 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId1 := blockBlobUploadResp.VersionID()
 
-	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	blockBlobUploadResp, err = blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 	versionId2 := blockBlobUploadResp.VersionID()
@@ -139,7 +139,7 @@ func (s *aztestsSuite) TestUploadBlockBlobWithSpecialCharactersInTags(c *chk.C) 
 		"tag2":     "+-./:=_",
 		"+-./:=_1": "+-./:=_",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 
@@ -169,7 +169,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 
 	for index, d := range data {
 		base64BlockIDs[index] = blockIDIntToBase64(index)
-		resp, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(d), LeaseAccessConditions{}, nil)
+		resp, err := blobURL.StageBlock(ctx, base64BlockIDs[index], strings.NewReader(d), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 		if err != nil {
 			c.Fail()
 		}
@@ -182,12 +182,12 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	commitResp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(commitResp.VersionID(), chk.NotNil)
 	versionId := commitResp.VersionID()
 
-	contentResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	contentResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	contentData, err := ioutil.ReadAll(contentResp.Body(RetryReaderOptions{}))
 	c.Assert(contentData, chk.DeepEquals, []uint8(strings.Join(data, "")))
@@ -230,7 +230,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 		"Javascript": "Android",
 	}
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -251,7 +251,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{})
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -259,7 +259,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{})
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -273,12 +273,12 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	//versionId := listResp.VersionID()
 
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -313,7 +313,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 		"Javascript": "Android",
 	}
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -344,7 +344,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 	c.Assert(resp.ContentMD5(), chk.DeepEquals, sourceDataMD5Value[:])
 	c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
 
-	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	destData, err := ioutil.ReadAll(downloadResp.Body(RetryReaderOptions{}))
 	c.Assert(err, chk.IsNil)
@@ -372,15 +372,15 @@ func (s *aztestsSuite) TestGetPropertiesReturnsTagsCount(c *chk.C) {
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap)
+	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 
-	getPropertiesResponse, err := blobURL.GetProperties(ctx, BlobAccessConditions{})
+	getPropertiesResponse, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(getPropertiesResponse.TagCount(), chk.Equals, int64(3))
 
-	downloadResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false)
+	downloadResp, err := blobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(downloadResp, chk.NotNil)
 	c.Assert(downloadResp.r.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
@@ -399,11 +399,11 @@ func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 	_, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{})
+	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
-	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{})
+	resp2, err := snapshotURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp2.TagCount(), chk.Equals, int64(3))
 }
@@ -419,7 +419,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 		"sdk":   "go",
 	}
 	blob, _ := createNewPageBlob(c, container)
-	putResp, err := blob.UploadPages(ctx, 0, getReaderToRandomBytes(1024), PageBlobAccessConditions{}, nil)
+	putResp, err := blob.UploadPages(ctx, 0, getReaderToRandomBytes(1024), PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
@@ -431,7 +431,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
-	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{})
+	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
@@ -445,7 +445,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
-	gpResp, err = blob.GetProperties(ctx, BlobAccessConditions{})
+	gpResp, err = blob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "2")
@@ -462,11 +462,11 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 		"blob":  "sdk",
 		"sdk":   "go",
 	}
-	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, blobTagsMap)
+	resp, err := blob.Create(ctx, PageBlobPageBytes*10, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
-	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{})
+	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
@@ -480,7 +480,7 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
-	gpResp, err = blob.GetProperties(ctx, BlobAccessConditions{})
+	gpResp, err = blob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gpResp, chk.NotNil)
 	c.Assert(gpResp.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "2")
@@ -492,11 +492,11 @@ func (s *aztestsSuite) TestCreateAppendBlobWithTags(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	blobProp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{})
-	createResp, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: blobProp.ETag()}}, nil)
+	blobProp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	createResp, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: blobProp.ETag()}}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(createResp.VersionID(), chk.NotNil)
-	blobProp, _ = blobURL.GetProperties(ctx, BlobAccessConditions{})
+	blobProp, _ = blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(createResp.VersionID(), chk.Equals, blobProp.VersionID())
 	c.Assert(createResp.LastModified(), chk.DeepEquals, blobProp.LastModified())
 	c.Assert(createResp.ETag(), chk.Equals, blobProp.ETag())
@@ -546,21 +546,21 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 		"tag3": "thirdtag",
 	}
 	blobURL11, _ := getBlockBlobURL(c, containerURL1)
-	_, err := blobURL11.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap1)
+	_, err := blobURL11.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap1, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	blobURL12, _ := getBlockBlobURL(c, containerURL1)
-	_, err = blobURL12.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2)
+	_, err = blobURL12.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	blobURL21, _ := getBlockBlobURL(c, containerURL2)
-	_, err = blobURL21.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL21.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	blobURL22, _ := getBlockBlobURL(c, containerURL2)
-	_, err = blobURL22.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2)
+	_, err = blobURL22.Upload(ctx, bytes.NewReader([]byte("another random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap2, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	blobURL31, _ := getBlockBlobURL(c, containerURL3)
-	_, err = blobURL31.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL31.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	where := "\"tag4\"='fourthtag'"
@@ -612,7 +612,7 @@ func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
 	}
 
 	blobURL := containerURL.NewBlockBlobURL("temp")
-	_, err = blobURL.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fail()
 	}

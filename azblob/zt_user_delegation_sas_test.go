@@ -56,12 +56,12 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	cSASURL := NewContainerURL(cURL, p)
 
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
-	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	resp, err := bblob.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	data := &bytes.Buffer{}
 	body := resp.Body(RetryReaderOptions{})
 	if body == nil {
@@ -134,13 +134,13 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 		c.Fatal(err)
 	}
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil)
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	// Download data via User Delegation SAS URL; must succeed
-	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false)
+	downloadResponse, err := bSASURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}
