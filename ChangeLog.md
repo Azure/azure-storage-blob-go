@@ -5,7 +5,8 @@
 ## Version 0.12.0:
 - Added support for [Customer Provided Key](https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption) which will let users encrypt their data within client applications before uploading to Azure Storage, and decrypting data while downloading to the client
     - Read here to know more about [Azure key vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview), [Encryption scope](https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-manage?tabs=portal), [managing encryption scope](https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-manage?tabs=portal), and how to [configure customer managed keys](https://docs.microsoft.com/en-us/azure/data-explorer/customer-managed-keys-portal)
-- Fixed issue [#214](https://github.com/Azure/azure-storage-blob-go/issues/214) to resolve bug in `forceLog`
+- Fixed issue [#214](https://github.com/Azure/azure-storage-blob-go/issues/214)
+- Fixed issue [#230](https://github.com/Azure/azure-storage-blob-go/issues/230)
 
 ## Version 0.11.0:
 - Added support for the service version [`2019-12-12`](https://docs.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services).
