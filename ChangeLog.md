@@ -2,6 +2,13 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
+## Version 0.12.0:
+- Added support for [Customer Provided Key](https://docs.microsoft.com/en-us/azure/storage/common/storage-service-encryption) which will let users encrypt their data within client applications before uploading to Azure Storage, and decrypting data while downloading to the client
+    - Read here to know more about [Azure key vault](https://docs.microsoft.com/en-us/azure/key-vault/general/overview), [Encryption scope](https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-manage?tabs=portal), [managing encryption scope](https://docs.microsoft.com/en-us/azure/storage/blobs/encryption-scope-manage?tabs=portal), and how to [configure customer managed keys](https://docs.microsoft.com/en-us/azure/data-explorer/customer-managed-keys-portal)
+- Stopped using memory-mapped files and switched to the `io.ReaderAt` and `io.WriterAt` interfaces. Please refer [this](https://github.com/Azure/azure-storage-blob-go/pull/223/commits/0e3e7a4e260c059c49a418a0f1501452d3e05a44) to know more
+- Fixed issue [#214](https://github.com/Azure/azure-storage-blob-go/issues/214)
+- Fixed issue [#230](https://github.com/Azure/azure-storage-blob-go/issues/230)
+
 ## Version 0.11.0:
 - Added support for the service version [`2019-12-12`](https://docs.microsoft.com/en-us/rest/api/storageservices/versioning-for-the-azure-storage-services).
 - Added [Get Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags) and [Set Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags) APIs which allow user-defined tags to be added to a blob which then act as a secondary index.
