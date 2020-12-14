@@ -136,21 +136,29 @@ func (c *copier) sendChunk() error {
 	case err == nil && n == 0:
 		return nil
 	case err == nil:
-		c.ch <- copierChunk{
+		select {
+		case c.ch <- copierChunk{
 			buffer: buffer[0:n],
 			id:     c.id.next(),
+		}:
+			return nil
+		case <-c.ctx.Done():
+			return c.getErr()
 		}
-		return nil
 	case err != nil && (err == io.EOF || err == io.ErrUnexpectedEOF) && n == 0:
 		return io.EOF
 	}
 
 	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		c.ch <- copierChunk{
+		select {
+		case c.ch <- copierChunk{
 			buffer: buffer[0:n],
 			id:     c.id.next(),
+		}:
+			return io.EOF
+		case <-c.ctx.Done():
+			return c.getErr()
 		}
-		return io.EOF
 	}
 	if err := c.getErr(); err != nil {
 		return err
