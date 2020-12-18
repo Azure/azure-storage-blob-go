@@ -366,6 +366,8 @@ const _1MiB = 1024 * 1024
 type UploadStreamToBlockBlobOptions struct {
 	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
 	BufferSize int
+	// SyncPool if provided excludes BufferSize option. Use one of the two options.
+	SyncPool         BufferPool
 	// MaxBuffers defines the number of simultaneous uploads will be performed to upload the file.
 	MaxBuffers               int
 	BlobHTTPHeaders          BlobHTTPHeaders

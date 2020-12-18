@@ -43,11 +43,16 @@ func copyFromReader(ctx context.Context, from io.Reader, to blockWriter, o Uploa
 		o:      o,
 		ch:     make(chan copierChunk, 1),
 		errCh:  make(chan error, 1),
-		buffers: sync.Pool{
+	}
+
+	if o.SyncPool != nil {
+		cp.buffers = o.SyncPool
+	} else {
+		cp.buffers = &sync.Pool{
 			New: func() interface{} {
 				return make([]byte, o.BufferSize)
 			},
-		},
+		}
 	}
 
 	// Starts the pools of concurrent writers.
@@ -101,10 +106,17 @@ type copier struct {
 	// wg provides a count of how many writers we are waiting to finish.
 	wg sync.WaitGroup
 	// buffers provides a pool of chunks that can be reused.
-	buffers sync.Pool
+	buffers BufferPool
 
 	// result holds the final result from blob storage after we have submitted all chunks.
 	result *BlockBlobCommitBlockListResponse
+}
+
+// BufferPool provides a pool of chunks that can be reused.
+// Fits sync.Pool methods.
+type BufferPool interface {
+	Put(x interface{})
+	Get() interface{}
 }
 
 type copierChunk struct {

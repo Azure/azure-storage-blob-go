@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -230,6 +231,16 @@ func TestCopyFromReader(t *testing.T) {
 			ctx:      context.Background(),
 			fileSize: 12 * _1MiB,
 			o:        UploadStreamToBlockBlobOptions{MaxBuffers: 5, BufferSize: 8 * 1024 * 1024},
+		},
+		{
+			desc:     "Send file(1 MiB) with custom BufferPool",
+			ctx:      context.Background(),
+			fileSize: 1 * _1MiB,
+			o:        UploadStreamToBlockBlobOptions{MaxBuffers: 5, SyncPool: &sync.Pool{
+				New: func() interface{} {
+					return make([]byte, 1024)
+				},
+			}},
 		},
 	}
 
