@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
@@ -282,6 +283,16 @@ func (b BlobURL) ChangeLease(ctx context.Context, leaseID string, proposedID str
 		nil, ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
 		nil)
+}
+
+// SetAccessControl set the owner, group, permissions, or access control list for a blob.
+func (b BlobURL) SetAccessControl(ctx context.Context, timeout *int32, leaseID *string, owner *string, group *string, posixPermissions *string, posixACL *string, ifMatch *ETag, ifNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*BlobSetAccessControlResponse, error) {
+	return b.blobClient.SetAccessControl(ctx, timeout, leaseID, owner, group, posixPermissions, posixACL, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince, requestID)
+}
+
+//GetAccessControl gets the owner, group, permission and access control for a blob. Valid on hns accounts only
+func (b BlobURL) GetAccessControl(ctx context.Context, timeout *int32, upn *bool, leaseID *string, _ *string, _ *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*BlobGetAccessControlResponse, error) {
+	return b.blobClient.GetAccessControl(ctx, timeout, upn, leaseID, nil, nil, ifModifiedSince, ifUnmodifiedSince, requestID)
 }
 
 // LeaseBreakNaturally tells ContainerURL's or BlobURL's BreakLease method to break the lease using service semantics.
