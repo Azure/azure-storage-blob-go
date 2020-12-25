@@ -230,16 +230,8 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 						} else {
 							action = "NoRetry: StorageError not Temporary() and without retriable status code"
 						}
-					} else if netErr, ok := err.(net.Error); ok {
-						// Use non-retriable net.Error list, but not retriable list.
-						// As there are errors without Temporary() implementation,
-						// while need be retried, like 'connection reset by peer', 'transport connection broken' and etc.
-						// So the SDK do retry for most of the case, unless the error should not be retried for sure.
-						if !isNotRetriable(netErr) {
+					} else if _, ok := err.(net.Error); ok {
 							action = "Retry: net.Error and not in the non-retriable list"
-						} else {
-							action = "NoRetry: net.Error and in the non-retriable list"
-						}
 					} else if err == io.ErrUnexpectedEOF {
 						action = "Retry: unexpected EOF"
 					} else {
