@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Azure/azure-pipeline-go/pipeline"
@@ -239,6 +240,10 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 							action = "Retry: net.Error and not in the non-retriable list"
 						} else {
 							action = "NoRetry: net.Error and in the non-retriable list"
+						}
+					} else if opErr, ok := err.(*net.OpError); ok {
+						if opErr.Err.Error() == syscall.ECONNRESET.Error() {
+							action = "Retry: netOperr Connection Reset"
 						}
 					} else if err == io.ErrUnexpectedEOF {
 						action = "Retry: unexpected EOF"
