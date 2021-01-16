@@ -14,14 +14,17 @@ func NewUniqueRequestIDPolicyFactory() pipeline.Factory {
 		return func(ctx context.Context, request pipeline.Request) (pipeline.Response, error) {
 			id := request.Header.Get(xMsClientRequestID)
 			if id == "" { // Add a unique request ID if the caller didn't specify one already
-				request.Header.Set(xMsClientRequestID, newUUID().String())
+				id = newUUID().String()
+				request.Header.Set(xMsClientRequestID, id)
 			}
 
 			resp, err := next.Do(ctx, request)
 
-			// Return error if request ID from request & response don't match
-			if err == nil && resp != nil && resp.Response().Header.Get(xMsClientRequestID) != id {
-				err = errors.New("client Request ID from request and response does not match")
+			val := resp.Response().Header.Values(xMsClientRequestID)
+			if len(val) > 0 {
+				if val[0] != id {
+					err = errors.New("client Request ID from request and response does not match")
+				}
 			}
 
 			return resp, err

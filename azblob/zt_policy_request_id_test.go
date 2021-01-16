@@ -31,7 +31,7 @@ func (p dummyPolicy) Do(ctx context.Context, request pipeline.Request) (pipeline
 	// Set headers and errors according to each scenario
 	switch p.scenario {
 	case clientRequestIDMissing:
-		header.Add("x-ms-client-request-id", "")
+		// header.Add("x-ms-client-request-id", "")
 	case clientRequestIDError:
 		err = errors.New("error is not nil")
 	case clientRequestIDMatch:
