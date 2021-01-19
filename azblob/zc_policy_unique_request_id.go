@@ -20,10 +20,12 @@ func NewUniqueRequestIDPolicyFactory() pipeline.Factory {
 
 			resp, err := next.Do(ctx, request)
 
-			val := resp.Response().Header.Values(xMsClientRequestID)
-			if len(val) > 0 {
-				if val[0] != id {
-					err = errors.New("client Request ID from request and response does not match")
+			if err == nil && resp != nil {
+				val := resp.Response().Header.Values(xMsClientRequestID)
+				if len(val) > 0 {
+					if val[0] != id {
+						err = errors.New("client Request ID from request and response does not match")
+					}
 				}
 			}
 
