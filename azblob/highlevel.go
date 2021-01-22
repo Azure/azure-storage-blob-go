@@ -185,7 +185,7 @@ type DownloadFromBlobOptions struct {
 
 // downloadBlobToWriterAt downloads an Azure blob to a buffer with parallel.
 func downloadBlobToWriterAt(ctx context.Context, blobURL BlobURL, offset int64, count int64,
-	writer io.WriterAt, o DownloadFromBlobOptions, initialDownloadResponse *DownloadResponse) error {
+	writer io.WriterAt, o DownloadFromBlobOptions, initialDownloadResponse *downloadResponse) error {
 	if o.BlockSize == 0 {
 		o.BlockSize = BlobDefaultDownloadBlockSize
 	}

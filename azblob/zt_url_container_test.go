@@ -353,9 +353,9 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeMetadata(c *chk.C) {
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Segment.BlobItems[0].Name, chk.Equals, blobNameNoMetadata)
-	c.Assert(resp.Segment.BlobItems[0].Metadata, chk.HasLen, 0)
+	c.Assert(resp.Segment.BlobItems[0].Metadata.AdditionalProperties, chk.HasLen, 0)
 	c.Assert(resp.Segment.BlobItems[1].Name, chk.Equals, blobNameMetadata)
-	c.Assert(resp.Segment.BlobItems[1].Metadata["field"], chk.Equals, "value")
+	c.Assert(resp.Segment.BlobItems[1].Metadata.AdditionalProperties["field"], chk.Equals, "value")
 }
 
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeSnapshots(c *chk.C) {
