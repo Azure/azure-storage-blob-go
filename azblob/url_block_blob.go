@@ -154,6 +154,5 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		nil, // Blob ifTags
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
-		nil,            // seal Blob
 	)
 }

@@ -576,7 +576,15 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	for _, blob := range lResp.Blobs {
-		c.Assert(blob.TagValue, chk.Equals, "firsttag")
+		containsTag := false
+
+		for _, tag := range blob.Tags.BlobTagSet {
+			if tag.Key == "firsttag" {
+				containsTag = true
+			}
+		}
+
+		c.Assert(containsTag, chk.Equals, "firsttag")
 	}
 }
 
