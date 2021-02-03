@@ -51,12 +51,30 @@ func (b BlobURL) WithSnapshot(snapshot string) BlobURL {
 	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
 }
 
+func (b BlobURL) getSnapshot() *string {
+	blobURLParts := NewBlobURLParts(b.URL())
+	var snapshot *string = nil
+	if blobURLParts.Snapshot != "" {
+		snapshot = &blobURLParts.Snapshot
+	}
+	return snapshot
+}
+
 // WithVersionID creates a new BlobURL object identical to the source but with the specified version id.
 // Pass "" to remove the snapshot returning a URL to the base blob.
 func (b BlobURL) WithVersionID(versionID string) BlobURL {
 	p := NewBlobURLParts(b.URL())
 	p.VersionID = versionID
 	return NewBlobURL(p.URL(), b.blobClient.Pipeline())
+}
+
+func (b BlobURL) getVersionId() *string {
+	blobURLParts := NewBlobURLParts(b.URL())
+	var versionID *string = nil
+	if blobURLParts.VersionID != "" {
+		versionID = &blobURLParts.VersionID
+	}
+	return versionID
 }
 
 // ToAppendBlobURL creates an AppendBlobURL using the source's URL and pipeline.
@@ -146,15 +164,18 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 // Each call to this operation replaces all existing tags attached to the blob.
 // To remove all tags from the blob, call this operation with no tags set.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
-func (b BlobURL) SetTags(ctx context.Context, timeout *int32, versionID *string, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, requestID *string, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
+func (b BlobURL) SetTags(ctx context.Context, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
 	tags := SerializeBlobTags(blobTagsMap)
-	return b.blobClient.SetTags(ctx, timeout, versionID, transactionalContentMD5, transactionalContentCrc64, requestID, ifTags, &tags)
+	versionID := b.getSnapshot()
+	return b.blobClient.SetTags(ctx, nil, versionID, transactionalContentMD5, transactionalContentCrc64, nil, ifTags, &tags)
 }
 
 // GetTags operation enables users to get tags on a blob or specific blob version, or snapshot.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags
-func (b BlobURL) GetTags(ctx context.Context, timeout *int32, requestID *string, snapshot *string, versionID *string, ifTags *string) (*BlobTags, error) {
-	return b.blobClient.GetTags(ctx, timeout, requestID, snapshot, versionID, ifTags)
+func (b BlobURL) GetTags(ctx context.Context, ifTags *string) (*BlobTags, error) {
+	versionID := b.getVersionId()
+	snapshot := b.getSnapshot()
+	return b.blobClient.GetTags(ctx, nil, nil, snapshot, versionID, ifTags)
 }
 
 // Undelete restores the contents and metadata of a soft-deleted blob and any associated soft-deleted snapshots.
