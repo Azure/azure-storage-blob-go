@@ -579,12 +579,12 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 		containsTag := false
 
 		for _, tag := range blob.Tags.BlobTagSet {
-			if tag.Key == "firsttag" {
+			if tag.Value == "firsttag" {
 				containsTag = true
 			}
 		}
 
-		c.Assert(containsTag, chk.Equals, "firsttag")
+		c.Assert(containsTag, chk.Equals, true)
 	}
 }
 
