@@ -166,7 +166,7 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 // https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
 func (b BlobURL) SetTags(ctx context.Context, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
 	tags := SerializeBlobTags(blobTagsMap)
-	versionID := b.getSnapshot()
+	versionID := b.getVersionId()
 	return b.blobClient.SetTags(ctx, nil, versionID, transactionalContentMD5, transactionalContentCrc64, nil, ifTags, &tags)
 }
 
