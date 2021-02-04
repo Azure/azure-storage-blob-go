@@ -2365,7 +2365,7 @@ type BlobItemInternal struct {
 	VersionID                 *string                `xml:"VersionId"`
 	IsCurrentVersion          *bool                  `xml:"IsCurrentVersion"`
 	Properties                BlobPropertiesInternal `xml:"Properties"`
-	Metadata                  *BlobMetadata          `xml:"Metadata"`
+	Metadata                  Metadata               `xml:"Metadata"`
 	BlobTags                  *BlobTags              `xml:"Tags"`
 	ObjectReplicationMetadata map[string]string      `xml:"ObjectReplicationMetadata"`
 }
@@ -7511,7 +7511,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
+	rfc3339Format = "2006-01-02T15:04:05Z"
 )
 
 // used to convert times from UTC to GMT before sending across the wire
