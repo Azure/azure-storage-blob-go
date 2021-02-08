@@ -106,6 +106,7 @@ type SASQueryParameters struct {
 	signedExpiry       time.Time   `param:"ske"`
 	signedService      string      `param:"sks"`
 	signedVersion      string      `param:"skv"`
+	signedDirectoryDepth string    `param:"sdd"`
 
 	// private member used for startTime and expiryTime formatting.
 	stTimeFormat string
@@ -199,6 +200,10 @@ func (p *SASQueryParameters) ContentType() string {
 	return p.contentType
 }
 
+func (p *SASQueryParameters) SignedDirectoryDepth() string {
+	return p.signedDirectoryDepth
+}
+
 // IPRange represents a SAS IP range's start IP and (optionally) end IP.
 type IPRange struct {
 	Start net.IP // Not specified if length = 0
@@ -279,6 +284,8 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 			p.signedService = val
 		case "skv":
 			p.signedVersion = val
+		case "sdd":
+			p.signedDirectoryDepth = val
 		default:
 			isSASKey = false // We didn't recognize the query parameter
 		}
@@ -346,6 +353,9 @@ func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
 	}
 	if p.contentType != "" {
 		v.Add("rsct", p.contentType)
+	}
+	if p.signedDirectoryDepth != "" {
+		v.Add("sdd", p.signedDirectoryDepth)
 	}
 	return v
 }
