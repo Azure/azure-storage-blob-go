@@ -90,7 +90,7 @@ func (s *aztestsSuite) TestContainerCreateNilMetadata(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := getContainerURL(c, bsu)
 
-	_, err := containerURL.Create(ctx, nil, PublicAccessBlob)
+	_, err := containerURL.Create(ctx, nil, PublicAccessNone)
 	defer deleteContainer(c, containerURL)
 	c.Assert(err, chk.IsNil)
 
