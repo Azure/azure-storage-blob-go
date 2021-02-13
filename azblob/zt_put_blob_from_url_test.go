@@ -1,7 +1,7 @@
 package azblob
 
 import (
-	"context"
+	"bytes"
 	"crypto/md5"
 	chk "gopkg.in/check.v1"
 	"io/ioutil"
@@ -9,20 +9,26 @@ import (
 	"time"
 )
 
-func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
+func CreateBlockBlobsForTesting(c *chk.C, size int) (ContainerURL, *SharedKeyCredential, *bytes.Reader, []uint8, [16]uint8, BlockBlobURL, BlockBlobURL) {
 	bsu := getBSU()
 	credential, err := getGenericCredential("")
 	if err != nil {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
 
-	testSize := 1 * 1024 * 1024 // 1MB
+	testSize := size * 1024 * 1024 // 1MB
 	r, sourceData := getRandomDataAndReader(testSize)
 	sourceDataMD5Value := md5.Sum(sourceData)
-	srcBlob := container.NewBlockBlobURL("srcBlob")
-	destBlob := container.NewBlockBlobURL("destBlob")
+	srcBlob := container.NewBlockBlobURL(generateBlobName())
+	destBlob := container.NewBlockBlobURL(generateBlobName())
+
+	return container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob
+}
+
+func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
+	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 1)
+	defer delContainer(c, container)
 
 	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
@@ -67,6 +73,8 @@ func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(destData, chk.DeepEquals, sourceData)
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
+	c.Assert(downloadResp.r.rawResponse.Header.Get("x-ms-meta-foo"), chk.Equals, "bar")
+	c.Assert(downloadResp.r.rawResponse.Header.Get("x-ms-tag-count"), chk.Equals, "3")
 
 	// Edge case 1: Provide bad MD5 and make sure the put fails
 	_, badMD5 := getRandomDataAndReader(16)
@@ -77,23 +85,12 @@ func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
+	c.Assert(resp.rawResponse.Header.Get("x-mx-content-crc64"), chk.NotNil)
 }
 
 func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
-	bsu := getBSU()
-	credential, err := getGenericCredential("")
-	if err != nil {
-		c.Fatal("Invalid credential")
-	}
-	container, _ := createNewContainer(c, bsu)
+	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 4)
 	defer delContainer(c, container)
-
-	testSize := 4 * 1024 * 1024 // 4MB
-	r, sourceData := getRandomDataAndReader(testSize)
-	sourceDataMD5Value := md5.Sum(sourceData)
-	ctx := context.Background()
-	srcBlob := container.NewBlockBlobURL(generateBlobName())
-	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -132,34 +129,18 @@ func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 	c.Assert(downloadResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
 
-	// Edge case 1: Provide bad MD5 and make sure the put fails
-	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, badMD5, DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
-	c.Assert(err, chk.NotNil)
-
-	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
+	// Edge case: Not providing any source MD5 should see the CRC getting returned instead and service version matches
 	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
+	c.Assert(resp.rawResponse.Header.Get("x-mx-content-crc64"), chk.NotNil)
 	c.Assert(resp.Response().Header.Get("x-ms-version"), chk.Equals, ServiceVersion)
 	c.Assert(resp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
 }
 
 func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
-	bsu := getBSU()
-	credential, err := getGenericCredential("")
-	if err != nil {
-		c.Fatal("Invalid credential")
-	}
-	container, _ := createNewContainer(c, bsu)
+	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 8)
 	defer delContainer(c, container)
-
-	testSize := 8 * 1024 * 1024 // 8MB
-	r, sourceData := getRandomDataAndReader(testSize)
-	sourceDataMD5Value := md5.Sum(sourceData)
-	ctx := context.Background() // Use default Background context
-	srcBlob := container.NewBlockBlobURL(generateBlobName())
-	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for copy.
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
@@ -201,29 +182,11 @@ func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
 
 	// Make sure the metadata got copied over
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
-
-	// Edge case 1: Provide bad MD5 and make sure the put fails
-	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, badMD5, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
-	c.Assert(err, chk.NotNil)
-
-	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
-	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
-	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 }
 
 func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
-	bsu := getBSU()
-
-	container, _ := createNewContainer(c, bsu)
+	container, credential, r, _, sourceDataMD5Value, srcBlob, _ := CreateBlockBlobsForTesting(c, 1)
 	defer delContainer(c, container)
-
-	testSize := 1 * 1024 * 1024
-	r, sourceData := getRandomDataAndReader(testSize)
-	sourceDataMD5Value := md5.Sum(sourceData)
-	ctx := context.Background()
-	srcBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Setting blob tier as "cool"
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, AccessTierCool, nil, ClientProvidedKeyOptions{})
@@ -233,10 +196,6 @@ func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 	// Get source blob URL with SAS for StageFromURL.
 	srcBlobParts := NewBlobURLParts(srcBlob.URL())
 
-	credential, err := getGenericCredential("")
-	if err != nil {
-		c.Fatal("Invalid credential")
-	}
 	srcBlobParts.SAS, err = BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		ExpiryTime:    time.Now().UTC().Add(2 * time.Hour),
@@ -262,40 +221,25 @@ func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestPutBlobFromURLWithMissingSAS(c *chk.C) {
-	bsu := getBSU()
-	container, _ := createNewContainer(c, bsu)
+	container, _, r, _, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 8)
 	defer delContainer(c, container)
-
-	testSize := 8 * 1024 * 1024 // 8MB
-	r, sourceData := getRandomDataAndReader(testSize)
-	sourceDataMD5Value := md5.Sum(sourceData)
-	ctx := context.Background() // Use default Background context
-	srcBlob := container.NewBlockBlobURL(generateBlobName())
-	destBlob := container.NewBlockBlobURL(generateBlobName())
 
 	// Prepare source blob for put.
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
-	// Invoke put blob from URL with URL without SAS
+	// Invoke put blob from URL with URL without SAS and make sure it fails
 	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlob.URL(), Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	c.Assert(resp, chk.IsNil)
 }
 
 func (s *aztestsSuite) TestPutBlobFromURLWithIncorrectURL(c *chk.C) {
-	bsu := getBSU()
-	container, _ := createNewContainer(c, bsu)
+	container, _, _, _, sourceDataMD5Value, _, destBlob := CreateBlockBlobsForTesting(c, 8)
 	defer delContainer(c, container)
 
-	testSize := 8 * 1024 * 1024 // 8MB
-	_, sourceData := getRandomDataAndReader(testSize)
-	sourceDataMD5Value := md5.Sum(sourceData)
-	ctx := context.Background() // Use default Background context
-	destBlob := container.NewBlockBlobURL(generateBlobName())
-
-	// Invoke put blob from URL with incorrect URL
+	// Invoke put blob from URL with URL without SAS and make sure it fails
 	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, url.URL{}, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	c.Assert(resp, chk.IsNil)
