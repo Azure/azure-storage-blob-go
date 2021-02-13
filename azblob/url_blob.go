@@ -146,7 +146,7 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 // Each call to this operation replaces all existing tags attached to the blob.
 // To remove all tags from the blob, call this operation with no tags set.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
-func (b BlobURL) SetTags(ctx context.Context, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
+func (b BlobURL) SetTags(ctx context.Context, timeout *int32, versionID *string, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, requestID *string, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
 	tags := SerializeBlobTags(blobTagsMap)
 	return b.blobClient.SetTags(ctx, timeout, versionID, transactionalContentMD5, transactionalContentCrc64, requestID, ifTags, nil, &tags)
 }
