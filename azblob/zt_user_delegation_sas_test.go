@@ -1,8 +1,14 @@
 package azblob
 
-// TODO: This test will be addressed, it is failing due to a service change
+import (
+	"bytes"
+	chk "gopkg.in/check.v1"
+	"strings"
+	"time"
+)
+
 //Creates a container and tests permissions by listing blobs
-/*func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
+func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
 	currentTime := time.Now().UTC()
@@ -74,11 +80,10 @@ package azblob
 	if err != nil {
 		c.Fatal(err)
 	}
-}*/
+}
 
-// TODO: This test will be addressed, it is failing due to a service change
 // Creates a blob, takes a snapshot, downloads from snapshot, and deletes from the snapshot w/ the token
-/*func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
+func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 	// Accumulate prerequisite details to create storage etc.
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
@@ -155,4 +160,4 @@ package azblob
 	if err != nil {
 		c.Fatal(err)
 	}
-}*/
+}

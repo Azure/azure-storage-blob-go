@@ -88,6 +88,9 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 			udkExpiry,
 			udk.SignedService,
 			udk.SignedVersion,
+			udk.SignedAuthOid,
+			udk.SignedUnauthOid,
+			udk.SignedCorrelationId,
 		}, "\n")
 	}
 
