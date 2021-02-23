@@ -7430,6 +7430,10 @@ type UserDelegationKey struct {
 	SignedVersion string `xml:"SignedVersion"`
 	// Value - The key as a base64 string
 	Value string `xml:"Value"`
+	// SignedAuthOid - The
+	SignedAuthOid       string `xml:"SignedAuthOid"`
+	SignedUnauthOid     string `xml:"SignedUnauthOid"`
+	SignedCorrelationId string `xml:"SignedCorrelationId"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for UserDelegationKey.
@@ -7571,14 +7575,17 @@ func (c *base64Encoded) UnmarshalText(data []byte) error {
 
 // internal type used for marshalling
 type userDelegationKey struct {
-	rawResponse   *http.Response
-	SignedOid     string      `xml:"SignedOid"`
-	SignedTid     string      `xml:"SignedTid"`
-	SignedStart   timeRFC3339 `xml:"SignedStart"`
-	SignedExpiry  timeRFC3339 `xml:"SignedExpiry"`
-	SignedService string      `xml:"SignedService"`
-	SignedVersion string      `xml:"SignedVersion"`
-	Value         string      `xml:"Value"`
+	rawResponse         *http.Response
+	SignedOid           string      `xml:"SignedOid"`
+	SignedTid           string      `xml:"SignedTid"`
+	SignedStart         timeRFC3339 `xml:"SignedStart"`
+	SignedExpiry        timeRFC3339 `xml:"SignedExpiry"`
+	SignedService       string      `xml:"SignedService"`
+	SignedVersion       string      `xml:"SignedVersion"`
+	Value               string      `xml:"Value"`
+	SignedAuthOid       string      `xml:"SignedAuthOid"`
+	SignedUnauthOid     string      `xml:"SignedUnauthOid"`
+	SignedCorrelationId string      `xml:"SignedCorrelationId"`
 }
 
 // internal type used for marshalling
