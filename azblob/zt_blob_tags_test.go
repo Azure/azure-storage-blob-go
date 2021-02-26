@@ -27,11 +27,11 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
-	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	blobSetTagsResponse, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
-	blobGetTagsResponse, err := blobURL.GetTags(ctx, nil)
+	blobGetTagsResponse, err := blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
@@ -61,11 +61,11 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	versionId2 := blockBlobUploadResp.VersionID()
 
 	blobURL1 := blobURL.WithVersionID(versionId1)
-	blobSetTagsResponse, err := blobURL1.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	blobSetTagsResponse, err := blobURL1.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
-	blobGetTagsResponse, err := blobURL1.GetTags(ctx, nil)
+	blobGetTagsResponse, err := blobURL1.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
@@ -74,7 +74,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	}
 
 	blobURL2 := blobURL.WithVersionID(versionId2)
-	blobGetTagsResponse, err = blobURL2.GetTags(ctx, nil)
+	blobGetTagsResponse, err = blobURL2.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.IsNil)
@@ -103,11 +103,11 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 	}
 
 	blobURL1 := blobURL.WithVersionID(versionId1)
-	blobSetTagsResponse, err := blobURL1.SetTags(ctx, nil, nil, nil, blobTags1)
+	blobSetTagsResponse, err := blobURL1.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags1)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
-	blobGetTagsResponse, err := blobURL1.GetTags(ctx, nil)
+	blobGetTagsResponse, err := blobURL1.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
@@ -121,11 +121,11 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 	}
 
 	blobURL2 := blobURL.WithVersionID(versionId2)
-	blobSetTagsResponse, err = blobURL2.SetTags(ctx, nil, nil, nil, blobTags2)
+	blobSetTagsResponse, err = blobURL2.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTags2)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobSetTagsResponse.StatusCode(), chk.Equals, 204)
 
-	blobGetTagsResponse, err = blobURL2.GetTags(ctx, nil)
+	blobGetTagsResponse, err = blobURL2.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.NotNil)
@@ -148,7 +148,7 @@ func (s *aztestsSuite) TestUploadBlockBlobWithSpecialCharactersInTags(c *chk.C) 
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockBlobUploadResp.StatusCode(), chk.Equals, 201)
 
-	blobGetTagsResponse, err := blobURL.GetTags(ctx, nil)
+	blobGetTagsResponse, err := blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResponse.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResponse.BlobTagSet, chk.HasLen, 3)
@@ -198,7 +198,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 	c.Assert(contentData, chk.DeepEquals, []uint8(strings.Join(data, "")))
 
 	blobURL1 := blobURL.WithVersionID(versionId)
-	blobGetTagsResp, err := blobURL1.GetTags(ctx, nil)
+	blobGetTagsResp, err := blobURL1.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResp, chk.NotNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
@@ -206,7 +206,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 		c.Assert(blobTagsMap[blobTag.Key], chk.Equals, blobTag.Value)
 	}
 
-	blobGetTagsResp, err = blobURL.GetTags(ctx, nil)
+	blobGetTagsResp, err = blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResp, chk.NotNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
@@ -290,7 +290,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(destData, chk.DeepEquals, sourceData)
 
-	blobGetTagsResp, err := destBlob.GetTags(ctx, nil)
+	blobGetTagsResp, err := destBlob.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
 	for _, blobTag := range blobGetTagsResp.BlobTagSet {
@@ -402,7 +402,7 @@ func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 		"Storage+SDK":     "SDK/GO",
 		"GO ":             ".Net",
 	}
-	_, err := blobURL.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	_, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -433,7 +433,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.rawResponse.Header.Get("x-ms-version-id"), chk.NotNil)
 
-	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
@@ -447,7 +447,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 		"b0l1o2b3":   "s0d1k2",
 	}
 
-	setTagResp, err = blob.SetTags(ctx, nil, nil, nil, modifiedBlobTags)
+	setTagResp, err = blob.SetTags(ctx, nil, nil, nil, nil, nil, nil, modifiedBlobTags)
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
@@ -482,7 +482,7 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 		"b0l1o2b3":   "s0d1k2",
 	}
 
-	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, modifiedBlobTags)
+	setTagResp, err := blob.SetTags(ctx, nil, nil, nil, nil, nil, nil, modifiedBlobTags)
 	c.Assert(err, chk.IsNil)
 	c.Assert(setTagResp.StatusCode(), chk.Equals, 204)
 
@@ -519,7 +519,7 @@ func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 		"tag2":     "+-./:=_",
 		"+-./:=_1": "+-./:=_",
 	}
-	resp, err := blobURL.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	resp, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 204)
 
@@ -582,7 +582,15 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	for _, blob := range lResp.Blobs {
-		c.Assert(blob.TagValue, chk.Equals, "firsttag")
+		containsTag := false
+
+		for _, tag := range blob.Tags.BlobTagSet {
+			if tag.Value == "firsttag" {
+				containsTag = true
+			}
+		}
+
+		c.Assert(containsTag, chk.Equals, true)
 	}
 }
 
@@ -624,11 +632,11 @@ func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
 	}
 
 	blobTagsMap := BlobTagsMap{"tag1": "firsttag", "tag2": "secondtag", "tag3": "thirdtag"}
-	setBlobTagsResp, err := blobURL.SetTags(ctx, nil, nil, nil, blobTagsMap)
+	setBlobTagsResp, err := blobURL.SetTags(ctx, nil, nil, nil, nil, nil, nil, blobTagsMap)
 	c.Assert(err, chk.IsNil)
 	c.Assert(setBlobTagsResp.StatusCode(), chk.Equals, 204)
 
-	blobGetTagsResp, err := blobURL.GetTags(ctx, nil)
+	blobGetTagsResp, err := blobURL.GetTags(ctx, nil, nil, nil, nil, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(blobGetTagsResp.StatusCode(), chk.Equals, 200)
 	c.Assert(blobGetTagsResp.BlobTagSet, chk.HasLen, 3)
