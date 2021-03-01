@@ -7430,9 +7430,11 @@ type UserDelegationKey struct {
 	SignedVersion string `xml:"SignedVersion"`
 	// Value - The key as a base64 string
 	Value string `xml:"Value"`
-	// SignedAuthOid - The
-	SignedAuthOid       string `xml:"SignedAuthOid"`
-	SignedUnauthOid     string `xml:"SignedUnauthOid"`
+	// SignedAuthOid - The AAD object ID of an authorized user
+	SignedAuthOid string `xml:"SignedAuthOid"`
+	// SignedUnauthOid - The AAD object ID of an unauthorized user
+	SignedUnauthOid string `xml:"SignedUnauthOid"`
+	// SignedCorrelationId - The correlation ID is used to correlate storage audit log
 	SignedCorrelationId string `xml:"SignedCorrelationId"`
 }
 
