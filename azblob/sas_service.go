@@ -27,6 +27,9 @@ type BlobSASSignatureValues struct {
 	ContentLanguage    string // rscl
 	ContentType        string // rsct
 	BlobVersion        string // sr=bv
+	/*SignedCorrelationId string
+	SignedUnauthOid     string
+	SignedAuthOid       string*/
 }
 
 func getDirectoryDepth(path string) string {
@@ -105,9 +108,6 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 			udkExpiry,
 			udk.SignedService,
 			udk.SignedVersion,
-			udk.SignedAuthOid,
-			udk.SignedUnauthOid,
-			udk.SignedCorrelationId,
 		}, "\n")
 	}
 
@@ -118,6 +118,10 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		expiryTime,
 		getCanonicalName(credential.AccountName(), v.ContainerName, v.BlobName, v.Directory),
 		signedIdentifier,
+		/*"", /*v.SignedAuthOid,*/
+		"", /*v.SignedUnauthOid,*/
+		"", /*v.SignedCorrelationId,
+		 */
 		v.IPRange.String(),
 		string(v.Protocol),
 		v.Version,
@@ -143,16 +147,18 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		ipRange:     v.IPRange,
 
 		// Container/Blob-specific SAS parameters
-		resource:           resource,
-		identifier:         v.Identifier,
-		cacheControl:       v.CacheControl,
-		contentDisposition: v.ContentDisposition,
-		contentEncoding:    v.ContentEncoding,
-		contentLanguage:    v.ContentLanguage,
-		contentType:        v.ContentType,
-		snapshotTime:       v.SnapshotTime,
+		resource:             resource,
+		identifier:           v.Identifier,
+		cacheControl:         v.CacheControl,
+		contentDisposition:   v.ContentDisposition,
+		contentEncoding:      v.ContentEncoding,
+		contentLanguage:      v.ContentLanguage,
+		contentType:          v.ContentType,
+		snapshotTime:         v.SnapshotTime,
 		signedDirectoryDepth: getDirectoryDepth(v.Directory),
-
+		signedAuthOid:        "",
+		signedUnauthOid:      "",
+		signedCorrelationId:  "",
 		// Calculated SAS signature
 		signature: signature,
 	}
@@ -250,7 +256,9 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 
 // The BlobSASPermissions type simplifies creating the permissions string for an Azure Storage blob SAS.
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
-type BlobSASPermissions struct{ Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List bool }
+type BlobSASPermissions struct {
+	Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List, Move, Execute, Ownership, Permissions bool
+}
 
 // String produces the SAS permissions string for an Azure Storage blob.
 // Call this method to set BlobSASSignatureValues's Permissions field.
@@ -280,6 +288,18 @@ func (p BlobSASPermissions) String() string {
 	if p.List {
 		b.WriteRune('l')
 	}
+	if p.Move {
+		b.WriteRune('m')
+	}
+	if p.Execute {
+		b.WriteRune('e')
+	}
+	if p.Ownership {
+		b.WriteRune('o')
+	}
+	if p.Permissions {
+		b.WriteRune('p')
+	}
 	return b.String()
 }
 
@@ -304,6 +324,14 @@ func (p *BlobSASPermissions) Parse(s string) error {
 			p.Tag = true
 		case 'l':
 			p.List = true
+		case 'm':
+			p.Move = true
+		case 'e':
+			p.Execute = true
+		case 'o':
+			p.Ownership = true
+		case 'p':
+			p.Permissions = true
 		default:
 			return fmt.Errorf("invalid permission: '%v'", r)
 		}

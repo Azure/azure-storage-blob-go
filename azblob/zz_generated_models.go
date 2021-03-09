@@ -7430,12 +7430,6 @@ type UserDelegationKey struct {
 	SignedVersion string `xml:"SignedVersion"`
 	// Value - The key as a base64 string
 	Value string `xml:"Value"`
-	// SignedAuthOid - The AAD object ID of an authorized user
-	SignedAuthOid string `xml:"SignedAuthOid"`
-	// SignedUnauthOid - The AAD object ID of an unauthorized user
-	SignedUnauthOid string `xml:"SignedUnauthOid"`
-	// SignedCorrelationId - The correlation ID is used to correlate storage audit log
-	SignedCorrelationId string `xml:"SignedCorrelationId"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for UserDelegationKey.
@@ -7577,17 +7571,14 @@ func (c *base64Encoded) UnmarshalText(data []byte) error {
 
 // internal type used for marshalling
 type userDelegationKey struct {
-	rawResponse         *http.Response
-	SignedOid           string      `xml:"SignedOid"`
-	SignedTid           string      `xml:"SignedTid"`
-	SignedStart         timeRFC3339 `xml:"SignedStart"`
-	SignedExpiry        timeRFC3339 `xml:"SignedExpiry"`
-	SignedService       string      `xml:"SignedService"`
-	SignedVersion       string      `xml:"SignedVersion"`
-	Value               string      `xml:"Value"`
-	SignedAuthOid       string      `xml:"SignedAuthOid"`
-	SignedUnauthOid     string      `xml:"SignedUnauthOid"`
-	SignedCorrelationId string      `xml:"SignedCorrelationId"`
+	rawResponse   *http.Response
+	SignedOid     string      `xml:"SignedOid"`
+	SignedTid     string      `xml:"SignedTid"`
+	SignedStart   timeRFC3339 `xml:"SignedStart"`
+	SignedExpiry  timeRFC3339 `xml:"SignedExpiry"`
+	SignedService string      `xml:"SignedService"`
+	SignedVersion string      `xml:"SignedVersion"`
+	Value         string      `xml:"Value"`
 }
 
 // internal type used for marshalling
