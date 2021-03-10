@@ -27,9 +27,6 @@ type BlobSASSignatureValues struct {
 	ContentLanguage    string // rscl
 	ContentType        string // rsct
 	BlobVersion        string // sr=bv
-	/*SignedCorrelationId string
-	SignedUnauthOid     string
-	SignedAuthOid       string*/
 }
 
 func getDirectoryDepth(path string) string {
@@ -118,10 +115,6 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		expiryTime,
 		getCanonicalName(credential.AccountName(), v.ContainerName, v.BlobName, v.Directory),
 		signedIdentifier,
-		/*"", /*v.SignedAuthOid,*/
-		"", /*v.SignedUnauthOid,*/
-		"", /*v.SignedCorrelationId,
-		 */
 		v.IPRange.String(),
 		string(v.Protocol),
 		v.Version,
@@ -156,9 +149,6 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		contentType:          v.ContentType,
 		snapshotTime:         v.SnapshotTime,
 		signedDirectoryDepth: getDirectoryDepth(v.Directory),
-		signedAuthOid:        "",
-		signedUnauthOid:      "",
-		signedCorrelationId:  "",
 		// Calculated SAS signature
 		signature: signature,
 	}

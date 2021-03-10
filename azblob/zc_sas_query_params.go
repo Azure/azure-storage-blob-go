@@ -9,7 +9,8 @@ import (
 )
 
 // SASVersion indicates the SAS version.
-const SASVersion = ServiceVersion
+// Following Java SDK in pining down old version in order to avoid implementing the new user delegation features
+const SASVersion = "2019-12-12"
 
 type SASProtocol string
 
