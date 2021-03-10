@@ -3,6 +3,7 @@ package azblob
 import (
 	"context"
 	"errors"
+
 	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
@@ -21,11 +22,8 @@ func NewUniqueRequestIDPolicyFactory() pipeline.Factory {
 			resp, err := next.Do(ctx, request)
 
 			if err == nil && resp != nil {
-				val := resp.Response().Header.Values(xMsClientRequestID)
-				if len(val) > 0 {
-					if val[0] != id {
-						err = errors.New("client Request ID from request and response does not match")
-					}
+				if resp.Response().Header.Get(xMsClientRequestID) != id {
+					err = errors.New("client Request ID from request and response does not match")
 				}
 			}
 
