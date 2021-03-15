@@ -10,23 +10,26 @@ import (
 // BlobSASSignatureValues is used to generate a Shared Access Signature (SAS) for an Azure Storage container or blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/constructing-a-service-sas
 type BlobSASSignatureValues struct {
-	Version            string      `param:"sv"`  // If not specified, this defaults to SASVersion
-	Protocol           SASProtocol `param:"spr"` // See the SASProtocol* constants
-	StartTime          time.Time   `param:"st"`  // Not specified if IsZero
-	ExpiryTime         time.Time   `param:"se"`  // Not specified if IsZero
-	SnapshotTime       time.Time
-	Permissions        string  `param:"sp"` // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
-	IPRange            IPRange `param:"sip"`
-	Identifier         string  `param:"si"`
-	ContainerName      string
-	BlobName           string // Use "" to create a Container SAS
-	Directory          string // Not nil for a directory SAS (ie sr=d)
-	CacheControl       string // rscc
-	ContentDisposition string // rscd
-	ContentEncoding    string // rsce
-	ContentLanguage    string // rscl
-	ContentType        string // rsct
-	BlobVersion        string // sr=bv
+	Version                    string      `param:"sv"`  // If not specified, this defaults to SASVersion
+	Protocol                   SASProtocol `param:"spr"` // See the SASProtocol* constants
+	StartTime                  time.Time   `param:"st"`  // Not specified if IsZero
+	ExpiryTime                 time.Time   `param:"se"`  // Not specified if IsZero
+	SnapshotTime               time.Time
+	Permissions                string  `param:"sp"` // Create by initializing a ContainerSASPermissions or BlobSASPermissions and then call String()
+	IPRange                    IPRange `param:"sip"`
+	Identifier                 string  `param:"si"`
+	ContainerName              string
+	BlobName                   string // Use "" to create a Container SAS
+	Directory                  string // Not nil for a directory SAS (ie sr=d)
+	CacheControl               string // rscc
+	ContentDisposition         string // rscd
+	ContentEncoding            string // rsce
+	ContentLanguage            string // rscl
+	ContentType                string // rsct
+	BlobVersion                string // sr=bv
+	PreauthorizedAgentObjectId string
+	SignedUnauthOid            string
+	CorrelationId              string
 }
 
 func getDirectoryDepth(path string) string {
@@ -105,6 +108,9 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 			udkExpiry,
 			udk.SignedService,
 			udk.SignedVersion,
+			v.PreauthorizedAgentObjectId,
+			v.SignedUnauthOid,
+			v.CorrelationId,
 		}, "\n")
 	}
 
@@ -140,15 +146,18 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		ipRange:     v.IPRange,
 
 		// Container/Blob-specific SAS parameters
-		resource:             resource,
-		identifier:           v.Identifier,
-		cacheControl:         v.CacheControl,
-		contentDisposition:   v.ContentDisposition,
-		contentEncoding:      v.ContentEncoding,
-		contentLanguage:      v.ContentLanguage,
-		contentType:          v.ContentType,
-		snapshotTime:         v.SnapshotTime,
-		signedDirectoryDepth: getDirectoryDepth(v.Directory),
+		resource:                   resource,
+		identifier:                 v.Identifier,
+		cacheControl:               v.CacheControl,
+		contentDisposition:         v.ContentDisposition,
+		contentEncoding:            v.ContentEncoding,
+		contentLanguage:            v.ContentLanguage,
+		contentType:                v.ContentType,
+		snapshotTime:               v.SnapshotTime,
+		signedDirectoryDepth:       getDirectoryDepth(v.Directory),
+		preauthorizedAgentObjectId: v.PreauthorizedAgentObjectId,
+		signedUnauthOid:            v.SignedUnauthOid,
+		correlationId:              v.CorrelationId,
 		// Calculated SAS signature
 		signature: signature,
 	}
