@@ -7,31 +7,6 @@ import (
 	"time"
 )
 
-/*func CreateUserDelegationKey(c *chk.C) (ContainerURL, string, BlockBlobURL, string, UserDelegationCredential, time.Time, pipeline.Pipeline) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	return containerURL, containerName, blobURL, blobName, budk, currentTime, p
-}*/
-
 // Attempting to create User Delegation Key SAS with Incorrect Permissions, should return err
 func (s *aztestsSuite) TestUserDelegationSASIncorrectPermissions(c *chk.C) {
 	// Accumulate prerequisite details to create storage etc.
