@@ -2,17 +2,17 @@ package azblob
 
 import (
 	"bytes"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	chk "gopkg.in/check.v1"
 	"strings"
 	"time"
 )
 
-// Attempting to create User Delegation Key SAS with Incorrect Permissions, should return err
-func (s *aztestsSuite) TestUserDelegationSASIncorrectPermissions(c *chk.C) {
+func CreateUserDelegationKey(c *chk.C) (ContainerURL, string, BlockBlobURL, string, UserDelegationCredential, time.Time, pipeline.Pipeline) {
 	// Accumulate prerequisite details to create storage etc.
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
-	_, blobName := getBlockBlobURL(c, containerURL)
+	blobURL, blobName := getBlockBlobURL(c, containerURL)
 	currentTime := time.Now().UTC()
 	ocred, err := getOAuthCredential("")
 	if err != nil {
@@ -25,12 +25,19 @@ func (s *aztestsSuite) TestUserDelegationSASIncorrectPermissions(c *chk.C) {
 	// Prepare user delegation key
 	bsu = bsu.WithPipeline(p)
 	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
+	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
 	if err != nil {
 		c.Fatal(err)
 	}
+
+	return containerURL, containerName, blobURL, blobName, budk, currentTime, p
+}
+
+// Attempting to create User Delegation Key SAS with Incorrect Permissions, should return err
+func (s *aztestsSuite) TestUserDelegationSASIncorrectPermissions(c *chk.C) {
+	_, containerName, _, blobName, cudk, currentTime, _ := CreateUserDelegationKey(c)
 	// Prepare User Delegation SAS query for Container
-	_, err = BlobSASSignatureValues{
+	_, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
 		ExpiryTime:    currentTime.Add(24 * time.Hour),
@@ -53,26 +60,7 @@ func (s *aztestsSuite) TestUserDelegationSASIncorrectPermissions(c *chk.C) {
 
 // Creates a container with no permissions, upload fails due to lack of permissions
 func (s *aztestsSuite) TestUserDelegationSASContainerNoPermissions(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
-
+	containerURL, containerName, _, _, cudk, currentTime, p := CreateUserDelegationKey(c)
 	// Prepare User Delegation SAS query
 	cSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
@@ -107,25 +95,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainerNoPermissions(c *chk.C) {
 
 // Creates a container with all permissions
 func (s *aztestsSuite) TestUserDelegationSASContainerAllPermissions(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
+	containerURL, containerName, _, _, cudk, currentTime, p := CreateUserDelegationKey(c)
 	// Prepare User Delegation SAS query
 	cSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
@@ -183,26 +153,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainerAllPermissions(c *chk.C) {
 
 //Creates a container and tests permissions by listing blobs
 func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	cudk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
-
+	containerURL, containerName, _, _, cudk, currentTime, p := CreateUserDelegationKey(c)
 	// Prepare User Delegation SAS query
 	cSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
@@ -260,28 +211,9 @@ func (s *aztestsSuite) TestUserDelegationSASContainer(c *chk.C) {
 
 // Creates a blob with all permissions, takes a snapshot, downloads from snapshot, and deletes from the snapshot w/ the token
 func (s *aztestsSuite) TestUserDelegationSASBlobAllPermissions(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
+	containerURL, containerName, blobURL, blobName, budk, currentTime, p := CreateUserDelegationKey(c)
 
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Prepare User Delegation SAS query (new permissions: m, e, o, p)
+	// Prepare User Delegation SAS query
 	bSAS, err := BlobSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		StartTime:     currentTime,
@@ -340,26 +272,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlobAllPermissions(c *chk.C) {
 
 // Creates a blob, takes a snapshot, downloads from snapshot, and deletes from the snapshot w/ the token
 func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
+	containerURL, containerName, blobURL, blobName, budk, currentTime, p := CreateUserDelegationKey(c)
 
 	// Prepare User Delegation SAS query
 	bSAS, err := BlobSASSignatureValues{
@@ -420,27 +333,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlob(c *chk.C) {
 
 // Creates User Delegation SAS with saoid and checks if URL is correctly formed
 func (s *aztestsSuite) TestUserDelegationSaoid(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
-
+	_, containerName, blobURL, blobName, budk, currentTime, p := CreateUserDelegationKey(c)
 	saoid := newUUID().String()
 	// Prepare User Delegation SAS query
 	bSAS, err := BlobSASSignatureValues{
@@ -469,26 +362,7 @@ func (s *aztestsSuite) TestUserDelegationSaoid(c *chk.C) {
 
 // Creates User Delegation SAS with suoid and checks if URL is correctly formed
 func (s *aztestsSuite) TestUserDelegationSuoid(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
+	_, containerName, blobURL, blobName, budk, currentTime, p := CreateUserDelegationKey(c)
 	suoid := newUUID().String()
 	// Prepare User Delegation SAS query
 	bSAS, err := BlobSASSignatureValues{
@@ -517,26 +391,7 @@ func (s *aztestsSuite) TestUserDelegationSuoid(c *chk.C) {
 
 // Creates User Delegation SAS with correlation id and checks if URL is correctly formed
 func (s *aztestsSuite) TestUserDelegationCid(c *chk.C) {
-	// Accumulate prerequisite details to create storage etc.
-	bsu := getBSU()
-	containerURL, containerName := getContainerURL(c, bsu)
-	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
-	ocred, err := getOAuthCredential("")
-	if err != nil {
-		c.Fatal(err)
-	}
-
-	// Create pipeline to handle requests
-	p := NewPipeline(*ocred, PipelineOptions{})
-
-	// Prepare user delegation key
-	bsu = bsu.WithPipeline(p)
-	keyInfo := NewKeyInfo(currentTime, currentTime.Add(48*time.Hour))
-	budk, err := bsu.GetUserDelegationCredential(ctx, keyInfo, nil, nil) //MUST have TokenCredential
-	if err != nil {
-		c.Fatal(err)
-	}
+	_, containerName, blobURL, blobName, budk, currentTime, p := CreateUserDelegationKey(c)
 	cid := newUUID().String()
 	// Prepare User Delegation SAS query
 	bSAS, err := BlobSASSignatureValues{
