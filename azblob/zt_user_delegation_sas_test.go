@@ -13,7 +13,7 @@ func CreateUserDelegationKey(c *chk.C) (ContainerURL, string, BlockBlobURL, stri
 	bsu := getBSU()
 	containerURL, containerName := getContainerURL(c, bsu)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
-	currentTime := time.Now().UTC()
+	currentTime := time.Now().UTC().Add(-10 * time.Second)
 	ocred, err := getOAuthCredential("")
 	if err != nil {
 		c.Fatal(err)
