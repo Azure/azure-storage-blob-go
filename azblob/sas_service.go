@@ -28,7 +28,7 @@ type BlobSASSignatureValues struct {
 	ContentType                string // rsct
 	BlobVersion                string // sr=bv
 	PreauthorizedAgentObjectId string
-	SignedUnauthOid            string
+	AgentObjectId              string
 	CorrelationId              string
 }
 
@@ -109,7 +109,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 			udk.SignedService,
 			udk.SignedVersion,
 			v.PreauthorizedAgentObjectId,
-			v.SignedUnauthOid,
+			v.AgentObjectId,
 			v.CorrelationId,
 		}, "\n")
 	}
@@ -156,7 +156,7 @@ func (v BlobSASSignatureValues) NewSASQueryParameters(credential StorageAccountC
 		snapshotTime:               v.SnapshotTime,
 		signedDirectoryDepth:       getDirectoryDepth(v.Directory),
 		preauthorizedAgentObjectId: v.PreauthorizedAgentObjectId,
-		signedUnauthOid:            v.SignedUnauthOid,
+		agentObjectId:              v.AgentObjectId,
 		correlationId:              v.CorrelationId,
 		// Calculated SAS signature
 		signature: signature,

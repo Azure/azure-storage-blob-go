@@ -9,7 +9,6 @@ import (
 )
 
 // SASVersion indicates the SAS version.
-// Following Java SDK in pining down old version in order to avoid implementing the new user delegation features
 const SASVersion = ServiceVersion
 
 type SASProtocol string
@@ -109,7 +108,7 @@ type SASQueryParameters struct {
 	signedVersion              string      `param:"skv"`
 	signedDirectoryDepth       string      `param:"sdd"`
 	preauthorizedAgentObjectId string      `param:"saoid"`
-	signedUnauthOid            string      `param:"suoid"`
+	agentObjectId              string      `param:"suoid"`
 	correlationId              string      `param:"scid"`
 	// private member used for startTime and expiryTime formatting.
 	stTimeFormat string
@@ -120,8 +119,8 @@ func (p *SASQueryParameters) PreauthorizedAgentObjectId() string {
 	return p.preauthorizedAgentObjectId
 }
 
-func (p *SASQueryParameters) SignedUnauthOid() string {
-	return p.signedUnauthOid
+func (p *SASQueryParameters) AgentObjectId() string {
+	return p.agentObjectId
 }
 
 func (p *SASQueryParameters) SignedCorrelationId() string {
@@ -300,7 +299,7 @@ func newSASQueryParameters(values url.Values, deleteSASParametersFromValues bool
 		case "saoid":
 			p.preauthorizedAgentObjectId = val
 		case "suoid":
-			p.signedUnauthOid = val
+			p.agentObjectId = val
 		case "scid":
 			p.correlationId = val
 		default:
@@ -377,8 +376,8 @@ func (p *SASQueryParameters) addToValues(v url.Values) url.Values {
 	if p.preauthorizedAgentObjectId != "" {
 		v.Add("saoid", p.preauthorizedAgentObjectId)
 	}
-	if p.signedUnauthOid != "" {
-		v.Add("suoid", p.signedUnauthOid)
+	if p.agentObjectId != "" {
+		v.Add("suoid", p.agentObjectId)
 	}
 	if p.correlationId != "" {
 		v.Add("scid", p.correlationId)
