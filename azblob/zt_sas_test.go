@@ -5,7 +5,7 @@ import (
 	"net/url"
 )
 
-func (s *aztestSuite) TestParseSASQueryParams(c *chk.C) {
+func (s *aztestsSuite) TestParseSASQueryParams(c *chk.C) {
 	const blobURL = "https://myaccount.blob.core.windows.net/mycontainer/testfile?sp=r&st=2021-03-19T03:48:02Z&se=2021-03-19T11:48:02Z&spr=https&sv=2020-02-10&sr=d&sdd=10&sig=invalidsignature"
 
 	testURL, _ := url.Parse(blobURL)
