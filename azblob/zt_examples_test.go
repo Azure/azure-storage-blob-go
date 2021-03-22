@@ -1305,128 +1305,6 @@ func ExampleListBlobsHierarchy() {
 	}
 }
 
-//// ===========================================================================================
-//type HTTPResponseExtension struct {
-//	*http.Response
-//}
-//
-//// IsSuccessStatusCode checks if response's status code is contained in specified success status codes.
-//func (r HTTPResponseExtension) IsSuccessStatusCode(successStatusCodes ...int) bool {
-//	if r.Response == nil {
-//		return false
-//	}
-//	for _, i := range successStatusCodes {
-//		if i == r.StatusCode {
-//			return true
-//		}
-//	}
-//	return false
-//}
-//
-//type ByteSlice []byte
-//type ByteSliceExtension struct {
-//	ByteSlice
-//}
-//
-//// RemoveBOM removes any BOM from the byte slice
-//func (bs ByteSliceExtension) RemoveBOM() []byte {
-//	if bs.ByteSlice == nil {
-//		return nil
-//	}
-//	// UTF8
-//	return bytes.TrimPrefix(bs.ByteSlice, []byte("\xef\xbb\xbf"))
-//}
-//
-//// Resource used in azure storage OAuth authentication
-//const (
-//	Resource                       = "https://storage.azure.com"
-//	DefaultTenantID                = "common"
-//	DefaultActiveDirectoryEndpoint = "https://login.microsoftonline.com"
-//	IMDSAPIVersion                 = "2018-02-01"
-//	MSIEndpoint                    = "http://169.254.169.254/metadata/identity/oauth2/token"
-//)
-//
-//func goSDKHTTPClient() *http.Client {
-//	return &http.Client{
-//		Transport: &http.Transport{
-//			Proxy: nil,
-//			// We use Dial instead of DialContext as DialContext has been reported to cause slower performance.
-//			Dial /*Context*/ : (&net.Dialer{
-//				Timeout:   30 * time.Second,
-//				KeepAlive: 30 * time.Second,
-//				DualStack: true,
-//			}).Dial,                   /*Context*/
-//			MaxIdleConns:           0, // No limit
-//			MaxIdleConnsPerHost:    1000,
-//			IdleConnTimeout:        180 * time.Second,
-//			TLSHandshakeTimeout:    10 * time.Second,
-//			ExpectContinueTimeout:  1 * time.Second,
-//			DisableKeepAlives:      false,
-//			DisableCompression:     true,
-//			MaxResponseHeaderBytes: 0,
-//		},
-//	}
-//}
-//
-//func getNewTokenFromMSI(ctx context.Context, clientID, objectID, resourceID string) (*adal.Token, error) {
-//	// Prepare request to get token from Azure Instance Metadata Service identity endpoint.
-//	req, err := http.NewRequest("GET", MSIEndpoint, nil)
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to create request, %v", err)
-//	}
-//	params := req.URL.Query()
-//	params.Set("resource", Resource)
-//	params.Set("api-version", IMDSAPIVersion)
-//	if clientID != "" {
-//		params.Set("client_id", clientID)
-//	}
-//	if objectID != "" {
-//		params.Set("object_id", objectID)
-//	}
-//	if resourceID != "" {
-//		params.Set("msi_res_id", resourceID)
-//	}
-//	req.URL.RawQuery = params.Encode()
-//	req.Header.Set("Metadata", "true")
-//	// Set context.
-//	req.WithContext(ctx)
-//
-//	// Send request
-//	var msiTokenHTTPClient = goSDKHTTPClient()
-//	resp, err := msiTokenHTTPClient.Do(req)
-//	if err != nil {
-//		return nil, fmt.Errorf("please check whether MSI is enabled on this PC, to enable MSI please refer to https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/qs-configure-portal-windows-vm#enable-system-assigned-identity-on-an-existing-vm. (Error details: %v)", err)
-//	}
-//	defer func() { // resp and Body should not be nil
-//		io.Copy(ioutil.Discard, resp.Body)
-//		resp.Body.Close()
-//	}()
-//
-//	// Check if the status code indicates success
-//	// The request returns 200 currently, add 201 and 202 as well for possible extension.
-//	if !(HTTPResponseExtension{Response: resp}).IsSuccessStatusCode(http.StatusOK, http.StatusCreated, http.StatusAccepted) {
-//		return nil, fmt.Errorf("failed to get token from msi, status code: %v", resp.StatusCode)
-//	}
-//
-//	b, err := ioutil.ReadAll(resp.Body)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	result := &adal.Token{}
-//	if len(b) > 0 {
-//		b = ByteSliceExtension{ByteSlice: b}.RemoveBOM()
-//		if err := json.Unmarshal(b, result); err != nil {
-//			return nil, fmt.Errorf("failed to unmarshal response body, %v", err)
-//		}
-//	} else {
-//		return nil, errors.New("failed to get token from msi")
-//	}
-//
-//	return result, nil
-//}
-// //==================================================================================================================================
-
 func fetchMSIToken(applicationID string, identityResourceID string, resource string, callbacks ...adal.TokenRefreshCallback) (*adal.ServicePrincipalToken, error) {
 	// Both application id and identityResourceId cannot be present at the same time.
 	if applicationID != "" && identityResourceID != "" {
@@ -1468,15 +1346,24 @@ func getOAuthToken(applicationID, identityResourceID, resource string, callbacks
 		log.Fatal(err)
 	}
 
-	// Refresh obtains a fresh token for the Service Principal.
+	// Refresh obtains a fresh token
 	err = spt.Refresh()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	tc := NewTokenCredential(spt.Token().AccessToken, func(tc TokenCredential) time.Duration {
-		_ = spt.Refresh()
-		return time.Until(spt.Token().Expires())
+		err := spt.Refresh()
+		if err != nil {
+			// something went wrong, prevent the refresher from being triggered again
+			return 0
+		}
+
+		// set the new token value
+		tc.SetToken(spt.Token().AccessToken)
+
+		// get the next token slightly before the current one expires
+		return time.Until(spt.Token().Expires()) - 10*time.Second
 	})
 
 	return &tc, nil
