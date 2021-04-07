@@ -144,6 +144,7 @@ func ExampleNewPipeline() {
 		// Set RequestLogOptions to control how each HTTP request & its response is logged
 		RequestLog: RequestLogOptions{
 			LogWarningIfTryOverThreshold: time.Millisecond * 200, // A successful response taking more than this time to arrive is logged as a warning
+			SyslogDisabled:               true,
 		},
 
 		// Set LogOptions to control what & where all pipeline log events go
