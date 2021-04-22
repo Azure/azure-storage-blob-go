@@ -294,3 +294,29 @@ func TestCopyFromReader(t *testing.T) {
 		}
 	}
 }
+
+func Test_CopyWithErr(t *testing.T) {
+	ctx := context.Background()
+	p, err := createSrcFile(_1MiB * 12)
+	if err != nil {
+		panic(err)
+	}
+	defer os.Remove(p)
+
+	from, err := os.Open(p)
+	if err != nil {
+		panic(err)
+	}
+
+	br := newFakeBlockWriter()
+	defer br.cleanup()
+
+	br.errOnBlock = 1
+	transferManager, err := NewStaticBuffer(_1MiB, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer transferManager.Close()
+	_, err = copyFromReader(ctx, from, br, UploadStreamToBlockBlobOptions{TransferManager: transferManager})
+
+}
