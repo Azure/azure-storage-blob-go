@@ -432,3 +432,31 @@ func (s *aztestsSuite) TestDoBatchTransferWithError(c *chk.C) {
 	mmf.isClosed = true
 	time.Sleep(time.Second * 5)
 }
+
+func (s *aztestsSuite) Test_CopyFromReader(c *chk.C) {
+	ctx := context.Background()
+	p, err := createSrcFile(_1MiB * 12)
+	if err != nil {
+		panic(err)
+	}
+
+	defer os.Remove(p)
+
+	from, err := os.Open(p)
+	if err != nil {
+		panic(err)
+	}
+
+	br := newFakeBlockWriter()
+	defer br.cleanup()
+
+	br.errOnBlock = 1
+	transferManager, err := NewStaticBuffer(_1MiB, 1)
+	if err != nil {
+		panic(err)
+	}
+	defer transferManager.Close()
+	_, err = copyFromReader(ctx, from, br, UploadStreamToBlockBlobOptions{TransferManager: transferManager})
+	c.Assert(err, chk.NotNil)
+	c.Assert(err.Error(), chk.Equals, "write error: multiple Read calls return no data or error")
+}
