@@ -437,14 +437,14 @@ func (s *aztestsSuite) Test_CopyFromReader(c *chk.C) {
 	ctx := context.Background()
 	p, err := createSrcFile(_1MiB * 12)
 	if err != nil {
-		panic(err)
+		c.Assert(err, chk.IsNil)
 	}
 
 	defer os.Remove(p)
 
 	from, err := os.Open(p)
 	if err != nil {
-		panic(err)
+		c.Assert(err, chk.IsNil)
 	}
 
 	br := newFakeBlockWriter()
