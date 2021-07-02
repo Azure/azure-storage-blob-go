@@ -981,8 +981,8 @@ func (s *aztestsSuite) TestSetTierOnStageBlockFromURL(c *chk.C) {
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)
 	ctx := context.Background() // Use default Background context
-	srcBlob := container.NewBlockBlobURL(generateBlobName())
-	destBlob := container.NewBlockBlobURL(generateBlobName())
+	srcBlob := container.NewBlockBlobURL("src" + generateBlobName())
+	destBlob := container.NewBlockBlobURL("dst" + generateBlobName())
 	tier := AccessTierCool
 
 	// Prepare source blob for copy.
