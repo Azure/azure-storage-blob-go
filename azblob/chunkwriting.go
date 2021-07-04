@@ -166,12 +166,12 @@ func (c *copier) write(chunk copierChunk) {
 	if err := c.ctx.Err(); err != nil {
 		return
 	}
+
 	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), c.o.AccessConditions.LeaseAccessConditions, nil, c.o.ClientProvidedKeyOptions)
 	if err != nil {
 		c.errCh <- fmt.Errorf("write error: %w", err)
 		return
 	}
-	return
 }
 
 // close commits our blocks to blob storage and closes our writer.
