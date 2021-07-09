@@ -6,12 +6,13 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	chk "gopkg.in/check.v1"
 	"io/ioutil"
 	"log"
 	"net/url"
 	"strings"
 	"time"
+
+	chk "gopkg.in/check.v1"
 )
 
 func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
@@ -604,7 +605,7 @@ func (s *aztestsSuite) TestFilterBlobsUsingAccountSAS(c *chk.C) {
 	sasQueryParams, err := AccountSASSignatureValues{
 		Protocol:      SASProtocolHTTPS,
 		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour),
-		Permissions:   AccountSASPermissions{Read: true, List: true, Write: true, DeletePreviousVersion: true, Tag: true, FilterByTags: true, Create: true}.String(),
+		Permissions:   AccountSASPermissions{Read: true, List: true, Write: true, DeletePreviousVersion: true, Tag: true, FilterByTags: true, Create: true, Delete: true}.String(),
 		Services:      AccountSASServices{Blob: true}.String(),
 		ResourceTypes: AccountSASResourceTypes{Service: true, Container: true, Object: true}.String(),
 	}.NewSASQueryParameters(credential)

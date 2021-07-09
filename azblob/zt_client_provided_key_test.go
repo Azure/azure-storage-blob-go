@@ -499,7 +499,7 @@ func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPageBlockWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	// defer delContainer(c, container)
+	defer delContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
