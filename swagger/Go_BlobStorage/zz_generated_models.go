@@ -5552,13 +5552,13 @@ func (dsacr DirectorySetAccessControlResponse) Version() string {
 	return dsacr.rawResponse.Header.Get("x-ms-version")
 }
 
-// downloadResponse - Wraps the response from the blobClient.Download method.
-type downloadResponse struct {
+// DownloadResponse - Wraps the response from the blobClient.Download method.
+type DownloadResponse struct {
 	rawResponse *http.Response
 }
 
 // NewMetadata returns user-defined key/value pairs.
-func (dr downloadResponse) NewMetadata() Metadata {
+func (dr DownloadResponse) NewMetadata() Metadata {
 	md := Metadata{}
 	for k, v := range dr.rawResponse.Header {
 		if len(k) > mdPrefixLen {
@@ -5571,32 +5571,32 @@ func (dr downloadResponse) NewMetadata() Metadata {
 }
 
 // Response returns the raw HTTP response object.
-func (dr downloadResponse) Response() *http.Response {
+func (dr DownloadResponse) Response() *http.Response {
 	return dr.rawResponse
 }
 
 // StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dr downloadResponse) StatusCode() int {
+func (dr DownloadResponse) StatusCode() int {
 	return dr.rawResponse.StatusCode
 }
 
 // Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dr downloadResponse) Status() string {
+func (dr DownloadResponse) Status() string {
 	return dr.rawResponse.Status
 }
 
 // Body returns the raw HTTP response object's Body.
-func (dr downloadResponse) Body() io.ReadCloser {
+func (dr DownloadResponse) Body() io.ReadCloser {
 	return dr.rawResponse.Body
 }
 
 // AcceptRanges returns the value for header Accept-Ranges.
-func (dr downloadResponse) AcceptRanges() string {
+func (dr DownloadResponse) AcceptRanges() string {
 	return dr.rawResponse.Header.Get("Accept-Ranges")
 }
 
 // BlobCommittedBlockCount returns the value for header x-ms-blob-committed-block-count.
-func (dr downloadResponse) BlobCommittedBlockCount() int32 {
+func (dr DownloadResponse) BlobCommittedBlockCount() int32 {
 	s := dr.rawResponse.Header.Get("x-ms-blob-committed-block-count")
 	if s == "" {
 		return -1
@@ -5609,7 +5609,7 @@ func (dr downloadResponse) BlobCommittedBlockCount() int32 {
 }
 
 // BlobContentMD5 returns the value for header x-ms-blob-content-md5.
-func (dr downloadResponse) BlobContentMD5() []byte {
+func (dr DownloadResponse) BlobContentMD5() []byte {
 	s := dr.rawResponse.Header.Get("x-ms-blob-content-md5")
 	if s == "" {
 		return nil
@@ -5622,7 +5622,7 @@ func (dr downloadResponse) BlobContentMD5() []byte {
 }
 
 // BlobSequenceNumber returns the value for header x-ms-blob-sequence-number.
-func (dr downloadResponse) BlobSequenceNumber() int64 {
+func (dr DownloadResponse) BlobSequenceNumber() int64 {
 	s := dr.rawResponse.Header.Get("x-ms-blob-sequence-number")
 	if s == "" {
 		return -1
@@ -5635,22 +5635,22 @@ func (dr downloadResponse) BlobSequenceNumber() int64 {
 }
 
 // BlobType returns the value for header x-ms-blob-type.
-func (dr downloadResponse) BlobType() BlobType {
+func (dr DownloadResponse) BlobType() BlobType {
 	return BlobType(dr.rawResponse.Header.Get("x-ms-blob-type"))
 }
 
 // CacheControl returns the value for header Cache-Control.
-func (dr downloadResponse) CacheControl() string {
+func (dr DownloadResponse) CacheControl() string {
 	return dr.rawResponse.Header.Get("Cache-Control")
 }
 
 // ClientRequestID returns the value for header x-ms-client-request-id.
-func (dr downloadResponse) ClientRequestID() string {
+func (dr DownloadResponse) ClientRequestID() string {
 	return dr.rawResponse.Header.Get("x-ms-client-request-id")
 }
 
 // ContentCrc64 returns the value for header x-ms-content-crc64.
-func (dr downloadResponse) ContentCrc64() []byte {
+func (dr DownloadResponse) ContentCrc64() []byte {
 	s := dr.rawResponse.Header.Get("x-ms-content-crc64")
 	if s == "" {
 		return nil
@@ -5663,22 +5663,22 @@ func (dr downloadResponse) ContentCrc64() []byte {
 }
 
 // ContentDisposition returns the value for header Content-Disposition.
-func (dr downloadResponse) ContentDisposition() string {
+func (dr DownloadResponse) ContentDisposition() string {
 	return dr.rawResponse.Header.Get("Content-Disposition")
 }
 
 // ContentEncoding returns the value for header Content-Encoding.
-func (dr downloadResponse) ContentEncoding() string {
+func (dr DownloadResponse) ContentEncoding() string {
 	return dr.rawResponse.Header.Get("Content-Encoding")
 }
 
 // ContentLanguage returns the value for header Content-Language.
-func (dr downloadResponse) ContentLanguage() string {
+func (dr DownloadResponse) ContentLanguage() string {
 	return dr.rawResponse.Header.Get("Content-Language")
 }
 
 // ContentLength returns the value for header Content-Length.
-func (dr downloadResponse) ContentLength() int64 {
+func (dr DownloadResponse) ContentLength() int64 {
 	s := dr.rawResponse.Header.Get("Content-Length")
 	if s == "" {
 		return -1
@@ -5691,7 +5691,7 @@ func (dr downloadResponse) ContentLength() int64 {
 }
 
 // ContentMD5 returns the value for header Content-MD5.
-func (dr downloadResponse) ContentMD5() []byte {
+func (dr DownloadResponse) ContentMD5() []byte {
 	s := dr.rawResponse.Header.Get("Content-MD5")
 	if s == "" {
 		return nil
@@ -5704,17 +5704,17 @@ func (dr downloadResponse) ContentMD5() []byte {
 }
 
 // ContentRange returns the value for header Content-Range.
-func (dr downloadResponse) ContentRange() string {
+func (dr DownloadResponse) ContentRange() string {
 	return dr.rawResponse.Header.Get("Content-Range")
 }
 
 // ContentType returns the value for header Content-Type.
-func (dr downloadResponse) ContentType() string {
+func (dr DownloadResponse) ContentType() string {
 	return dr.rawResponse.Header.Get("Content-Type")
 }
 
 // CopyCompletionTime returns the value for header x-ms-copy-completion-time.
-func (dr downloadResponse) CopyCompletionTime() time.Time {
+func (dr DownloadResponse) CopyCompletionTime() time.Time {
 	s := dr.rawResponse.Header.Get("x-ms-copy-completion-time")
 	if s == "" {
 		return time.Time{}
@@ -5727,32 +5727,32 @@ func (dr downloadResponse) CopyCompletionTime() time.Time {
 }
 
 // CopyID returns the value for header x-ms-copy-id.
-func (dr downloadResponse) CopyID() string {
+func (dr DownloadResponse) CopyID() string {
 	return dr.rawResponse.Header.Get("x-ms-copy-id")
 }
 
 // CopyProgress returns the value for header x-ms-copy-progress.
-func (dr downloadResponse) CopyProgress() string {
+func (dr DownloadResponse) CopyProgress() string {
 	return dr.rawResponse.Header.Get("x-ms-copy-progress")
 }
 
 // CopySource returns the value for header x-ms-copy-source.
-func (dr downloadResponse) CopySource() string {
+func (dr DownloadResponse) CopySource() string {
 	return dr.rawResponse.Header.Get("x-ms-copy-source")
 }
 
 // CopyStatus returns the value for header x-ms-copy-status.
-func (dr downloadResponse) CopyStatus() CopyStatusType {
+func (dr DownloadResponse) CopyStatus() CopyStatusType {
 	return CopyStatusType(dr.rawResponse.Header.Get("x-ms-copy-status"))
 }
 
 // CopyStatusDescription returns the value for header x-ms-copy-status-description.
-func (dr downloadResponse) CopyStatusDescription() string {
+func (dr DownloadResponse) CopyStatusDescription() string {
 	return dr.rawResponse.Header.Get("x-ms-copy-status-description")
 }
 
 // Date returns the value for header Date.
-func (dr downloadResponse) Date() time.Time {
+func (dr DownloadResponse) Date() time.Time {
 	s := dr.rawResponse.Header.Get("Date")
 	if s == "" {
 		return time.Time{}
@@ -5765,27 +5765,27 @@ func (dr downloadResponse) Date() time.Time {
 }
 
 // EncryptionKeySha256 returns the value for header x-ms-encryption-key-sha256.
-func (dr downloadResponse) EncryptionKeySha256() string {
+func (dr DownloadResponse) EncryptionKeySha256() string {
 	return dr.rawResponse.Header.Get("x-ms-encryption-key-sha256")
 }
 
 // EncryptionScope returns the value for header x-ms-encryption-scope.
-func (dr downloadResponse) EncryptionScope() string {
+func (dr DownloadResponse) EncryptionScope() string {
 	return dr.rawResponse.Header.Get("x-ms-encryption-scope")
 }
 
 // ErrorCode returns the value for header x-ms-error-code.
-func (dr downloadResponse) ErrorCode() string {
+func (dr DownloadResponse) ErrorCode() string {
 	return dr.rawResponse.Header.Get("x-ms-error-code")
 }
 
 // ETag returns the value for header ETag.
-func (dr downloadResponse) ETag() ETag {
+func (dr DownloadResponse) ETag() ETag {
 	return ETag(dr.rawResponse.Header.Get("ETag"))
 }
 
 // ImmutabilityPolicyExpiresOn returns the value for header x-ms-immutability-policy-until-date.
-func (dr downloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
+func (dr DownloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
 	s := dr.rawResponse.Header.Get("x-ms-immutability-policy-until-date")
 	if s == "" {
 		return time.Time{}
@@ -5798,27 +5798,27 @@ func (dr downloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
 }
 
 // ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
-func (dr downloadResponse) ImmutabilityPolicyMode() string {
+func (dr DownloadResponse) ImmutabilityPolicyMode() string {
 	return dr.rawResponse.Header.Get("x-ms-immutability-policy-mode")
 }
 
 // IsCurrentVersion returns the value for header x-ms-is-current-version.
-func (dr downloadResponse) IsCurrentVersion() string {
+func (dr DownloadResponse) IsCurrentVersion() string {
 	return dr.rawResponse.Header.Get("x-ms-is-current-version")
 }
 
 // IsSealed returns the value for header x-ms-blob-sealed.
-func (dr downloadResponse) IsSealed() string {
+func (dr DownloadResponse) IsSealed() string {
 	return dr.rawResponse.Header.Get("x-ms-blob-sealed")
 }
 
 // IsServerEncrypted returns the value for header x-ms-server-encrypted.
-func (dr downloadResponse) IsServerEncrypted() string {
+func (dr DownloadResponse) IsServerEncrypted() string {
 	return dr.rawResponse.Header.Get("x-ms-server-encrypted")
 }
 
 // LastAccessed returns the value for header x-ms-last-access-time.
-func (dr downloadResponse) LastAccessed() time.Time {
+func (dr DownloadResponse) LastAccessed() time.Time {
 	s := dr.rawResponse.Header.Get("x-ms-last-access-time")
 	if s == "" {
 		return time.Time{}
@@ -5831,7 +5831,7 @@ func (dr downloadResponse) LastAccessed() time.Time {
 }
 
 // LastModified returns the value for header Last-Modified.
-func (dr downloadResponse) LastModified() time.Time {
+func (dr DownloadResponse) LastModified() time.Time {
 	s := dr.rawResponse.Header.Get("Last-Modified")
 	if s == "" {
 		return time.Time{}
@@ -5844,42 +5844,42 @@ func (dr downloadResponse) LastModified() time.Time {
 }
 
 // LeaseDuration returns the value for header x-ms-lease-duration.
-func (dr downloadResponse) LeaseDuration() LeaseDurationType {
+func (dr DownloadResponse) LeaseDuration() LeaseDurationType {
 	return LeaseDurationType(dr.rawResponse.Header.Get("x-ms-lease-duration"))
 }
 
 // LeaseState returns the value for header x-ms-lease-state.
-func (dr downloadResponse) LeaseState() LeaseStateType {
+func (dr DownloadResponse) LeaseState() LeaseStateType {
 	return LeaseStateType(dr.rawResponse.Header.Get("x-ms-lease-state"))
 }
 
 // LeaseStatus returns the value for header x-ms-lease-status.
-func (dr downloadResponse) LeaseStatus() LeaseStatusType {
+func (dr DownloadResponse) LeaseStatus() LeaseStatusType {
 	return LeaseStatusType(dr.rawResponse.Header.Get("x-ms-lease-status"))
 }
 
 // LegalHold returns the value for header x-ms-legal-hold.
-func (dr downloadResponse) LegalHold() string {
+func (dr DownloadResponse) LegalHold() string {
 	return dr.rawResponse.Header.Get("x-ms-legal-hold")
 }
 
 // ObjectReplicationPolicyID returns the value for header x-ms-or-policy-id.
-func (dr downloadResponse) ObjectReplicationPolicyID() string {
+func (dr DownloadResponse) ObjectReplicationPolicyID() string {
 	return dr.rawResponse.Header.Get("x-ms-or-policy-id")
 }
 
 // ObjectReplicationRules returns the value for header x-ms-or.
-func (dr downloadResponse) ObjectReplicationRules() string {
+func (dr DownloadResponse) ObjectReplicationRules() string {
 	return dr.rawResponse.Header.Get("x-ms-or")
 }
 
 // RequestID returns the value for header x-ms-request-id.
-func (dr downloadResponse) RequestID() string {
+func (dr DownloadResponse) RequestID() string {
 	return dr.rawResponse.Header.Get("x-ms-request-id")
 }
 
 // TagCount returns the value for header x-ms-tag-count.
-func (dr downloadResponse) TagCount() int64 {
+func (dr DownloadResponse) TagCount() int64 {
 	s := dr.rawResponse.Header.Get("x-ms-tag-count")
 	if s == "" {
 		return -1
@@ -5892,12 +5892,12 @@ func (dr downloadResponse) TagCount() int64 {
 }
 
 // Version returns the value for header x-ms-version.
-func (dr downloadResponse) Version() string {
+func (dr DownloadResponse) Version() string {
 	return dr.rawResponse.Header.Get("x-ms-version")
 }
 
 // VersionID returns the value for header x-ms-version-id.
-func (dr downloadResponse) VersionID() string {
+func (dr DownloadResponse) VersionID() string {
 	return dr.rawResponse.Header.Get("x-ms-version-id")
 }
 
@@ -7526,10 +7526,10 @@ type StaticWebsite struct {
 	DefaultIndexDocumentPath *string `xml:"DefaultIndexDocumentPath"`
 }
 
-// // StorageError ...
-// type StorageError struct {
-// 	Message *string `xml:"Message"`
-// }
+// StorageError ...
+type StorageError struct {
+	Message *string `xml:"Message"`
+}
 
 // StorageServiceProperties - Storage Service Properties.
 type StorageServiceProperties struct {
@@ -7898,6 +7898,10 @@ type blobPropertiesInternal struct {
 	ImmutabilityPolicyExpiresOn *timeRFC1123                   `xml:"ImmutabilityPolicyUntilDate"`
 	ImmutabilityPolicyMode      BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
 	LegalHold                   *bool                          `xml:"LegalHold"`
+	Owner                       *string                        `xml:"Owner"`
+	Group                       *string                        `xml:"Group"`
+	Permissions                 *string                        `xml:"Permissions"`
+	ACL                         *string                        `xml:"Acl"`
 }
 
 // internal type used for marshalling

@@ -72,7 +72,7 @@ directive:
 ```yaml
 directive:
   - from: swagger-document
-    where: $.definitions.BlobItemInternal
+    where: $.definitions.BlobPropertiesInternal
     transform: >
       $.properties["Owner"] = {
         "type": "string"
