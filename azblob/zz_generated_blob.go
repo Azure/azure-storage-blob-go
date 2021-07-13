@@ -8,13 +8,14 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/xml"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // blobClient is the client for the Blob methods of the Azblob service.
@@ -366,15 +367,17 @@ func (client blobClient) changeLeaseResponder(resp pipeline.Response) (pipeline.
 // only succeeds if the resource's lease is active and matches this ID. requestID is provides a client-generated,
 // opaque value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is
 // enabled. sourceContentMD5 is specify the md5 calculated for the range of bytes that must be read from the copy
-// source. blobTagsString is optional.  Used to set blob tags in various blob operations.
-func (client blobClient) CopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, sourceContentMD5 []byte, blobTagsString *string) (*BlobCopyFromURLResponse, error) {
+// source. blobTagsString is optional.  Used to set blob tags in various blob operations. immutabilityPolicyExpiry is
+// specifies the date time when the blobs immutability policy is set to expire. immutabilityPolicyMode is specifies the
+// immutability policy mode to set on the blob. legalHold is specified if a legal hold should be set on the blob.
+func (client blobClient) CopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, sourceContentMD5 []byte, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*BlobCopyFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.copyFromURLPreparer(copySource, timeout, metadata, tier, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, leaseID, requestID, sourceContentMD5, blobTagsString)
+	req, err := client.copyFromURLPreparer(copySource, timeout, metadata, tier, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, leaseID, requestID, sourceContentMD5, blobTagsString, immutabilityPolicyExpiry, immutabilityPolicyMode, legalHold)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +389,7 @@ func (client blobClient) CopyFromURL(ctx context.Context, copySource string, tim
 }
 
 // copyFromURLPreparer prepares the CopyFromURL request.
-func (client blobClient) copyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, sourceContentMD5 []byte, blobTagsString *string) (pipeline.Request, error) {
+func (client blobClient) copyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, sourceContentMD5 []byte, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -444,6 +447,15 @@ func (client blobClient) copyFromURLPreparer(copySource string, timeout *int32, 
 	}
 	if blobTagsString != nil {
 		req.Header.Set("x-ms-tags", *blobTagsString)
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	if legalHold != nil {
+		req.Header.Set("x-ms-legal-hold", strconv.FormatBool(*legalHold))
 	}
 	req.Header.Set("x-ms-requires-sync", "true")
 	return req, nil
@@ -672,6 +684,60 @@ func (client blobClient) deleteResponder(resp pipeline.Response) (pipeline.Respo
 	io.Copy(ioutil.Discard, resp.Response().Body)
 	resp.Response().Body.Close()
 	return &BlobDeleteResponse{rawResponse: resp.Response()}, err
+}
+
+// DeleteImmutabilityPolicy the Delete Immutability Policy operation deletes the immutability policy on the blob
+//
+// timeout is the timeout parameter is expressed in seconds. For more information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
+// character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blobClient) DeleteImmutabilityPolicy(ctx context.Context, timeout *int32, requestID *string) (*BlobDeleteImmutabilityPolicyResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.deleteImmutabilityPolicyPreparer(timeout, requestID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.deleteImmutabilityPolicyResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobDeleteImmutabilityPolicyResponse), err
+}
+
+// deleteImmutabilityPolicyPreparer prepares the DeleteImmutabilityPolicy request.
+func (client blobClient) deleteImmutabilityPolicyPreparer(timeout *int32, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("DELETE", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
+	}
+	params.Set("comp", "immutabilityPolicies")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	return req, nil
+}
+
+// deleteImmutabilityPolicyResponder handles the response to the DeleteImmutabilityPolicy request.
+func (client blobClient) deleteImmutabilityPolicyResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlobDeleteImmutabilityPolicyResponse{rawResponse: resp.Response()}, err
 }
 
 // Download the Download operation reads or downloads a blob from the system, including its metadata and properties.
@@ -1096,7 +1162,7 @@ func (client blobClient) getTagsResponder(resp pipeline.Response) (pipeline.Resp
 	return result, nil
 }
 
-// todo funky quick query code
+// Funky Quick Query code
 // // Query the Query operation enables users to select/project on blob data by providing simple query expressions.
 // //
 // // snapshot is the snapshot parameter is an opaque DateTime value that, when present, specifies the blob snapshot to
@@ -1754,6 +1820,128 @@ func (client blobClient) setHTTPHeadersResponder(resp pipeline.Response) (pipeli
 	return &BlobSetHTTPHeadersResponse{rawResponse: resp.Response()}, err
 }
 
+// SetImmutabilityPolicy the Set Immutability Policy operation sets the immutability policy on the blob
+//
+// timeout is the timeout parameter is expressed in seconds. For more information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
+// character limit that is recorded in the analytics logs when storage analytics logging is enabled. ifUnmodifiedSince
+// is specify this header value to operate only on a blob if it has not been modified since the specified date/time.
+// immutabilityPolicyExpiry is specifies the date time when the blobs immutability policy is set to expire.
+// immutabilityPolicyMode is specifies the immutability policy mode to set on the blob.
+func (client blobClient) SetImmutabilityPolicy(ctx context.Context, timeout *int32, requestID *string, ifUnmodifiedSince *time.Time, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType) (*BlobSetImmutabilityPolicyResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.setImmutabilityPolicyPreparer(timeout, requestID, ifUnmodifiedSince, immutabilityPolicyExpiry, immutabilityPolicyMode)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.setImmutabilityPolicyResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobSetImmutabilityPolicyResponse), err
+}
+
+// setImmutabilityPolicyPreparer prepares the SetImmutabilityPolicy request.
+func (client blobClient) setImmutabilityPolicyPreparer(timeout *int32, requestID *string, ifUnmodifiedSince *time.Time, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
+	}
+	params.Set("comp", "immutabilityPolicies")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	if ifUnmodifiedSince != nil {
+		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	return req, nil
+}
+
+// setImmutabilityPolicyResponder handles the response to the SetImmutabilityPolicy request.
+func (client blobClient) setImmutabilityPolicyResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlobSetImmutabilityPolicyResponse{rawResponse: resp.Response()}, err
+}
+
+// SetLegalHold the Set Legal Hold operation sets a legal hold on the blob.
+//
+// legalHold is specified if a legal hold should be set on the blob. timeout is the timeout parameter is expressed in
+// seconds. For more information, see <a
+// href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
+// Timeouts for Blob Service Operations.</a> requestID is provides a client-generated, opaque value with a 1 KB
+// character limit that is recorded in the analytics logs when storage analytics logging is enabled.
+func (client blobClient) SetLegalHold(ctx context.Context, legalHold bool, timeout *int32, requestID *string) (*BlobSetLegalHoldResponse, error) {
+	if err := validate([]validation{
+		{targetValue: timeout,
+			constraints: []constraint{{target: "timeout", name: null, rule: false,
+				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
+		return nil, err
+	}
+	req, err := client.setLegalHoldPreparer(legalHold, timeout, requestID)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.setLegalHoldResponder}, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*BlobSetLegalHoldResponse), err
+}
+
+// setLegalHoldPreparer prepares the SetLegalHold request.
+func (client blobClient) setLegalHoldPreparer(legalHold bool, timeout *int32, requestID *string) (pipeline.Request, error) {
+	req, err := pipeline.NewRequest("PUT", client.url, nil)
+	if err != nil {
+		return req, pipeline.NewError(err, "failed to create request")
+	}
+	params := req.URL.Query()
+	if timeout != nil {
+		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
+	}
+	params.Set("comp", "legalhold")
+	req.URL.RawQuery = params.Encode()
+	req.Header.Set("x-ms-version", ServiceVersion)
+	if requestID != nil {
+		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	req.Header.Set("x-ms-legal-hold", strconv.FormatBool(legalHold))
+	return req, nil
+}
+
+// setLegalHoldResponder handles the response to the SetLegalHold request.
+func (client blobClient) setLegalHoldResponder(resp pipeline.Response) (pipeline.Response, error) {
+	err := validateResponse(resp, http.StatusOK)
+	if resp == nil {
+		return nil, err
+	}
+	io.Copy(ioutil.Discard, resp.Response().Body)
+	resp.Response().Body.Close()
+	return &BlobSetLegalHoldResponse{rawResponse: resp.Response()}, err
+}
+
 // SetMetadata the Set Blob Metadata operation sets user-defined metadata for the specified blob as one or more
 // name-value pairs
 //
@@ -2056,15 +2244,17 @@ func (client blobClient) setTierResponder(resp pipeline.Response) (pipeline.Resp
 // only succeeds if the resource's lease is active and matches this ID. requestID is provides a client-generated,
 // opaque value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is
 // enabled. blobTagsString is optional.  Used to set blob tags in various blob operations. sealBlob is overrides the
-// sealed state of the destination blob.  Service version 2019-12-12 and newer.
-func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, rehydratePriority RehydratePriorityType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, sourceIfTags *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, blobTagsString *string, sealBlob *bool) (*BlobStartCopyFromURLResponse, error) {
+// sealed state of the destination blob.  Service version 2019-12-12 and newer. immutabilityPolicyExpiry is specifies
+// the date time when the blobs immutability policy is set to expire. immutabilityPolicyMode is specifies the
+// immutability policy mode to set on the blob. legalHold is specified if a legal hold should be set on the blob.
+func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, rehydratePriority RehydratePriorityType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, sourceIfTags *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, blobTagsString *string, sealBlob *bool, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*BlobStartCopyFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.startCopyFromURLPreparer(copySource, timeout, metadata, tier, rehydratePriority, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, sourceIfTags, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, leaseID, requestID, blobTagsString, sealBlob)
+	req, err := client.startCopyFromURLPreparer(copySource, timeout, metadata, tier, rehydratePriority, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, sourceIfTags, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, leaseID, requestID, blobTagsString, sealBlob, immutabilityPolicyExpiry, immutabilityPolicyMode, legalHold)
 	if err != nil {
 		return nil, err
 	}
@@ -2076,7 +2266,7 @@ func (client blobClient) StartCopyFromURL(ctx context.Context, copySource string
 }
 
 // startCopyFromURLPreparer prepares the StartCopyFromURL request.
-func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, rehydratePriority RehydratePriorityType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, sourceIfTags *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, blobTagsString *string, sealBlob *bool) (pipeline.Request, error) {
+func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *int32, metadata map[string]string, tier AccessTierType, rehydratePriority RehydratePriorityType, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, sourceIfTags *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, leaseID *string, requestID *string, blobTagsString *string, sealBlob *bool, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -2140,6 +2330,15 @@ func (client blobClient) startCopyFromURLPreparer(copySource string, timeout *in
 	}
 	if sealBlob != nil {
 		req.Header.Set("x-ms-seal-blob", strconv.FormatBool(*sealBlob))
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	if legalHold != nil {
+		req.Header.Set("x-ms-legal-hold", strconv.FormatBool(*legalHold))
 	}
 	return req, nil
 }

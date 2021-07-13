@@ -2,9 +2,10 @@ package azblob
 
 import (
 	"context"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net/url"
 	"strings"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // A BlobURL represents a URL to an Azure Storage blob; the blob may be a block blob, append blob, or page blob.
@@ -310,7 +311,10 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		dstLeaseID,
 		nil,
 		blobTagsString, // Blob tags
-		nil)
+		nil,
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
+		)
 }
 
 // AbortCopyFromURL stops a pending copy that was previously started and leaves a destination blob with 0 length and metadata.

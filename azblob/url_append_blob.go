@@ -68,6 +68,8 @@ func (ab AppendBlobURL) Create(ctx context.Context, h BlobHTTPHeaders, metadata 
 		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
 	)
 }
 
