@@ -7898,6 +7898,10 @@ type blobPropertiesInternal struct {
 	ImmutabilityPolicyExpiresOn *timeRFC1123                   `xml:"ImmutabilityPolicyUntilDate"`
 	ImmutabilityPolicyMode      BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
 	LegalHold                   *bool                          `xml:"LegalHold"`
+	Owner                       *string                        `xml:"Owner"`
+	Group                       *string                        `xml:"Group"`
+	Permissions                 *string                        `xml:"Permissions"`
+	ACL                         *string                        `xml:"Acl"`
 }
 
 // internal type used for marshalling
