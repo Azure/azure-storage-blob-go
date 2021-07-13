@@ -412,6 +412,8 @@ const (
 	ListBlobsIncludeItemMetadata ListBlobsIncludeItemType = "metadata"
 	// ListBlobsIncludeItemNone represents an empty ListBlobsIncludeItemType.
 	ListBlobsIncludeItemNone ListBlobsIncludeItemType = ""
+	// ListBlobsIncludeItemPermissions ...
+	ListBlobsIncludeItemPermissions ListBlobsIncludeItemType = "permissions"
 	// ListBlobsIncludeItemSnapshots ...
 	ListBlobsIncludeItemSnapshots ListBlobsIncludeItemType = "snapshots"
 	// ListBlobsIncludeItemTags ...
@@ -424,7 +426,7 @@ const (
 
 // PossibleListBlobsIncludeItemTypeValues returns an array of possible values for the ListBlobsIncludeItemType const type.
 func PossibleListBlobsIncludeItemTypeValues() []ListBlobsIncludeItemType {
-	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
+	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemPermissions, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
 }
 
 // ListContainersIncludeType enumerates the values for list containers include type.
@@ -2472,6 +2474,10 @@ type BlobItemInternal struct {
 	Metadata                  Metadata               `xml:"Metadata"`
 	BlobTags                  *BlobTags              `xml:"Tags"`
 	ObjectReplicationMetadata map[string]string      `xml:"ObjectReplicationMetadata"`
+	Owner                     *string                `xml:"Owner"`
+	Group                     *string                `xml:"Group"`
+	Permissions               *string                `xml:"Permissions"`
+	ACL                       *string                `xml:"Acl"`
 }
 
 // BlobPrefix ...

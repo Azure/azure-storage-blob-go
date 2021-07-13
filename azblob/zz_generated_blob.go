@@ -1162,7 +1162,7 @@ func (client blobClient) getTagsResponder(resp pipeline.Response) (pipeline.Resp
 	return result, nil
 }
 
-// Funky Quick Query code
+// Funky quick query code
 // // Query the Query operation enables users to select/project on blob data by providing simple query expressions.
 // //
 // // snapshot is the snapshot parameter is an opaque DateTime value that, when present, specifies the blob snapshot to
