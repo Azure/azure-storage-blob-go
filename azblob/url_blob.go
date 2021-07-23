@@ -135,12 +135,12 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 // 	These parameters can be explicitly set by calling WithSnapshot(snapshot string)/WithVersionID(versionID string)
 // 	Therefore it not required to pass these here.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-blob.
-func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions) (*BlobDeleteResponse, error) {
+func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions, blobDeleteType BlobDeleteType) (*BlobDeleteResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.Delete(ctx, nil, nil, nil, ac.LeaseAccessConditions.pointers(), deleteOptions,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		nil, BlobDeleteNone)
+		nil, blobDeleteType)
 }
 
 // SetTags operation enables users to set tags on a blob or specific blob version, but not snapshot.
@@ -314,7 +314,7 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		nil,
 		// immutability policy
 		nil, BlobImmutabilityPolicyModeNone, nil,
-		)
+	)
 }
 
 // AbortCopyFromURL stops a pending copy that was previously started and leaves a destination blob with 0 length and metadata.

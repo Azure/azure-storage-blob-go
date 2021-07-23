@@ -1048,7 +1048,7 @@ func (s *aztestsSuite) TestBlobDeleteNonExistant(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
 	validateStorageError(c, err, ServiceCodeBlobNotFound)
 }
 
@@ -1062,7 +1062,7 @@ func (s *aztestsSuite) TestBlobDeleteSnapshot(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	snapshotURL := blobURL.WithSnapshot(resp.Snapshot())
 
-	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobDeleted(c, snapshotURL)
@@ -1076,7 +1076,7 @@ func (s *aztestsSuite) TestBlobDeleteSnapshotsInclude(c *chk.C) {
 
 	_, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, _ := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -1092,7 +1092,7 @@ func (s *aztestsSuite) TestBlobDeleteSnapshotsOnly(c *chk.C) {
 
 	_, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionOnly, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionOnly, BlobAccessConditions{}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, _ := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -1109,7 +1109,7 @@ func (s *aztestsSuite) TestBlobDeleteSnapshotsNoneWithSnapshots(c *chk.C) {
 
 	_, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
 	validateStorageError(c, err, ServiceCodeSnapshotsPresent)
 }
 
@@ -1129,7 +1129,7 @@ func (s *aztestsSuite) TestBlobDeleteIfModifiedSinceTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobDeleted(c, blobURL)
@@ -1144,7 +1144,7 @@ func (s *aztestsSuite) TestBlobDeleteIfModifiedSinceFalse(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, BlobDeleteNone)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1157,7 +1157,7 @@ func (s *aztestsSuite) TestBlobDeleteIfUnmodifiedSinceTrue(c *chk.C) {
 	currentTime := getRelativeTimeGMT(10)
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobDeleted(c, blobURL)
@@ -1172,7 +1172,7 @@ func (s *aztestsSuite) TestBlobDeleteIfUnmodifiedSinceFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, BlobDeleteNone)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1186,7 +1186,7 @@ func (s *aztestsSuite) TestBlobDeleteIfMatchTrue(c *chk.C) {
 	etag := resp.ETag()
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobDeleted(c, blobURL)
@@ -1203,7 +1203,7 @@ func (s *aztestsSuite) TestBlobDeleteIfMatchFalse(c *chk.C) {
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: etag}}, BlobDeleteNone)
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
@@ -1219,7 +1219,7 @@ func (s *aztestsSuite) TestBlobDeleteIfNoneMatchTrue(c *chk.C) {
 	blobURL.SetMetadata(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	validateBlobDeleted(c, blobURL)
@@ -1235,7 +1235,7 @@ func (s *aztestsSuite) TestBlobDeleteIfNoneMatchFalse(c *chk.C) {
 	etag := resp.ETag()
 
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: etag}}, BlobDeleteNone)
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1799,7 +1799,7 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 	c.Assert(resp2.Segment.BlobItems[0].Properties.ArchiveStatus, chk.Equals, ArchiveStatusRehydratePendingToCool)
 
 	// delete first blob
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	blobURL, _ = createNewBlockBlob(c, containerURL)

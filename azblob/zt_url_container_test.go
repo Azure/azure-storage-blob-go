@@ -426,7 +426,7 @@ func testContainerListBlobsIncludeTypeDeletedImpl(c *chk.C, bsu ServiceURL) erro
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Segment.BlobItems, chk.HasLen, 1)
 
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -462,7 +462,7 @@ func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	waitForCopy(c, blobURL2, resp2)
 	blobURL3, _ := createBlockBlobWithPrefix(c, containerURL, "deleted")
 
-	_, err = blobURL3.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = blobURL3.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
 		ListBlobsSegmentOptions{Details: BlobListingDetails{Snapshots: true, Copy: true, Deleted: true, Versions: true}})
