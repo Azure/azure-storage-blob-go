@@ -2,10 +2,9 @@ package azblob
 
 import (
 	"context"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net/url"
 	"strings"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // A BlobURL represents a URL to an Azure Storage blob; the blob may be a block blob, append blob, or page blob.
