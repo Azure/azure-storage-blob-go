@@ -2,9 +2,10 @@ package azblob
 
 import (
 	"context"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net/url"
 	"strings"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // A BlobURL represents a URL to an Azure Storage blob; the blob may be a block blob, append blob, or page blob.
@@ -75,7 +76,7 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 }
 
 func SerializeBlobTagsHeader(blobTagsMap BlobTagsMap) *string {
-	if blobTagsMap == nil {
+	if blobTagsMap == nil || len(blobTagsMap) == 0 {
 		return nil
 	}
 	tags := make([]string, 0)
