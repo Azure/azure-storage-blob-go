@@ -174,6 +174,21 @@ func PossibleArchiveStatusTypeValues() []ArchiveStatusType {
 	return []ArchiveStatusType{ArchiveStatusNone, ArchiveStatusRehydratePendingToCool, ArchiveStatusRehydratePendingToHot}
 }
 
+// BlobDeleteType enumerates the values for blob delete type.
+type BlobDeleteType string
+
+const (
+	// BlobDeleteNone represents an empty BlobDeleteType.
+	BlobDeleteNone BlobDeleteType = ""
+	// BlobDeletePermanent ...
+	BlobDeletePermanent BlobDeleteType = "Permanent"
+)
+
+// PossibleBlobDeleteTypeValues returns an array of possible values for the BlobDeleteType const type.
+func PossibleBlobDeleteTypeValues() []BlobDeleteType {
+	return []BlobDeleteType{BlobDeleteNone, BlobDeletePermanent}
+}
+
 // BlobExpiryOptionsType enumerates the values for blob expiry options type.
 type BlobExpiryOptionsType string
 
@@ -193,6 +208,25 @@ const (
 // PossibleBlobExpiryOptionsTypeValues returns an array of possible values for the BlobExpiryOptionsType const type.
 func PossibleBlobExpiryOptionsTypeValues() []BlobExpiryOptionsType {
 	return []BlobExpiryOptionsType{BlobExpiryOptionsAbsolute, BlobExpiryOptionsNeverExpire, BlobExpiryOptionsNone, BlobExpiryOptionsRelativeToCreation, BlobExpiryOptionsRelativeToNow}
+}
+
+// BlobImmutabilityPolicyModeType enumerates the values for blob immutability policy mode type.
+type BlobImmutabilityPolicyModeType string
+
+const (
+	// BlobImmutabilityPolicyModeLocked ...
+	BlobImmutabilityPolicyModeLocked BlobImmutabilityPolicyModeType = "Locked"
+	// BlobImmutabilityPolicyModeMutable ...
+	BlobImmutabilityPolicyModeMutable BlobImmutabilityPolicyModeType = "Mutable"
+	// BlobImmutabilityPolicyModeNone represents an empty BlobImmutabilityPolicyModeType.
+	BlobImmutabilityPolicyModeNone BlobImmutabilityPolicyModeType = ""
+	// BlobImmutabilityPolicyModeUnlocked ...
+	BlobImmutabilityPolicyModeUnlocked BlobImmutabilityPolicyModeType = "Unlocked"
+)
+
+// PossibleBlobImmutabilityPolicyModeTypeValues returns an array of possible values for the BlobImmutabilityPolicyModeType const type.
+func PossibleBlobImmutabilityPolicyModeTypeValues() []BlobImmutabilityPolicyModeType {
+	return []BlobImmutabilityPolicyModeType{BlobImmutabilityPolicyModeLocked, BlobImmutabilityPolicyModeMutable, BlobImmutabilityPolicyModeNone, BlobImmutabilityPolicyModeUnlocked}
 }
 
 // BlobType enumerates the values for blob type.
@@ -370,6 +404,10 @@ const (
 	ListBlobsIncludeItemCopy ListBlobsIncludeItemType = "copy"
 	// ListBlobsIncludeItemDeleted ...
 	ListBlobsIncludeItemDeleted ListBlobsIncludeItemType = "deleted"
+	// ListBlobsIncludeItemImmutabilitypolicy ...
+	ListBlobsIncludeItemImmutabilitypolicy ListBlobsIncludeItemType = "immutabilitypolicy"
+	// ListBlobsIncludeItemLegalhold ...
+	ListBlobsIncludeItemLegalhold ListBlobsIncludeItemType = "legalhold"
 	// ListBlobsIncludeItemMetadata ...
 	ListBlobsIncludeItemMetadata ListBlobsIncludeItemType = "metadata"
 	// ListBlobsIncludeItemNone represents an empty ListBlobsIncludeItemType.
@@ -386,7 +424,7 @@ const (
 
 // PossibleListBlobsIncludeItemTypeValues returns an array of possible values for the ListBlobsIncludeItemType const type.
 func PossibleListBlobsIncludeItemTypeValues() []ListBlobsIncludeItemType {
-	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
+	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
 }
 
 // ListContainersIncludeType enumerates the values for list containers include type.
@@ -479,17 +517,21 @@ func PossiblePublicAccessTypeValues() []PublicAccessType {
 type QueryFormatType string
 
 const (
+	// QueryFormatArrow ...
+	QueryFormatArrow QueryFormatType = "arrow"
 	// QueryFormatDelimited ...
 	QueryFormatDelimited QueryFormatType = "delimited"
 	// QueryFormatJSON ...
 	QueryFormatJSON QueryFormatType = "json"
 	// QueryFormatNone represents an empty QueryFormatType.
 	QueryFormatNone QueryFormatType = ""
+	// QueryFormatParquet ...
+	QueryFormatParquet QueryFormatType = "parquet"
 )
 
 // PossibleQueryFormatTypeValues returns an array of possible values for the QueryFormatType const type.
 func PossibleQueryFormatTypeValues() []QueryFormatType {
-	return []QueryFormatType{QueryFormatDelimited, QueryFormatJSON, QueryFormatNone}
+	return []QueryFormatType{QueryFormatArrow, QueryFormatDelimited, QueryFormatJSON, QueryFormatNone, QueryFormatParquet}
 }
 
 // RehydratePriorityType enumerates the values for rehydrate priority type.
@@ -583,6 +625,8 @@ const (
 	StorageErrorCodeBlobArchived StorageErrorCodeType = "BlobArchived"
 	// StorageErrorCodeBlobBeingRehydrated ...
 	StorageErrorCodeBlobBeingRehydrated StorageErrorCodeType = "BlobBeingRehydrated"
+	// StorageErrorCodeBlobImmutableDueToPolicy ...
+	StorageErrorCodeBlobImmutableDueToPolicy StorageErrorCodeType = "BlobImmutableDueToPolicy"
 	// StorageErrorCodeBlobNotArchived ...
 	StorageErrorCodeBlobNotArchived StorageErrorCodeType = "BlobNotArchived"
 	// StorageErrorCodeBlobNotFound ...
@@ -591,6 +635,8 @@ const (
 	StorageErrorCodeBlobOverwritten StorageErrorCodeType = "BlobOverwritten"
 	// StorageErrorCodeBlobTierInadequateForContentLength ...
 	StorageErrorCodeBlobTierInadequateForContentLength StorageErrorCodeType = "BlobTierInadequateForContentLength"
+	// StorageErrorCodeBlobUsesCustomerSpecifiedEncryption ...
+	StorageErrorCodeBlobUsesCustomerSpecifiedEncryption StorageErrorCodeType = "BlobUsesCustomerSpecifiedEncryption"
 	// StorageErrorCodeBlockCountExceedsLimit ...
 	StorageErrorCodeBlockCountExceedsLimit StorageErrorCodeType = "BlockCountExceedsLimit"
 	// StorageErrorCodeBlockListTooLong ...
@@ -783,7 +829,7 @@ const (
 
 // PossibleStorageErrorCodeTypeValues returns an array of possible values for the StorageErrorCodeType const type.
 func PossibleStorageErrorCodeTypeValues() []StorageErrorCodeType {
-	return []StorageErrorCodeType{StorageErrorCodeAccountAlreadyExists, StorageErrorCodeAccountBeingCreated, StorageErrorCodeAccountIsDisabled, StorageErrorCodeAppendPositionConditionNotMet, StorageErrorCodeAuthenticationFailed, StorageErrorCodeAuthorizationFailure, StorageErrorCodeAuthorizationPermissionMismatch, StorageErrorCodeAuthorizationProtocolMismatch, StorageErrorCodeAuthorizationResourceTypeMismatch, StorageErrorCodeAuthorizationServiceMismatch, StorageErrorCodeAuthorizationSourceIPMismatch, StorageErrorCodeBlobAlreadyExists, StorageErrorCodeBlobArchived, StorageErrorCodeBlobBeingRehydrated, StorageErrorCodeBlobNotArchived, StorageErrorCodeBlobNotFound, StorageErrorCodeBlobOverwritten, StorageErrorCodeBlobTierInadequateForContentLength, StorageErrorCodeBlockCountExceedsLimit, StorageErrorCodeBlockListTooLong, StorageErrorCodeCannotChangeToLowerTier, StorageErrorCodeCannotVerifyCopySource, StorageErrorCodeConditionHeadersNotSupported, StorageErrorCodeConditionNotMet, StorageErrorCodeContainerAlreadyExists, StorageErrorCodeContainerBeingDeleted, StorageErrorCodeContainerDisabled, StorageErrorCodeContainerNotFound, StorageErrorCodeContentLengthLargerThanTierLimit, StorageErrorCodeCopyAcrossAccountsNotSupported, StorageErrorCodeCopyIDMismatch, StorageErrorCodeEmptyMetadataKey, StorageErrorCodeFeatureVersionMismatch, StorageErrorCodeIncrementalCopyBlobMismatch, StorageErrorCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed, StorageErrorCodeIncrementalCopySourceMustBeSnapshot, StorageErrorCodeInfiniteLeaseDurationRequired, StorageErrorCodeInsufficientAccountPermissions, StorageErrorCodeInternalError, StorageErrorCodeInvalidAuthenticationInfo, StorageErrorCodeInvalidBlobOrBlock, StorageErrorCodeInvalidBlobTier, StorageErrorCodeInvalidBlobType, StorageErrorCodeInvalidBlockID, StorageErrorCodeInvalidBlockList, StorageErrorCodeInvalidHeaderValue, StorageErrorCodeInvalidHTTPVerb, StorageErrorCodeInvalidInput, StorageErrorCodeInvalidMd5, StorageErrorCodeInvalidMetadata, StorageErrorCodeInvalidOperation, StorageErrorCodeInvalidPageRange, StorageErrorCodeInvalidQueryParameterValue, StorageErrorCodeInvalidRange, StorageErrorCodeInvalidResourceName, StorageErrorCodeInvalidSourceBlobType, StorageErrorCodeInvalidSourceBlobURL, StorageErrorCodeInvalidURI, StorageErrorCodeInvalidVersionForPageBlobOperation, StorageErrorCodeInvalidXMLDocument, StorageErrorCodeInvalidXMLNodeValue, StorageErrorCodeLeaseAlreadyBroken, StorageErrorCodeLeaseAlreadyPresent, StorageErrorCodeLeaseIDMismatchWithBlobOperation, StorageErrorCodeLeaseIDMismatchWithContainerOperation, StorageErrorCodeLeaseIDMismatchWithLeaseOperation, StorageErrorCodeLeaseIDMissing, StorageErrorCodeLeaseIsBreakingAndCannotBeAcquired, StorageErrorCodeLeaseIsBreakingAndCannotBeChanged, StorageErrorCodeLeaseIsBrokenAndCannotBeRenewed, StorageErrorCodeLeaseLost, StorageErrorCodeLeaseNotPresentWithBlobOperation, StorageErrorCodeLeaseNotPresentWithContainerOperation, StorageErrorCodeLeaseNotPresentWithLeaseOperation, StorageErrorCodeMaxBlobSizeConditionNotMet, StorageErrorCodeMd5Mismatch, StorageErrorCodeMetadataTooLarge, StorageErrorCodeMissingContentLengthHeader, StorageErrorCodeMissingRequiredHeader, StorageErrorCodeMissingRequiredQueryParameter, StorageErrorCodeMissingRequiredXMLNode, StorageErrorCodeMultipleConditionHeadersNotSupported, StorageErrorCodeNoAuthenticationInformation, StorageErrorCodeNone, StorageErrorCodeNoPendingCopyOperation, StorageErrorCodeOperationNotAllowedOnIncrementalCopyBlob, StorageErrorCodeOperationTimedOut, StorageErrorCodeOutOfRangeInput, StorageErrorCodeOutOfRangeQueryParameterValue, StorageErrorCodePendingCopyOperation, StorageErrorCodePreviousSnapshotCannotBeNewer, StorageErrorCodePreviousSnapshotNotFound, StorageErrorCodePreviousSnapshotOperationNotSupported, StorageErrorCodeRequestBodyTooLarge, StorageErrorCodeRequestURLFailedToParse, StorageErrorCodeResourceAlreadyExists, StorageErrorCodeResourceNotFound, StorageErrorCodeResourceTypeMismatch, StorageErrorCodeSequenceNumberConditionNotMet, StorageErrorCodeSequenceNumberIncrementTooLarge, StorageErrorCodeServerBusy, StorageErrorCodeSnaphotOperationRateExceeded, StorageErrorCodeSnapshotCountExceeded, StorageErrorCodeSnapshotsPresent, StorageErrorCodeSourceConditionNotMet, StorageErrorCodeSystemInUse, StorageErrorCodeTargetConditionNotMet, StorageErrorCodeUnauthorizedBlobOverwrite, StorageErrorCodeUnsupportedHeader, StorageErrorCodeUnsupportedHTTPVerb, StorageErrorCodeUnsupportedQueryParameter, StorageErrorCodeUnsupportedXMLNode}
+	return []StorageErrorCodeType{StorageErrorCodeAccountAlreadyExists, StorageErrorCodeAccountBeingCreated, StorageErrorCodeAccountIsDisabled, StorageErrorCodeAppendPositionConditionNotMet, StorageErrorCodeAuthenticationFailed, StorageErrorCodeAuthorizationFailure, StorageErrorCodeAuthorizationPermissionMismatch, StorageErrorCodeAuthorizationProtocolMismatch, StorageErrorCodeAuthorizationResourceTypeMismatch, StorageErrorCodeAuthorizationServiceMismatch, StorageErrorCodeAuthorizationSourceIPMismatch, StorageErrorCodeBlobAlreadyExists, StorageErrorCodeBlobArchived, StorageErrorCodeBlobBeingRehydrated, StorageErrorCodeBlobImmutableDueToPolicy, StorageErrorCodeBlobNotArchived, StorageErrorCodeBlobNotFound, StorageErrorCodeBlobOverwritten, StorageErrorCodeBlobTierInadequateForContentLength, StorageErrorCodeBlobUsesCustomerSpecifiedEncryption, StorageErrorCodeBlockCountExceedsLimit, StorageErrorCodeBlockListTooLong, StorageErrorCodeCannotChangeToLowerTier, StorageErrorCodeCannotVerifyCopySource, StorageErrorCodeConditionHeadersNotSupported, StorageErrorCodeConditionNotMet, StorageErrorCodeContainerAlreadyExists, StorageErrorCodeContainerBeingDeleted, StorageErrorCodeContainerDisabled, StorageErrorCodeContainerNotFound, StorageErrorCodeContentLengthLargerThanTierLimit, StorageErrorCodeCopyAcrossAccountsNotSupported, StorageErrorCodeCopyIDMismatch, StorageErrorCodeEmptyMetadataKey, StorageErrorCodeFeatureVersionMismatch, StorageErrorCodeIncrementalCopyBlobMismatch, StorageErrorCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed, StorageErrorCodeIncrementalCopySourceMustBeSnapshot, StorageErrorCodeInfiniteLeaseDurationRequired, StorageErrorCodeInsufficientAccountPermissions, StorageErrorCodeInternalError, StorageErrorCodeInvalidAuthenticationInfo, StorageErrorCodeInvalidBlobOrBlock, StorageErrorCodeInvalidBlobTier, StorageErrorCodeInvalidBlobType, StorageErrorCodeInvalidBlockID, StorageErrorCodeInvalidBlockList, StorageErrorCodeInvalidHeaderValue, StorageErrorCodeInvalidHTTPVerb, StorageErrorCodeInvalidInput, StorageErrorCodeInvalidMd5, StorageErrorCodeInvalidMetadata, StorageErrorCodeInvalidOperation, StorageErrorCodeInvalidPageRange, StorageErrorCodeInvalidQueryParameterValue, StorageErrorCodeInvalidRange, StorageErrorCodeInvalidResourceName, StorageErrorCodeInvalidSourceBlobType, StorageErrorCodeInvalidSourceBlobURL, StorageErrorCodeInvalidURI, StorageErrorCodeInvalidVersionForPageBlobOperation, StorageErrorCodeInvalidXMLDocument, StorageErrorCodeInvalidXMLNodeValue, StorageErrorCodeLeaseAlreadyBroken, StorageErrorCodeLeaseAlreadyPresent, StorageErrorCodeLeaseIDMismatchWithBlobOperation, StorageErrorCodeLeaseIDMismatchWithContainerOperation, StorageErrorCodeLeaseIDMismatchWithLeaseOperation, StorageErrorCodeLeaseIDMissing, StorageErrorCodeLeaseIsBreakingAndCannotBeAcquired, StorageErrorCodeLeaseIsBreakingAndCannotBeChanged, StorageErrorCodeLeaseIsBrokenAndCannotBeRenewed, StorageErrorCodeLeaseLost, StorageErrorCodeLeaseNotPresentWithBlobOperation, StorageErrorCodeLeaseNotPresentWithContainerOperation, StorageErrorCodeLeaseNotPresentWithLeaseOperation, StorageErrorCodeMaxBlobSizeConditionNotMet, StorageErrorCodeMd5Mismatch, StorageErrorCodeMetadataTooLarge, StorageErrorCodeMissingContentLengthHeader, StorageErrorCodeMissingRequiredHeader, StorageErrorCodeMissingRequiredQueryParameter, StorageErrorCodeMissingRequiredXMLNode, StorageErrorCodeMultipleConditionHeadersNotSupported, StorageErrorCodeNoAuthenticationInformation, StorageErrorCodeNone, StorageErrorCodeNoPendingCopyOperation, StorageErrorCodeOperationNotAllowedOnIncrementalCopyBlob, StorageErrorCodeOperationTimedOut, StorageErrorCodeOutOfRangeInput, StorageErrorCodeOutOfRangeQueryParameterValue, StorageErrorCodePendingCopyOperation, StorageErrorCodePreviousSnapshotCannotBeNewer, StorageErrorCodePreviousSnapshotNotFound, StorageErrorCodePreviousSnapshotOperationNotSupported, StorageErrorCodeRequestBodyTooLarge, StorageErrorCodeRequestURLFailedToParse, StorageErrorCodeResourceAlreadyExists, StorageErrorCodeResourceNotFound, StorageErrorCodeResourceTypeMismatch, StorageErrorCodeSequenceNumberConditionNotMet, StorageErrorCodeSequenceNumberIncrementTooLarge, StorageErrorCodeServerBusy, StorageErrorCodeSnaphotOperationRateExceeded, StorageErrorCodeSnapshotCountExceeded, StorageErrorCodeSnapshotsPresent, StorageErrorCodeSourceConditionNotMet, StorageErrorCodeSystemInUse, StorageErrorCodeTargetConditionNotMet, StorageErrorCodeUnauthorizedBlobOverwrite, StorageErrorCodeUnsupportedHeader, StorageErrorCodeUnsupportedHTTPVerb, StorageErrorCodeUnsupportedQueryParameter, StorageErrorCodeUnsupportedXMLNode}
 }
 
 // SyncCopyStatusType enumerates the values for sync copy status type.
@@ -1256,6 +1302,22 @@ func (absr AppendBlobSealResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (absr AppendBlobSealResponse) Version() string {
 	return absr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ArrowConfiguration - Groups the settings used for formatting the response if the response should be Arrow
+// formatted.
+type ArrowConfiguration struct {
+	Schema []ArrowField `xml:"Schema>Field"`
+}
+
+// ArrowField - Groups settings regarding specific field of an arrow schema
+type ArrowField struct {
+	// XMLName is used for marshalling and is subject to removal in a future release.
+	XMLName   xml.Name `xml:"Field"`
+	Type      string   `xml:"Type"`
+	Name      *string  `xml:"Name"`
+	Precision *int32   `xml:"Precision"`
+	Scale     *int32   `xml:"Scale"`
 }
 
 // BlobAbortCopyFromURLResponse ...
@@ -1745,6 +1807,59 @@ func (bcsr BlobCreateSnapshotResponse) VersionID() string {
 	return bcsr.rawResponse.Header.Get("x-ms-version-id")
 }
 
+// BlobDeleteImmutabilityPolicyResponse ...
+type BlobDeleteImmutabilityPolicyResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) Response() *http.Response {
+	return bdipr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) StatusCode() int {
+	return bdipr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bdipr BlobDeleteImmutabilityPolicyResponse) Status() string {
+	return bdipr.rawResponse.Status
+}
+
+// ClientRequestID returns the value for header x-ms-client-request-id.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) ClientRequestID() string {
+	return bdipr.rawResponse.Header.Get("x-ms-client-request-id")
+}
+
+// Date returns the value for header Date.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) Date() time.Time {
+	s := bdipr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) ErrorCode() string {
+	return bdipr.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) RequestID() string {
+	return bdipr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bdipr BlobDeleteImmutabilityPolicyResponse) Version() string {
+	return bdipr.rawResponse.Header.Get("x-ms-version")
+}
+
 // BlobDeleteResponse ...
 type BlobDeleteResponse struct {
 	rawResponse *http.Response
@@ -2209,6 +2324,24 @@ func (bgpr BlobGetPropertiesResponse) ExpiresOn() time.Time {
 	return t
 }
 
+// ImmutabilityPolicyExpiresOn returns the value for header x-ms-immutability-policy-until-date.
+func (bgpr BlobGetPropertiesResponse) ImmutabilityPolicyExpiresOn() time.Time {
+	s := bgpr.rawResponse.Header.Get("x-ms-immutability-policy-until-date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
+func (bgpr BlobGetPropertiesResponse) ImmutabilityPolicyMode() BlobImmutabilityPolicyModeType {
+	return BlobImmutabilityPolicyModeType(bgpr.rawResponse.Header.Get("x-ms-immutability-policy-mode"))
+}
+
 // IsCurrentVersion returns the value for header x-ms-is-current-version.
 func (bgpr BlobGetPropertiesResponse) IsCurrentVersion() string {
 	return bgpr.rawResponse.Header.Get("x-ms-is-current-version")
@@ -2227,6 +2360,19 @@ func (bgpr BlobGetPropertiesResponse) IsSealed() string {
 // IsServerEncrypted returns the value for header x-ms-server-encrypted.
 func (bgpr BlobGetPropertiesResponse) IsServerEncrypted() string {
 	return bgpr.rawResponse.Header.Get("x-ms-server-encrypted")
+}
+
+// LastAccessed returns the value for header x-ms-last-access-time.
+func (bgpr BlobGetPropertiesResponse) LastAccessed() time.Time {
+	s := bgpr.rawResponse.Header.Get("x-ms-last-access-time")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
 }
 
 // LastModified returns the value for header Last-Modified.
@@ -2255,6 +2401,11 @@ func (bgpr BlobGetPropertiesResponse) LeaseState() LeaseStateType {
 // LeaseStatus returns the value for header x-ms-lease-status.
 func (bgpr BlobGetPropertiesResponse) LeaseStatus() LeaseStatusType {
 	return LeaseStatusType(bgpr.rawResponse.Header.Get("x-ms-lease-status"))
+}
+
+// LegalHold returns the value for header x-ms-legal-hold.
+func (bgpr BlobGetPropertiesResponse) LegalHold() string {
+	return bgpr.rawResponse.Header.Get("x-ms-legal-hold")
 }
 
 // ObjectReplicationPolicyID returns the value for header x-ms-or-policy-id.
@@ -2311,27 +2462,16 @@ type BlobHierarchyListSegment struct {
 // BlobItemInternal - An Azure Storage blob
 type BlobItemInternal struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName          xml.Name       `xml:"Blob"`
-	Name             string         `xml:"Name"`
-	Deleted          bool           `xml:"Deleted"`
-	Snapshot         string         `xml:"Snapshot"`
-	VersionID        *string        `xml:"VersionId"`
-	IsCurrentVersion *bool          `xml:"IsCurrentVersion"`
-	Properties       BlobProperties `xml:"Properties"`
-
-	// TODO funky generator type -> *BlobMetadata
-	Metadata                  Metadata          `xml:"Metadata"`
-	BlobTags                  *BlobTags         `xml:"Tags"`
-	ObjectReplicationMetadata map[string]string `xml:"ObjectReplicationMetadata"`
-}
-
-// BlobMetadata ...
-type BlobMetadata struct {
-	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName xml.Name `xml:"Metadata"`
-	// AdditionalProperties - Unmatched properties from the message are deserialized this collection
-	AdditionalProperties map[string]string `xml:"AdditionalProperties"`
-	Encrypted            *string           `xml:"Encrypted,attr"`
+	XMLName                   xml.Name               `xml:"Blob"`
+	Name                      string                 `xml:"Name"`
+	Deleted                   bool                   `xml:"Deleted"`
+	Snapshot                  string                 `xml:"Snapshot"`
+	VersionID                 *string                `xml:"VersionId"`
+	IsCurrentVersion          *bool                  `xml:"IsCurrentVersion"`
+	Properties                BlobPropertiesInternal `xml:"Properties"`
+	Metadata                  Metadata               `xml:"Metadata"`
+	BlobTags                  *BlobTags              `xml:"Tags"`
+	ObjectReplicationMetadata map[string]string      `xml:"ObjectReplicationMetadata"`
 }
 
 // BlobPrefix ...
@@ -2339,8 +2479,8 @@ type BlobPrefix struct {
 	Name string `xml:"Name"`
 }
 
-// BlobProperties - Properties of a blob
-type BlobProperties struct {
+// BlobPropertiesInternal - Properties of a blob
+type BlobPropertiesInternal struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName      xml.Name   `xml:"Properties"`
 	CreationTime *time.Time `xml:"Creation-Time"`
@@ -2386,20 +2526,25 @@ type BlobProperties struct {
 	AccessTierChangeTime *time.Time `xml:"AccessTierChangeTime"`
 	TagCount             *int32     `xml:"TagCount"`
 	ExpiresOn            *time.Time `xml:"Expiry-Time"`
-	IsSealed             *bool      `xml:"IsSealed"`
+	IsSealed             *bool      `xml:"Sealed"`
 	// RehydratePriority - Possible values include: 'RehydratePriorityHigh', 'RehydratePriorityStandard', 'RehydratePriorityNone'
-	RehydratePriority RehydratePriorityType `xml:"RehydratePriority"`
+	RehydratePriority           RehydratePriorityType `xml:"RehydratePriority"`
+	LastAccessedOn              *time.Time            `xml:"LastAccessTime"`
+	ImmutabilityPolicyExpiresOn *time.Time            `xml:"ImmutabilityPolicyUntilDate"`
+	// ImmutabilityPolicyMode - Possible values include: 'BlobImmutabilityPolicyModeMutable', 'BlobImmutabilityPolicyModeUnlocked', 'BlobImmutabilityPolicyModeLocked', 'BlobImmutabilityPolicyModeNone'
+	ImmutabilityPolicyMode BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
+	LegalHold              *bool                          `xml:"LegalHold"`
 }
 
-// MarshalXML implements the xml.Marshaler interface for BlobProperties.
-func (bpi BlobProperties) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	bpi2 := (*blobProperties)(unsafe.Pointer(&bpi))
+// MarshalXML implements the xml.Marshaler interface for BlobPropertiesInternal.
+func (bpi BlobPropertiesInternal) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	bpi2 := (*blobPropertiesInternal)(unsafe.Pointer(&bpi))
 	return e.EncodeElement(*bpi2, start)
 }
 
-// UnmarshalXML implements the xml.Unmarshaler interface for BlobProperties.
-func (bpi *BlobProperties) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	bpi2 := (*blobProperties)(unsafe.Pointer(bpi))
+// UnmarshalXML implements the xml.Unmarshaler interface for BlobPropertiesInternal.
+func (bpi *BlobPropertiesInternal) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	bpi2 := (*blobPropertiesInternal)(unsafe.Pointer(bpi))
 	return d.DecodeElement(bpi2, &start)
 }
 
@@ -2848,6 +2993,135 @@ func (bshhr BlobSetHTTPHeadersResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (bshhr BlobSetHTTPHeadersResponse) Version() string {
 	return bshhr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobSetImmutabilityPolicyResponse ...
+type BlobSetImmutabilityPolicyResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bsipr BlobSetImmutabilityPolicyResponse) Response() *http.Response {
+	return bsipr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bsipr BlobSetImmutabilityPolicyResponse) StatusCode() int {
+	return bsipr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bsipr BlobSetImmutabilityPolicyResponse) Status() string {
+	return bsipr.rawResponse.Status
+}
+
+// ClientRequestID returns the value for header x-ms-client-request-id.
+func (bsipr BlobSetImmutabilityPolicyResponse) ClientRequestID() string {
+	return bsipr.rawResponse.Header.Get("x-ms-client-request-id")
+}
+
+// Date returns the value for header Date.
+func (bsipr BlobSetImmutabilityPolicyResponse) Date() time.Time {
+	s := bsipr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (bsipr BlobSetImmutabilityPolicyResponse) ErrorCode() string {
+	return bsipr.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// ImmutabilityPolicyExpiry returns the value for header x-ms-immutability-policy-until-date.
+func (bsipr BlobSetImmutabilityPolicyResponse) ImmutabilityPolicyExpiry() time.Time {
+	s := bsipr.rawResponse.Header.Get("x-ms-immutability-policy-until-date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
+func (bsipr BlobSetImmutabilityPolicyResponse) ImmutabilityPolicyMode() BlobImmutabilityPolicyModeType {
+	return BlobImmutabilityPolicyModeType(bsipr.rawResponse.Header.Get("x-ms-immutability-policy-mode"))
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bsipr BlobSetImmutabilityPolicyResponse) RequestID() string {
+	return bsipr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bsipr BlobSetImmutabilityPolicyResponse) Version() string {
+	return bsipr.rawResponse.Header.Get("x-ms-version")
+}
+
+// BlobSetLegalHoldResponse ...
+type BlobSetLegalHoldResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bslhr BlobSetLegalHoldResponse) Response() *http.Response {
+	return bslhr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bslhr BlobSetLegalHoldResponse) StatusCode() int {
+	return bslhr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bslhr BlobSetLegalHoldResponse) Status() string {
+	return bslhr.rawResponse.Status
+}
+
+// ClientRequestID returns the value for header x-ms-client-request-id.
+func (bslhr BlobSetLegalHoldResponse) ClientRequestID() string {
+	return bslhr.rawResponse.Header.Get("x-ms-client-request-id")
+}
+
+// Date returns the value for header Date.
+func (bslhr BlobSetLegalHoldResponse) Date() time.Time {
+	s := bslhr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (bslhr BlobSetLegalHoldResponse) ErrorCode() string {
+	return bslhr.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// LegalHold returns the value for header x-ms-legal-hold.
+func (bslhr BlobSetLegalHoldResponse) LegalHold() string {
+	return bslhr.rawResponse.Header.Get("x-ms-legal-hold")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bslhr BlobSetLegalHoldResponse) RequestID() string {
+	return bslhr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bslhr BlobSetLegalHoldResponse) Version() string {
+	return bslhr.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobSetMetadataResponse ...
@@ -3360,6 +3634,110 @@ func (bbcblr BlockBlobCommitBlockListResponse) XMsContentCrc64() []byte {
 		b = nil
 	}
 	return b
+}
+
+// BlockBlobPutBlobFromURLResponse ...
+type BlockBlobPutBlobFromURLResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) Response() *http.Response {
+	return bbpbfur.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) StatusCode() int {
+	return bbpbfur.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (bbpbfur BlockBlobPutBlobFromURLResponse) Status() string {
+	return bbpbfur.rawResponse.Status
+}
+
+// ClientRequestID returns the value for header x-ms-client-request-id.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) ClientRequestID() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-client-request-id")
+}
+
+// ContentMD5 returns the value for header Content-MD5.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) ContentMD5() []byte {
+	s := bbpbfur.rawResponse.Header.Get("Content-MD5")
+	if s == "" {
+		return nil
+	}
+	b, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		b = nil
+	}
+	return b
+}
+
+// Date returns the value for header Date.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) Date() time.Time {
+	s := bbpbfur.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// EncryptionKeySha256 returns the value for header x-ms-encryption-key-sha256.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) EncryptionKeySha256() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-encryption-key-sha256")
+}
+
+// EncryptionScope returns the value for header x-ms-encryption-scope.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) EncryptionScope() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-encryption-scope")
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) ErrorCode() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// ETag returns the value for header ETag.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) ETag() ETag {
+	return ETag(bbpbfur.rawResponse.Header.Get("ETag"))
+}
+
+// IsServerEncrypted returns the value for header x-ms-request-server-encrypted.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) IsServerEncrypted() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-request-server-encrypted")
+}
+
+// LastModified returns the value for header Last-Modified.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) LastModified() time.Time {
+	s := bbpbfur.rawResponse.Header.Get("Last-Modified")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) RequestID() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) Version() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-version")
+}
+
+// VersionID returns the value for header x-ms-version-id.
+func (bbpbfur BlockBlobPutBlobFromURLResponse) VersionID() string {
+	return bbpbfur.rawResponse.Header.Get("x-ms-version-id")
 }
 
 // BlockBlobStageBlockFromURLResponse ...
@@ -4269,6 +4647,11 @@ func (cgpr ContainerGetPropertiesResponse) HasLegalHold() string {
 	return cgpr.rawResponse.Header.Get("x-ms-has-legal-hold")
 }
 
+// IsImmutableStorageWithVersioningEnabled returns the value for header x-ms-immutable-storage-with-versioning-enabled.
+func (cgpr ContainerGetPropertiesResponse) IsImmutableStorageWithVersioningEnabled() string {
+	return cgpr.rawResponse.Header.Get("x-ms-immutable-storage-with-versioning-enabled")
+}
+
 // LastModified returns the value for header Last-Modified.
 func (cgpr ContainerGetPropertiesResponse) LastModified() time.Time {
 	s := cgpr.rawResponse.Header.Get("Last-Modified")
@@ -4336,6 +4719,8 @@ type ContainerProperties struct {
 	PreventEncryptionScopeOverride *bool            `xml:"DenyEncryptionScopeOverride"`
 	DeletedTime                    *time.Time       `xml:"DeletedTime"`
 	RemainingRetentionDays         *int32           `xml:"RemainingRetentionDays"`
+	// IsImmutableStorageWithVersioningEnabled - Indicates if version level worm is enabled on this container.
+	IsImmutableStorageWithVersioningEnabled *bool `xml:"ImmutableStorageWithVersioningEnabled"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for ContainerProperties.
@@ -4419,6 +4804,59 @@ func (crlr ContainerReleaseLeaseResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (crlr ContainerReleaseLeaseResponse) Version() string {
 	return crlr.rawResponse.Header.Get("x-ms-version")
+}
+
+// ContainerRenameResponse ...
+type ContainerRenameResponse struct {
+	rawResponse *http.Response
+}
+
+// Response returns the raw HTTP response object.
+func (crr ContainerRenameResponse) Response() *http.Response {
+	return crr.rawResponse
+}
+
+// StatusCode returns the HTTP status code of the response, e.g. 200.
+func (crr ContainerRenameResponse) StatusCode() int {
+	return crr.rawResponse.StatusCode
+}
+
+// Status returns the HTTP status message of the response, e.g. "200 OK".
+func (crr ContainerRenameResponse) Status() string {
+	return crr.rawResponse.Status
+}
+
+// ClientRequestID returns the value for header x-ms-client-request-id.
+func (crr ContainerRenameResponse) ClientRequestID() string {
+	return crr.rawResponse.Header.Get("x-ms-client-request-id")
+}
+
+// Date returns the value for header Date.
+func (crr ContainerRenameResponse) Date() time.Time {
+	s := crr.rawResponse.Header.Get("Date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ErrorCode returns the value for header x-ms-error-code.
+func (crr ContainerRenameResponse) ErrorCode() string {
+	return crr.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// RequestID returns the value for header x-ms-request-id.
+func (crr ContainerRenameResponse) RequestID() string {
+	return crr.rawResponse.Header.Get("x-ms-request-id")
+}
+
+// Version returns the value for header x-ms-version.
+func (crr ContainerRenameResponse) Version() string {
+	return crr.rawResponse.Header.Get("x-ms-version")
 }
 
 // ContainerRenewLeaseResponse ...
@@ -4725,18 +5163,19 @@ type DataLakeStorageErrorError struct {
 	Message *string `xml:"Message"`
 }
 
-// DelimitedTextConfiguration - delimited text configuration
+// DelimitedTextConfiguration - Groups the settings used for interpreting the blob data if the blob is
+// delimited text formatted.
 type DelimitedTextConfiguration struct {
-	// ColumnSeparator - column separator
-	ColumnSeparator string `xml:"ColumnSeparator"`
-	// FieldQuote - field quote
-	FieldQuote string `xml:"FieldQuote"`
-	// RecordSeparator - record separator
-	RecordSeparator string `xml:"RecordSeparator"`
-	// EscapeChar - escape char
-	EscapeChar string `xml:"EscapeChar"`
-	// HeadersPresent - has headers
-	HeadersPresent bool `xml:"HasHeaders"`
+	// ColumnSeparator - The string used to separate columns.
+	ColumnSeparator *string `xml:"ColumnSeparator"`
+	// FieldQuote - The string used to quote a specific field.
+	FieldQuote *string `xml:"FieldQuote"`
+	// RecordSeparator - The string used to separate records.
+	RecordSeparator *string `xml:"RecordSeparator"`
+	// EscapeChar - The string used as an escape character.
+	EscapeChar *string `xml:"EscapeChar"`
+	// HeadersPresent - Represents whether the data has headers.
+	HeadersPresent *bool `xml:"HasHeaders"`
 }
 
 // DirectoryCreateResponse ...
@@ -5339,6 +5778,29 @@ func (dr downloadResponse) ETag() ETag {
 	return ETag(dr.rawResponse.Header.Get("ETag"))
 }
 
+// ImmutabilityPolicyExpiresOn returns the value for header x-ms-immutability-policy-until-date.
+func (dr downloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
+	s := dr.rawResponse.Header.Get("x-ms-immutability-policy-until-date")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
+}
+
+// ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
+func (dr downloadResponse) ImmutabilityPolicyMode() string {
+	return dr.rawResponse.Header.Get("x-ms-immutability-policy-mode")
+}
+
+// IsCurrentVersion returns the value for header x-ms-is-current-version.
+func (dr downloadResponse) IsCurrentVersion() string {
+	return dr.rawResponse.Header.Get("x-ms-is-current-version")
+}
+
 // IsSealed returns the value for header x-ms-blob-sealed.
 func (dr downloadResponse) IsSealed() string {
 	return dr.rawResponse.Header.Get("x-ms-blob-sealed")
@@ -5347,6 +5809,19 @@ func (dr downloadResponse) IsSealed() string {
 // IsServerEncrypted returns the value for header x-ms-server-encrypted.
 func (dr downloadResponse) IsServerEncrypted() string {
 	return dr.rawResponse.Header.Get("x-ms-server-encrypted")
+}
+
+// LastAccessed returns the value for header x-ms-last-access-time.
+func (dr downloadResponse) LastAccessed() time.Time {
+	s := dr.rawResponse.Header.Get("x-ms-last-access-time")
+	if s == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC1123, s)
+	if err != nil {
+		t = time.Time{}
+	}
+	return t
 }
 
 // LastModified returns the value for header Last-Modified.
@@ -5375,6 +5850,11 @@ func (dr downloadResponse) LeaseState() LeaseStateType {
 // LeaseStatus returns the value for header x-ms-lease-status.
 func (dr downloadResponse) LeaseStatus() LeaseStatusType {
 	return LeaseStatusType(dr.rawResponse.Header.Get("x-ms-lease-status"))
+}
+
+// LegalHold returns the value for header x-ms-legal-hold.
+func (dr downloadResponse) LegalHold() string {
+	return dr.rawResponse.Header.Get("x-ms-legal-hold")
 }
 
 // ObjectReplicationPolicyID returns the value for header x-ms-or-policy-id.
@@ -5418,10 +5898,10 @@ func (dr downloadResponse) VersionID() string {
 // FilterBlobItem - Blob info from a Filter Blobs API call
 type FilterBlobItem struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName       xml.Name `xml:"Blob"`
-	Name          string   `xml:"Name"`
-	ContainerName string   `xml:"ContainerName"`
-	TagValue      string   `xml:"TagValue"`
+	XMLName       xml.Name  `xml:"Blob"`
+	Name          string    `xml:"Name"`
+	ContainerName string    `xml:"ContainerName"`
+	Tags          *BlobTags `xml:"Tags"`
 }
 
 // FilterBlobSegment - The result of a Filter Blobs API call
@@ -5507,8 +5987,8 @@ func (gr *GeoReplication) UnmarshalXML(d *xml.Decoder, start xml.StartElement) e
 type JSONTextConfiguration struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
 	XMLName xml.Name `xml:"JsonTextConfiguration"`
-	// RecordSeparator - record separator
-	RecordSeparator string `xml:"RecordSeparator"`
+	// RecordSeparator - The string used to separate records.
+	RecordSeparator *string `xml:"RecordSeparator"`
 }
 
 // KeyInfo - Key information
@@ -6528,17 +7008,19 @@ type PageRange struct {
 
 // QueryFormat ...
 type QueryFormat struct {
-	// Type - Possible values include: 'QueryFormatDelimited', 'QueryFormatJSON', 'QueryFormatNone'
+	// Type - Possible values include: 'QueryFormatDelimited', 'QueryFormatJSON', 'QueryFormatArrow', 'QueryFormatParquet', 'QueryFormatNone'
 	Type                       QueryFormatType             `xml:"Type"`
 	DelimitedTextConfiguration *DelimitedTextConfiguration `xml:"DelimitedTextConfiguration"`
 	JSONTextConfiguration      *JSONTextConfiguration      `xml:"JsonTextConfiguration"`
+	ArrowConfiguration         *ArrowConfiguration         `xml:"ArrowConfiguration"`
+	ParquetTextConfiguration   map[string]interface{}      `xml:"ParquetTextConfiguration"`
 }
 
-// QueryRequest - the quick query body
+// QueryRequest - Groups the set of query request settings.
 type QueryRequest struct {
-	// QueryType - the query type
+	// QueryType - Required. The type of the provided query expression.
 	QueryType string `xml:"QueryType"`
-	// Expression - a query statement
+	// Expression - The query expression in SQL. The maximum size of the query expression is 256KiB.
 	Expression          string              `xml:"Expression"`
 	InputSerialization  *QuerySerialization `xml:"InputSerialization"`
 	OutputSerialization *QuerySerialization `xml:"OutputSerialization"`
@@ -6830,6 +7312,8 @@ type RetentionPolicy struct {
 	Enabled bool `xml:"Enabled"`
 	// Days - Indicates the number of days that metrics or logging or soft-deleted data should be retained. All data older than this value will be deleted
 	Days *int32 `xml:"Days"`
+	// AllowPermanentDelete - Indicates whether permanent delete is allowed on this storage account.
+	AllowPermanentDelete *bool `xml:"AllowPermanentDelete"`
 }
 
 // ServiceGetAccountInfoResponse ...
@@ -6878,6 +7362,11 @@ func (sgair ServiceGetAccountInfoResponse) Date() time.Time {
 // ErrorCode returns the value for header x-ms-error-code.
 func (sgair ServiceGetAccountInfoResponse) ErrorCode() string {
 	return sgair.rawResponse.Header.Get("x-ms-error-code")
+}
+
+// IsHierarchicalNamespaceEnabled returns the value for header x-ms-is-hns-enabled.
+func (sgair ServiceGetAccountInfoResponse) IsHierarchicalNamespaceEnabled() string {
+	return sgair.rawResponse.Header.Get("x-ms-is-hns-enabled")
 }
 
 // RequestID returns the value for header x-ms-request-id.
@@ -7031,6 +7520,11 @@ type StaticWebsite struct {
 	DefaultIndexDocumentPath *string `xml:"DefaultIndexDocumentPath"`
 }
 
+// // StorageError ...
+// type StorageError struct {
+// 	Message *string `xml:"Message"`
+// }
+
 // StorageServiceProperties - Storage Service Properties.
 type StorageServiceProperties struct {
 	rawResponse   *http.Response
@@ -7134,7 +7628,7 @@ func (sss StorageServiceStats) Version() string {
 	return sss.rawResponse.Header.Get("x-ms-version")
 }
 
-// SubmitBatchResponse - Wraps the response from the serviceClient.SubmitBatch method.
+// SubmitBatchResponse - Wraps the response from the containerClient.SubmitBatch method.
 type SubmitBatchResponse struct {
 	rawResponse *http.Response
 }
@@ -7265,8 +7759,8 @@ func init() {
 	if reflect.TypeOf((*AccessPolicy)(nil)).Elem().Size() != reflect.TypeOf((*accessPolicy)(nil)).Elem().Size() {
 		validateError(errors.New("size mismatch between AccessPolicy and accessPolicy"))
 	}
-	if reflect.TypeOf((*BlobProperties)(nil)).Elem().Size() != reflect.TypeOf((*blobProperties)(nil)).Elem().Size() {
-		validateError(errors.New("size mismatch between BlobProperties and blobProperties"))
+	if reflect.TypeOf((*BlobPropertiesInternal)(nil)).Elem().Size() != reflect.TypeOf((*blobPropertiesInternal)(nil)).Elem().Size() {
+		validateError(errors.New("size mismatch between BlobPropertiesInternal and blobPropertiesInternal"))
 	}
 	if reflect.TypeOf((*ContainerProperties)(nil)).Elem().Size() != reflect.TypeOf((*containerProperties)(nil)).Elem().Size() {
 		validateError(errors.New("size mismatch between ContainerProperties and containerProperties"))
@@ -7277,7 +7771,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05Z" //This was wrong in the generated code, FYI
+	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
 // used to convert times from UTC to GMT before sending across the wire
@@ -7355,61 +7849,66 @@ type accessPolicy struct {
 }
 
 // internal type used for marshalling
-type blobProperties struct {
+type blobPropertiesInternal struct {
 	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName                   xml.Name              `xml:"Properties"`
-	CreationTime              *timeRFC1123          `xml:"Creation-Time"`
-	LastModified              timeRFC1123           `xml:"Last-Modified"`
-	Etag                      ETag                  `xml:"Etag"`
-	ContentLength             *int64                `xml:"Content-Length"`
-	ContentType               *string               `xml:"Content-Type"`
-	ContentEncoding           *string               `xml:"Content-Encoding"`
-	ContentLanguage           *string               `xml:"Content-Language"`
-	ContentMD5                base64Encoded         `xml:"Content-MD5"`
-	ContentDisposition        *string               `xml:"Content-Disposition"`
-	CacheControl              *string               `xml:"Cache-Control"`
-	BlobSequenceNumber        *int64                `xml:"x-ms-blob-sequence-number"`
-	BlobType                  BlobType              `xml:"BlobType"`
-	LeaseStatus               LeaseStatusType       `xml:"LeaseStatus"`
-	LeaseState                LeaseStateType        `xml:"LeaseState"`
-	LeaseDuration             LeaseDurationType     `xml:"LeaseDuration"`
-	CopyID                    *string               `xml:"CopyId"`
-	CopyStatus                CopyStatusType        `xml:"CopyStatus"`
-	CopySource                *string               `xml:"CopySource"`
-	CopyProgress              *string               `xml:"CopyProgress"`
-	CopyCompletionTime        *timeRFC1123          `xml:"CopyCompletionTime"`
-	CopyStatusDescription     *string               `xml:"CopyStatusDescription"`
-	ServerEncrypted           *bool                 `xml:"ServerEncrypted"`
-	IncrementalCopy           *bool                 `xml:"IncrementalCopy"`
-	DestinationSnapshot       *string               `xml:"DestinationSnapshot"`
-	DeletedTime               *timeRFC1123          `xml:"DeletedTime"`
-	RemainingRetentionDays    *int32                `xml:"RemainingRetentionDays"`
-	AccessTier                AccessTierType        `xml:"AccessTier"`
-	AccessTierInferred        *bool                 `xml:"AccessTierInferred"`
-	ArchiveStatus             ArchiveStatusType     `xml:"ArchiveStatus"`
-	CustomerProvidedKeySha256 *string               `xml:"CustomerProvidedKeySha256"`
-	EncryptionScope           *string               `xml:"EncryptionScope"`
-	AccessTierChangeTime      *timeRFC1123          `xml:"AccessTierChangeTime"`
-	TagCount                  *int32                `xml:"TagCount"`
-	ExpiresOn                 *timeRFC1123          `xml:"Expiry-Time"`
-	IsSealed                  *bool                 `xml:"IsSealed"`
-	RehydratePriority         RehydratePriorityType `xml:"RehydratePriority"`
+	XMLName                     xml.Name                       `xml:"Properties"`
+	CreationTime                *timeRFC1123                   `xml:"Creation-Time"`
+	LastModified                timeRFC1123                    `xml:"Last-Modified"`
+	Etag                        ETag                           `xml:"Etag"`
+	ContentLength               *int64                         `xml:"Content-Length"`
+	ContentType                 *string                        `xml:"Content-Type"`
+	ContentEncoding             *string                        `xml:"Content-Encoding"`
+	ContentLanguage             *string                        `xml:"Content-Language"`
+	ContentMD5                  base64Encoded                  `xml:"Content-MD5"`
+	ContentDisposition          *string                        `xml:"Content-Disposition"`
+	CacheControl                *string                        `xml:"Cache-Control"`
+	BlobSequenceNumber          *int64                         `xml:"x-ms-blob-sequence-number"`
+	BlobType                    BlobType                       `xml:"BlobType"`
+	LeaseStatus                 LeaseStatusType                `xml:"LeaseStatus"`
+	LeaseState                  LeaseStateType                 `xml:"LeaseState"`
+	LeaseDuration               LeaseDurationType              `xml:"LeaseDuration"`
+	CopyID                      *string                        `xml:"CopyId"`
+	CopyStatus                  CopyStatusType                 `xml:"CopyStatus"`
+	CopySource                  *string                        `xml:"CopySource"`
+	CopyProgress                *string                        `xml:"CopyProgress"`
+	CopyCompletionTime          *timeRFC1123                   `xml:"CopyCompletionTime"`
+	CopyStatusDescription       *string                        `xml:"CopyStatusDescription"`
+	ServerEncrypted             *bool                          `xml:"ServerEncrypted"`
+	IncrementalCopy             *bool                          `xml:"IncrementalCopy"`
+	DestinationSnapshot         *string                        `xml:"DestinationSnapshot"`
+	DeletedTime                 *timeRFC1123                   `xml:"DeletedTime"`
+	RemainingRetentionDays      *int32                         `xml:"RemainingRetentionDays"`
+	AccessTier                  AccessTierType                 `xml:"AccessTier"`
+	AccessTierInferred          *bool                          `xml:"AccessTierInferred"`
+	ArchiveStatus               ArchiveStatusType              `xml:"ArchiveStatus"`
+	CustomerProvidedKeySha256   *string                        `xml:"CustomerProvidedKeySha256"`
+	EncryptionScope             *string                        `xml:"EncryptionScope"`
+	AccessTierChangeTime        *timeRFC1123                   `xml:"AccessTierChangeTime"`
+	TagCount                    *int32                         `xml:"TagCount"`
+	ExpiresOn                   *timeRFC1123                   `xml:"Expiry-Time"`
+	IsSealed                    *bool                          `xml:"Sealed"`
+	RehydratePriority           RehydratePriorityType          `xml:"RehydratePriority"`
+	LastAccessedOn              *timeRFC1123                   `xml:"LastAccessTime"`
+	ImmutabilityPolicyExpiresOn *timeRFC1123                   `xml:"ImmutabilityPolicyUntilDate"`
+	ImmutabilityPolicyMode      BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
+	LegalHold                   *bool                          `xml:"LegalHold"`
 }
 
 // internal type used for marshalling
 type containerProperties struct {
-	LastModified                   timeRFC1123       `xml:"Last-Modified"`
-	Etag                           ETag              `xml:"Etag"`
-	LeaseStatus                    LeaseStatusType   `xml:"LeaseStatus"`
-	LeaseState                     LeaseStateType    `xml:"LeaseState"`
-	LeaseDuration                  LeaseDurationType `xml:"LeaseDuration"`
-	PublicAccess                   PublicAccessType  `xml:"PublicAccess"`
-	HasImmutabilityPolicy          *bool             `xml:"HasImmutabilityPolicy"`
-	HasLegalHold                   *bool             `xml:"HasLegalHold"`
-	DefaultEncryptionScope         *string           `xml:"DefaultEncryptionScope"`
-	PreventEncryptionScopeOverride *bool             `xml:"DenyEncryptionScopeOverride"`
-	DeletedTime                    *timeRFC1123      `xml:"DeletedTime"`
-	RemainingRetentionDays         *int32            `xml:"RemainingRetentionDays"`
+	LastModified                            timeRFC1123       `xml:"Last-Modified"`
+	Etag                                    ETag              `xml:"Etag"`
+	LeaseStatus                             LeaseStatusType   `xml:"LeaseStatus"`
+	LeaseState                              LeaseStateType    `xml:"LeaseState"`
+	LeaseDuration                           LeaseDurationType `xml:"LeaseDuration"`
+	PublicAccess                            PublicAccessType  `xml:"PublicAccess"`
+	HasImmutabilityPolicy                   *bool             `xml:"HasImmutabilityPolicy"`
+	HasLegalHold                            *bool             `xml:"HasLegalHold"`
+	DefaultEncryptionScope                  *string           `xml:"DefaultEncryptionScope"`
+	PreventEncryptionScopeOverride          *bool             `xml:"DenyEncryptionScopeOverride"`
+	DeletedTime                             *timeRFC1123      `xml:"DeletedTime"`
+	RemainingRetentionDays                  *int32            `xml:"RemainingRetentionDays"`
+	IsImmutableStorageWithVersioningEnabled *bool             `xml:"ImmutableStorageWithVersioningEnabled"`
 }
 
 // internal type used for marshalling

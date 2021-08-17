@@ -6,12 +6,14 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"github.com/Azure/go-autorest/autorest/adal"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 
@@ -142,6 +144,7 @@ func ExampleNewPipeline() {
 		// Set RequestLogOptions to control how each HTTP request & its response is logged
 		RequestLog: RequestLogOptions{
 			LogWarningIfTryOverThreshold: time.Millisecond * 200, // A successful response taking more than this time to arrive is logged as a warning
+			SyslogDisabled:               true,
 		},
 
 		// Set LogOptions to control what & where all pipeline log events go
@@ -1300,5 +1303,133 @@ func ExampleListBlobsHierarchy() {
 		if err != nil {
 			log.Fatal("an error occurred while deleting the blobs created by the example")
 		}
+	}
+}
+
+func fetchMSIToken(applicationID string, identityResourceID string, resource string, callbacks ...adal.TokenRefreshCallback) (*adal.ServicePrincipalToken, error) {
+	// Both application id and identityResourceId cannot be present at the same time.
+	if applicationID != "" && identityResourceID != "" {
+		return nil, fmt.Errorf("didn't expect applicationID and identityResourceID at same time")
+	}
+
+	// msiEndpoint is the well known endpoint for getting MSI authentications tokens
+	// msiEndpoint := "http://169.254.169.254/metadata/identity/oauth2/token" for production Jobs
+	msiEndpoint, _ := adal.GetMSIVMEndpoint()
+
+	var spt *adal.ServicePrincipalToken
+	var err error
+
+	// both can be empty, systemAssignedMSI scenario
+	if applicationID == "" && identityResourceID == "" {
+		spt, err = adal.NewServicePrincipalTokenFromMSI(msiEndpoint, resource, callbacks...)
+	}
+
+	// msi login with clientID
+	if applicationID != "" {
+		spt, err = adal.NewServicePrincipalTokenFromMSIWithUserAssignedID(msiEndpoint, resource, applicationID, callbacks...)
+	}
+
+	// msi login with resourceID
+	if identityResourceID != "" {
+		spt, err = adal.NewServicePrincipalTokenFromMSIWithIdentityResourceID(msiEndpoint, resource, identityResourceID, callbacks...)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return spt, spt.Refresh()
+}
+
+func getOAuthToken(applicationID, identityResourceID, resource string, callbacks ...adal.TokenRefreshCallback) (*TokenCredential, error) {
+	spt, err := fetchMSIToken(applicationID, identityResourceID, resource, callbacks...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Refresh obtains a fresh token
+	err = spt.Refresh()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tc := NewTokenCredential(spt.Token().AccessToken, func(tc TokenCredential) time.Duration {
+		err := spt.Refresh()
+		if err != nil {
+			// something went wrong, prevent the refresher from being triggered again
+			return 0
+		}
+
+		// set the new token value
+		tc.SetToken(spt.Token().AccessToken)
+
+		// get the next token slightly before the current one expires
+		return time.Until(spt.Token().Expires()) - 10*time.Second
+	})
+
+	return &tc, nil
+}
+
+func ExampleMSILogin() {
+	var accountName string
+	// Use the azure resource id of user assigned identity when creating the token.
+	// identityResourceID := "/subscriptions/{subscriptionID}/resourceGroups/testGroup/providers/Microsoft.ManagedIdentity/userAssignedIdentities/test-identity"
+	// resource := "https://resource"
+	var applicationID, identityResourceID, resource string
+	var err error
+
+	callbacks := func(token adal.Token) error { return nil }
+
+	tokenCredentials, err := getOAuthToken(applicationID, identityResourceID, resource, callbacks)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// Create pipeline to handle requests
+	p := NewPipeline(*tokenCredentials, PipelineOptions{})
+	blobPrimaryURL, _ := url.Parse("https://" + accountName + ".blob.core.windows.net/")
+	// Generate a blob service URL
+	bsu := NewServiceURL(*blobPrimaryURL, p)
+
+	// Create container & upload sample data
+	containerName := generateContainerName()
+	containerURL := bsu.NewContainerURL(containerName)
+	_, err = containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Inside the container, create a test blob with random data.
+	blobName := generateBlobName()
+	blobURL := containerURL.NewBlockBlobURL(blobName)
+	data := "Hello World!"
+	uploadResp, err := blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	if err != nil || uploadResp.StatusCode() != 201 {
+		log.Fatal(err)
+	}
+
+	// Download data via User Delegation SAS URL; must succeed
+	downloadResp, err := blobURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	downloadedData := &bytes.Buffer{}
+	reader := downloadResp.Body(RetryReaderOptions{})
+	_, err = downloadedData.ReadFrom(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = reader.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Verify the content
+	reflect.DeepEqual(data, downloadedData)
+
+	// Delete the item using the User Delegation SAS URL; must succeed
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	if err != nil {
+		log.Fatal(err)
 	}
 }

@@ -329,15 +329,17 @@ func (client appendBlobClient) appendBlockFromURLResponder(resp pipeline.Respons
 // specify an ETag value to operate only on blobs without a matching value. ifTags is specify a SQL where clause on
 // blob tags to operate only on blobs with a matching value. requestID is provides a client-generated, opaque value
 // with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-// blobTagsString is optional.  Used to set blob tags in various blob operations.
-func (client appendBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (*AppendBlobCreateResponse, error) {
+// blobTagsString is optional.  Used to set blob tags in various blob operations. immutabilityPolicyExpiry is specifies
+// the date time when the blobs immutability policy is set to expire. immutabilityPolicyMode is specifies the
+// immutability policy mode to set on the blob. legalHold is specified if a legal hold should be set on the blob.
+func (client appendBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*AppendBlobCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.createPreparer(contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString)
+	req, err := client.createPreparer(contentLength, timeout, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString, immutabilityPolicyExpiry, immutabilityPolicyMode, legalHold)
 	if err != nil {
 		return nil, err
 	}
@@ -349,7 +351,7 @@ func (client appendBlobClient) Create(ctx context.Context, contentLength int64, 
 }
 
 // createPreparer prepares the Create request.
-func (client appendBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (pipeline.Request, error) {
+func (client appendBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -419,6 +421,15 @@ func (client appendBlobClient) createPreparer(contentLength int64, timeout *int3
 	}
 	if blobTagsString != nil {
 		req.Header.Set("x-ms-tags", *blobTagsString)
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	if legalHold != nil {
+		req.Header.Set("x-ms-legal-hold", strconv.FormatBool(*legalHold))
 	}
 	req.Header.Set("x-ms-blob-type", "AppendBlob")
 	return req, nil

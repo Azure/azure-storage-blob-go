@@ -143,8 +143,17 @@ func TestGetErr(t *testing.T) {
 		{"Err returned", context.Background(), err, err},
 	}
 
+	tm, err := NewStaticBuffer(_1MiB, 1)
+	if err != nil {
+		panic(err)
+	}
+
 	for _, test := range tests {
-		c := copier{errCh: make(chan error, 1), ctx: test.ctx}
+		c := copier{
+			errCh: make(chan error, 1),
+			ctx:   test.ctx,
+			o:     UploadStreamToBlockBlobOptions{TransferManager: tm},
+		}
 		if test.err != nil {
 			c.errCh <- test.err
 		}
@@ -161,6 +170,12 @@ func TestCopyFromReader(t *testing.T) {
 
 	canceled, cancel := context.WithCancel(context.Background())
 	cancel()
+
+	spm, err := NewSyncPool(_1MiB, 2)
+	if err != nil {
+		panic(err)
+	}
+	defer spm.Close()
 
 	tests := []struct {
 		desc      string
@@ -239,6 +254,14 @@ func TestCopyFromReader(t *testing.T) {
 			ctx:      context.Background(),
 			fileSize: 12 * _1MiB,
 			o:        UploadStreamToBlockBlobOptions{MaxBuffers: 5, BufferSize: 8 * 1024 * 1024},
+		},
+		{
+			desc:     "Send file(12 MiB) with default UploadStreamToBlockBlobOptions using SyncPool manager",
+			ctx:      context.Background(),
+			fileSize: 12 * _1MiB,
+			o: UploadStreamToBlockBlobOptions{
+				TransferManager: spm,
+			},
 		},
 	}
 
