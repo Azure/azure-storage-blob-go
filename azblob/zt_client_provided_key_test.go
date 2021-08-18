@@ -701,7 +701,7 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPK(c *chk.C) {
 	dResp, err := snapshotURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK)
 	c.Assert(err, chk.IsNil)
 	c.Assert(dResp.r.EncryptionKeySha256(), chk.Equals, *(testCPK.EncryptionKeySha256))
-	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	// Get blob properties of snapshot without encryption key should fail the request.
@@ -728,7 +728,7 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPKByScope(c *chk.C) {
 
 	_, err = snapshotURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, testCPK1)
 	c.Assert(err, chk.IsNil)
-	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = snapshotURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
 	// Get blob properties of snapshot without encryption key should fail the request.

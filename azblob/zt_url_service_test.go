@@ -236,7 +236,7 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 	}
 
 	// Soft delete first blob
-	delResp, err := blobURLs[0].Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone) //soft delete
+	delResp, err := blobURLs[0].Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}) //soft delete
 	c.Assert(err, chk.IsNil)
 	c.Assert(delResp, chk.NotNil)
 	time.Sleep(time.Second * 30)
@@ -259,12 +259,12 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 
 	// Soft delete snapshot
 	snapshotBlob := blobURLs[1].WithSnapshot(snapResp.Snapshot())
-	delResp, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	delResp, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(delResp, chk.NotNil)
 
 	// Permanent delete snapshot
-	delResp, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeletePermanent)
+	delResp, err = snapshotBlob.PermanentDelete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeletePermanent)
 	c.Assert(err, chk.IsNil)
 	c.Assert(delResp, chk.NotNil)
 

@@ -111,7 +111,7 @@ func Example() {
 	}
 
 	// Delete the blob we created earlier.
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -931,7 +931,7 @@ func Example_blobSnapshots() {
 	// DeleteSnapshotsOptionOnly deletes all the base blob's snapshots but not the base blob itself
 	// DeleteSnapshotsOptionInclude deletes the base blob & all its snapshots.
 	// DeleteSnapshotOptionNone produces an error if the base blob has any snapshots.
-	_, err = baseBlobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = baseBlobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1298,7 +1298,7 @@ func ExampleListBlobsHierarchy() {
 	// Delete the blobs created by this example
 	for _, blobName := range blobNames {
 		blobURL := containerURL.NewBlockBlobURL(blobName)
-		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+		_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 
 		if err != nil {
 			log.Fatal("an error occurred while deleting the blobs created by the example")
@@ -1428,7 +1428,7 @@ func ExampleMSILogin() {
 	reflect.DeepEqual(data, downloadedData)
 
 	// Delete the item using the User Delegation SAS URL; must succeed
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 	if err != nil {
 		log.Fatal(err)
 	}

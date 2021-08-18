@@ -83,7 +83,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	c.Assert(data, chk.Equals, downloadedData.String())
 
 	//Try to delete snapshot -------------------------------------------------------------------------------------------
-	_, err = sburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = sburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err != nil { //This shouldn't fail.
 		c.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func (s *aztestsSuite) TestSnapshotSAS(c *chk.C) {
 	fsburlparts.SAS = snapSASQueryParams
 	fsburl = NewBlockBlobURL(fsburlparts.URL(), p) //re-use fsburl as we don't need the sharedkey version anymore
 
-	resp, err := fsburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	resp, err := fsburl.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	if err == nil {
 		c.Fatal(resp) //This SHOULD fail. Otherwise we have a normal SAS token...
 	}

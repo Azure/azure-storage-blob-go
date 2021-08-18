@@ -93,7 +93,7 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersion(c *chk.C) {
 	c.Assert(listBlobsResp.Segment.BlobItems, chk.HasLen, 2)
 
 	// Deleting previous version snapshot.
-	deleteResp, err := blobURL.WithVersionID(versionID1).Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	deleteResp, err := blobURL.WithVersionID(versionID1).Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(deleteResp.StatusCode(), chk.Equals, 202)
 
@@ -138,7 +138,7 @@ func (s *aztestsSuite) TestDeleteSpecificBlobVersionWithBlobSAS(c *chk.C) {
 	}
 
 	sbURL := NewBlockBlobURL(blobParts.URL(), containerURL.client.p)
-	deleteResp, err := sbURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeleteNone)
+	deleteResp, err := sbURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(deleteResp, chk.IsNil)
 
 	listBlobResp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Versions: true}})
@@ -200,7 +200,7 @@ func (s *aztestsSuite) TestCreateBlobSnapshotReturnsVID(c *chk.C) {
 		c.Fail()
 	}
 
-	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{}, BlobDeleteNone)
+	_, err = blobURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 	lbResp, err = containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{
 		Details: BlobListingDetails{Versions: true, Snapshots: true},
 	})
@@ -305,7 +305,7 @@ func (s *aztestsSuite) TestCreateBlockBlobReturnsVID(c *chk.C) {
 		c.Fail()
 	}
 
-	deleteResp, err := blobURL.Delete(ctx, DeleteSnapshotsOptionOnly, BlobAccessConditions{}, BlobDeleteNone)
+	deleteResp, err := blobURL.Delete(ctx, DeleteSnapshotsOptionOnly, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(deleteResp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(deleteResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
