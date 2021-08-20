@@ -209,7 +209,8 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 	bsu, err := getAlternateBSU()
 	if err != nil {
-		c.Fatal(err)
+		c.Skip(err.Error())
+		return
 	}
 
 	days := int32(5)
