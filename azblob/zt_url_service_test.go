@@ -207,15 +207,14 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
-	c.Skip("Versioning on storage account must be disabled in order for soft delete to function.")
-	/* siminsavani: FYI, versioning on storage account must be disabled since soft delete will not function
-	 * properly with versioning enabled.
-	 */
-	bsu := getBSU()
+	bsu, err := getAlternateBSU()
+	if err != nil {
+		c.Fatal(err)
+	}
 
 	days := int32(5)
 	allowDelete := true
-	_, err := bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: true, Days: &days, AllowPermanentDelete: &allowDelete}})
+	_, err = bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: true, Days: &days, AllowPermanentDelete: &allowDelete}})
 	c.Assert(err, chk.IsNil)
 	time.Sleep(time.Second * 30)
 
