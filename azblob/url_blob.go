@@ -314,7 +314,7 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		nil,
 		// immutability policy
 		nil, BlobImmutabilityPolicyModeNone, nil,
-		)
+	)
 }
 
 // AbortCopyFromURL stops a pending copy that was previously started and leaves a destination blob with 0 length and metadata.
