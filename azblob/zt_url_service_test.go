@@ -234,6 +234,7 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 
 		c.Assert(err, chk.IsNil)
 		c.Assert(cResp.StatusCode(), chk.Equals, 201)
+		time.Sleep(time.Second * 30)
 	}
 
 	// Soft delete first blob
