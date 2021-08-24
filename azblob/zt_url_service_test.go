@@ -212,6 +212,7 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 		c.Skip(err.Error())
 		return
 	}
+	time.Sleep(time.Second * 30)
 
 	days := int32(5)
 	allowDelete := true
