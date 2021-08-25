@@ -3,10 +3,11 @@ package azblob
 import (
 	"context"
 	"errors"
-	"github.com/Azure/azure-pipeline-go/pipeline"
-	chk "gopkg.in/check.v1"
 	"net/http"
 	"net/url"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	chk "gopkg.in/check.v1"
 )
 
 type requestIDTestScenario int
@@ -58,7 +59,7 @@ func (s *aztestsSuite) TestEchoClientRequestIDMissing(c *chk.C) {
 
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp, chk.NotNil)
-	c.Assert(resp.Response().Header.Values(xMsClientRequestID), chk.IsNil)
+	c.Assert(resp.Response().Header.Get(xMsClientRequestID), chk.Equals, "")
 }
 
 func (s *aztestsSuite) TestEchoClientRequestIDErrorFromNextPolicy(c *chk.C) {

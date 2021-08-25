@@ -70,6 +70,8 @@ func (pb PageBlobURL) Create(ctx context.Context, size int64, sequenceNumber int
 		nil, // Blob tags
 		&sequenceNumber, nil,
 		blobTagsString, // Blob tags
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
 	)
 }
 

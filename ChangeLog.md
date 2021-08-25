@@ -2,6 +2,14 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
+## Version 0.14.0:
+- Updated [Get Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags) and [Set Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags) function signatures
+- Added [Put Blob From URL](https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url)
+- Offer knob to disable application logging (Syslog)
+- Added examples for MSI Login
+- Updated go.mod to address dependency issues
+- Fixed issues [#260](https://github.com/Azure/azure-storage-blob-go/issues/260) and [#257](https://github.com/Azure/azure-storage-blob-go/issues/257)
+
 ## Version 0.13.0:
 - Validate echoed client request ID from the service
 - Added new TransferManager option for UploadStreamToBlockBlob to fine-tune the concurrency and memory usage 

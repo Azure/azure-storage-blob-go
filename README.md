@@ -1,9 +1,11 @@
-# Azure Storage Blob SDK for Go
+# Azure Storage Blob SDK for Go (PREVIEW)
 [![GoDoc Widget]][GoDoc] [![Build Status][Travis Widget]][Travis]
 
 The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
 This repository contains the open source Blob SDK for Go. The [File SDK][File SDK] and [Queue SDK][Queue SDK] are also available.
+
+This library is in preview.
 
 ## Features
 * Blob Storage
