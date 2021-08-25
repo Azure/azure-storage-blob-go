@@ -234,19 +234,19 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 
 		c.Assert(err, chk.IsNil)
 		c.Assert(cResp.StatusCode(), chk.Equals, 201)
-		time.Sleep(time.Second * 30)
+		time.Sleep(time.Second * 10)
 	}
 
 	// Soft delete first blob
-	delResp, err := blobURLs[0].Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}) //soft delete
+	_, err = blobURLs[0].Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}) //soft delete
 	c.Assert(err, chk.IsNil)
-	c.Assert(delResp, chk.NotNil)
 	time.Sleep(time.Second * 30)
 
 	// Undelete soft deleted blob
 	undelResp, err := blobURLs[0].Undelete(ctx)
 	c.Assert(err, chk.IsNil)
 	c.Assert(undelResp, chk.NotNil)
+	c.Assert(undelResp.StatusCode(), chk.Equals, 200)
 	time.Sleep(time.Second * 10)
 
 	// Create snapshot for second blob
@@ -261,18 +261,19 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 
 	// Soft delete snapshot
 	snapshotBlob := blobURLs[1].WithSnapshot(snapResp.Snapshot())
-	delResp, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	_, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(delResp, chk.NotNil)
 
 	// Permanent delete snapshot
-	delResp, err = snapshotBlob.PermanentDelete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}, BlobDeletePermanent)
+	delResp, err := snapshotBlob.PermanentDelete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(delResp, chk.NotNil)
+	c.Assert(delResp.StatusCode(), chk.Equals, 202)
 
 	// Check that snapshot has been deleted
-	_, err = snapshotBlob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	spBlobResp, err := snapshotBlob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
+	c.Assert(spBlobResp, chk.IsNil)
 
 	// Check that both blobs exist
 	listBlobResp1, err = containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})

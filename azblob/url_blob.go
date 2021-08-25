@@ -143,14 +143,15 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 		nil, BlobDeleteNone)
 }
 
-// PermanentDelete permanently deletes-soft deleted snapshots & soft-deleted version blobs and is a dangerous operation and SHOULD NOT BE USED.
+// PermanentDelete permanently deletes soft-deleted snapshots & soft-deleted version blobs and is a dangerous operation and SHOULD NOT BE USED.
+// WARNING: This operation should not be used unless you know exactly the implications. We will not provide support for this API.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-blob.
-func (b BlobURL) PermanentDelete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions, blobDeleteType BlobDeleteType) (*BlobDeleteResponse, error) {
+func (b BlobURL) PermanentDelete(ctx context.Context, deleteOptions DeleteSnapshotsOptionType, ac BlobAccessConditions) (*BlobDeleteResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	return b.blobClient.Delete(ctx, nil, nil, nil, ac.LeaseAccessConditions.pointers(), deleteOptions,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		nil, blobDeleteType)
+		nil, BlobDeletePermanent)
 }
 
 // SetTags operation enables users to set tags on a blob or specific blob version, but not snapshot.
