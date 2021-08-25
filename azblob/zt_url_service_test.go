@@ -207,6 +207,7 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
+	c.Skip("Versioning must be disabled")
 	bsu, err := getAlternateBSU()
 	if err != nil {
 		c.Skip(err.Error())
