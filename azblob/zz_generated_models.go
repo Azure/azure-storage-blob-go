@@ -412,6 +412,8 @@ const (
 	ListBlobsIncludeItemMetadata ListBlobsIncludeItemType = "metadata"
 	// ListBlobsIncludeItemNone represents an empty ListBlobsIncludeItemType.
 	ListBlobsIncludeItemNone ListBlobsIncludeItemType = ""
+	// ListBlobsIncludeItemPermissions ...
+	ListBlobsIncludeItemPermissions ListBlobsIncludeItemType = "permissions"
 	// ListBlobsIncludeItemSnapshots ...
 	ListBlobsIncludeItemSnapshots ListBlobsIncludeItemType = "snapshots"
 	// ListBlobsIncludeItemTags ...
@@ -424,7 +426,7 @@ const (
 
 // PossibleListBlobsIncludeItemTypeValues returns an array of possible values for the ListBlobsIncludeItemType const type.
 func PossibleListBlobsIncludeItemTypeValues() []ListBlobsIncludeItemType {
-	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
+	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemPermissions, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
 }
 
 // ListContainersIncludeType enumerates the values for list containers include type.
@@ -2534,6 +2536,10 @@ type BlobPropertiesInternal struct {
 	// ImmutabilityPolicyMode - Possible values include: 'BlobImmutabilityPolicyModeMutable', 'BlobImmutabilityPolicyModeUnlocked', 'BlobImmutabilityPolicyModeLocked', 'BlobImmutabilityPolicyModeNone'
 	ImmutabilityPolicyMode BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
 	LegalHold              *bool                          `xml:"LegalHold"`
+	Owner                  *string                        `xml:"Owner"`
+	Group                  *string                        `xml:"Group"`
+	Permissions            *string                        `xml:"Permissions"`
+	ACL                    *string                        `xml:"Acl"`
 }
 
 // MarshalXML implements the xml.Marshaler interface for BlobPropertiesInternal.
@@ -7892,6 +7898,10 @@ type blobPropertiesInternal struct {
 	ImmutabilityPolicyExpiresOn *timeRFC1123                   `xml:"ImmutabilityPolicyUntilDate"`
 	ImmutabilityPolicyMode      BlobImmutabilityPolicyModeType `xml:"ImmutabilityPolicyMode"`
 	LegalHold                   *bool                          `xml:"LegalHold"`
+	Owner                       *string                        `xml:"Owner"`
+	Group                       *string                        `xml:"Group"`
+	Permissions                 *string                        `xml:"Permissions"`
+	ACL                         *string                        `xml:"Acl"`
 }
 
 // internal type used for marshalling

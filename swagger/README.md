@@ -52,5 +52,41 @@ directive:
       ]
 ```
 
+### Add permissions to ListBlobsInclude
+
+This *does* work, it's just not documented, or in the swagger unfortunately. Some directives jank it in.
+
+These directives may need to be removed eventually, once these items are included.
+
+For some reason, permissions gets added 3x, so a check for includes is added.
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.ListBlobsInclude
+    transform: >
+      if (!$.items.enum.includes("permissions"))
+        $.items.enum.push("permissions")
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.BlobPropertiesInternal
+    transform: >
+      $.properties["Owner"] = {
+        "type": "string"
+      };
+      $.properties["Group"] = {
+        "type": "string"
+      };
+      $.properties["Permissions"] = {
+        "type": "string"
+      };
+      $.properties["Acl"] = {
+        "type": "string"
+      };
+```
+
 ### TODO: Get rid of StorageError since we define it
 ### TODO: rfc3339Format = "2006-01-02T15:04:05Z" //This was wrong in the generated code
