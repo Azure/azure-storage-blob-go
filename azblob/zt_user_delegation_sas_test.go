@@ -308,6 +308,7 @@ func (s *aztestsSuite) TestParseSASQueryParams(c *chk.C) {
 	bURLParts := NewBlobURLParts(*testURL)
 	sas := bURLParts.SAS
 
+	c.Assert(sas, chk.NotNil)
 	c.Assert(sas.resource, chk.Equals, "d")
 	c.Assert(sas.SignedDirectoryDepth(), chk.Equals, "10")
 	c.Assert(sas.protocol, chk.Equals, SASProtocolHTTPS)
