@@ -67,15 +67,17 @@ func newBlockBlobClient(url url.URL, p pipeline.Pipeline) blockBlobClient {
 // matching value. ifTags is specify a SQL where clause on blob tags to operate only on blobs with a matching value.
 // requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
 // logs when storage analytics logging is enabled. blobTagsString is optional.  Used to set blob tags in various blob
-// operations.
-func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (*BlockBlobCommitBlockListResponse, error) {
+// operations. immutabilityPolicyExpiry is specifies the date time when the blobs immutability policy is set to expire.
+// immutabilityPolicyMode is specifies the immutability policy mode to set on the blob. legalHold is specified if a
+// legal hold should be set on the blob.
+func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*BlockBlobCommitBlockListResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, transactionalContentMD5, transactionalContentCrc64, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString)
+	req, err := client.commitBlockListPreparer(blocks, timeout, blobCacheControl, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, transactionalContentMD5, transactionalContentCrc64, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString, immutabilityPolicyExpiry, immutabilityPolicyMode, legalHold)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +89,7 @@ func (client blockBlobClient) CommitBlockList(ctx context.Context, blocks BlockL
 }
 
 // commitBlockListPreparer prepares the CommitBlockList request.
-func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (pipeline.Request, error) {
+func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, timeout *int32, blobCacheControl *string, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -166,6 +168,15 @@ func (client blockBlobClient) commitBlockListPreparer(blocks BlockLookupList, ti
 	}
 	if blobTagsString != nil {
 		req.Header.Set("x-ms-tags", *blobTagsString)
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	if legalHold != nil {
+		req.Header.Set("x-ms-legal-hold", strconv.FormatBool(*legalHold))
 	}
 	b, err := xml.Marshal(blocks)
 	if err != nil {
@@ -703,7 +714,10 @@ func (client blockBlobClient) stageBlockFromURLResponder(resp pipeline.Response)
 // SQL where clause on blob tags to operate only on blobs with a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled. blobTagsString is optional.  Used to set blob tags in various blob operations.
-func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (*BlockBlobUploadResponse, error) {
+// immutabilityPolicyExpiry is specifies the date time when the blobs immutability policy is set to expire.
+// immutabilityPolicyMode is specifies the immutability policy mode to set on the blob. legalHold is specified if a
+// legal hold should be set on the blob.
+func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*BlockBlobUploadResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -712,7 +726,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPreparer(body, contentLength, timeout, transactionalContentMD5, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString)
+	req, err := client.uploadPreparer(body, contentLength, timeout, transactionalContentMD5, blobContentType, blobContentEncoding, blobContentLanguage, blobContentMD5, blobCacheControl, metadata, leaseID, blobContentDisposition, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, tier, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID, blobTagsString, immutabilityPolicyExpiry, immutabilityPolicyMode, legalHold)
 	if err != nil {
 		return nil, err
 	}
@@ -724,7 +738,7 @@ func (client blockBlobClient) Upload(ctx context.Context, body io.ReadSeeker, co
 }
 
 // uploadPreparer prepares the Upload request.
-func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string) (pipeline.Request, error) {
+func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, tier AccessTierType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -800,6 +814,15 @@ func (client blockBlobClient) uploadPreparer(body io.ReadSeeker, contentLength i
 	}
 	if blobTagsString != nil {
 		req.Header.Set("x-ms-tags", *blobTagsString)
+	}
+	if immutabilityPolicyExpiry != nil {
+		req.Header.Set("x-ms-immutability-policy-until-date", (*immutabilityPolicyExpiry).In(gmt).Format(time.RFC1123))
+	}
+	if immutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+		req.Header.Set("x-ms-immutability-policy-mode", string(immutabilityPolicyMode))
+	}
+	if legalHold != nil {
+		req.Header.Set("x-ms-legal-hold", strconv.FormatBool(*legalHold))
 	}
 	req.Header.Set("x-ms-blob-type", "BlockBlob")
 	return req, nil

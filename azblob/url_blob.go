@@ -2,9 +2,10 @@ package azblob
 
 import (
 	"context"
-	"github.com/Azure/azure-pipeline-go/pipeline"
 	"net/url"
 	"strings"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 // A BlobURL represents a URL to an Azure Storage blob; the blob may be a block blob, append blob, or page blob.
@@ -146,15 +147,15 @@ func (b BlobURL) Delete(ctx context.Context, deleteOptions DeleteSnapshotsOption
 // Each call to this operation replaces all existing tags attached to the blob.
 // To remove all tags from the blob, call this operation with no tags set.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags
-func (b BlobURL) SetTags(ctx context.Context, timeout *int32, versionID *string, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, requestID *string, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
+func (b BlobURL) SetTags(ctx context.Context, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, ifTags *string, blobTagsMap BlobTagsMap) (*BlobSetTagsResponse, error) {
 	tags := SerializeBlobTags(blobTagsMap)
-	return b.blobClient.SetTags(ctx, timeout, versionID, transactionalContentMD5, transactionalContentCrc64, requestID, ifTags, nil, &tags)
+	return b.blobClient.SetTags(ctx, nil, nil, transactionalContentMD5, transactionalContentCrc64, nil, ifTags, nil, &tags)
 }
 
 // GetTags operation enables users to get tags on a blob or specific blob version, or snapshot.
 // https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags
-func (b BlobURL) GetTags(ctx context.Context, timeout *int32, requestID *string, snapshot *string, versionID *string, ifTags *string) (*BlobTags, error) {
-	return b.blobClient.GetTags(ctx, timeout, requestID, snapshot, versionID, ifTags, nil)
+func (b BlobURL) GetTags(ctx context.Context, ifTags *string) (*BlobTags, error) {
+	return b.blobClient.GetTags(ctx, nil, nil, nil, nil, ifTags, nil)
 }
 
 // Undelete restores the contents and metadata of a soft-deleted blob and any associated soft-deleted snapshots.
@@ -310,7 +311,10 @@ func (b BlobURL) StartCopyFromURL(ctx context.Context, source url.URL, metadata 
 		dstLeaseID,
 		nil,
 		blobTagsString, // Blob tags
-		nil)
+		nil,
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
+	)
 }
 
 // AbortCopyFromURL stops a pending copy that was previously started and leaves a destination blob with 0 length and metadata.

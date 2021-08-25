@@ -80,6 +80,8 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
 	)
 }
 
@@ -127,6 +129,8 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 		nil, // Blob ifTags
 		nil,
 		blobTagsString, // Blob tags
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
 	)
 }
 
@@ -154,6 +158,8 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		nil, // Blob ifTags
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
+		// immutability policy
+		nil, BlobImmutabilityPolicyModeNone, nil,
 	)
 }
 
