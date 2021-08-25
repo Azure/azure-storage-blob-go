@@ -207,7 +207,6 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
-	c.Skip("Versioning must be disabled")
 	bsu, err := getAlternateBSU()
 	if err != nil {
 		c.Skip(err.Error())
@@ -254,6 +253,7 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 	snapResp, err := blobURLs[1].CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(snapResp, chk.NotNil)
 	c.Assert(err, chk.IsNil)
+	time.Sleep(time.Second * 10)
 
 	// Check snapshot and blobs exist
 	listBlobResp1, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})
@@ -264,19 +264,26 @@ func (s *aztestsSuite) TestPermanentDeleteAndUndelete(c *chk.C) {
 	snapshotBlob := blobURLs[1].WithSnapshot(snapResp.Snapshot())
 	_, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
+	time.Sleep(time.Second * 10)
+
+	// Check that both blobs and snapshot exist
+	listBlobResp1, err = containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobResp1.Segment.BlobItems, chk.HasLen, 3)
 
 	// Permanent delete snapshot
 	delResp, err := snapshotBlob.PermanentDelete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(delResp, chk.NotNil)
 	c.Assert(delResp.StatusCode(), chk.Equals, 202)
+	time.Sleep(time.Second * 10)
 
 	// Check that snapshot has been deleted
 	spBlobResp, err := snapshotBlob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	c.Assert(spBlobResp, chk.IsNil)
 
-	// Check that both blobs exist
+	// Check that both blobs exist and snapshot does not exist
 	listBlobResp1, err = containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobResp1.Segment.BlobItems, chk.HasLen, 2)
