@@ -315,61 +315,66 @@ func deleteContainer(c *chk.C, container ContainerURL, hasImmutability bool) {
 		return *b
 	}
 
-	// Kill immutability policies
-	var m Marker
-	for hasImmutability && m.NotDone() {
-		resp, err := container.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{ Details: BlobListingDetails{ LegalHold: true, ImmutabilityPolicy: true }})
-
-		if stgErr, ok := err.(StorageError); ok {
-			if stgErr.ServiceCode() == ServiceCodeContainerNotFound {
-				return
-			}
-		}
-
+	if !hasImmutability {
+		_, err := container.Delete(ctx, ContainerAccessConditions{})
 		c.Assert(err, chk.IsNil)
+	} else {
+		// Kill immutability policies
+		var m Marker
+		for m.NotDone() {
+			resp, err := container.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{Details: BlobListingDetails{LegalHold: true, ImmutabilityPolicy: true}})
 
-		for _,v := range resp.Segment.BlobItems {
-			if boolv(v.Properties.LegalHold) {
-				_, err := container.NewBlobURL(v.Name).SetLegalHold(ctx, false)
-				c.Assert(err, chk.IsNil)
-			}
-			if v.Properties.ImmutabilityPolicyMode != BlobImmutabilityPolicyModeMutable {
-				_, err := container.NewBlobURL(v.Name).DeleteImmutabilityPolicy(ctx)
-				c.Assert(err, chk.IsNil)
+			if stgErr, ok := err.(StorageError); ok {
+				if stgErr.ServiceCode() == ServiceCodeContainerNotFound {
+					return
+				}
 			}
 
-			_, err := container.NewBlobURL(v.Name).Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 			c.Assert(err, chk.IsNil)
+
+			for _, v := range resp.Segment.BlobItems {
+				if boolv(v.Properties.LegalHold) {
+					_, err := container.NewBlobURL(v.Name).SetLegalHold(ctx, false)
+					c.Assert(err, chk.IsNil)
+				}
+				if v.Properties.ImmutabilityPolicyMode != BlobImmutabilityPolicyModeMutable {
+					_, err := container.NewBlobURL(v.Name).DeleteImmutabilityPolicy(ctx)
+					c.Assert(err, chk.IsNil)
+				}
+
+				_, err := container.NewBlobURL(v.Name).Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+				c.Assert(err, chk.IsNil)
+			}
+
+			m = resp.NextMarker
 		}
 
-		m = resp.NextMarker
-	}
-
-	// While I would definitely prefer not to write my own REST API requests... azure-sdk-for-go's armcore tries to import now nonexistent APIs.
-	cred, err := getOAuthCredential("", "https://management.azure.com/")
-	c.Assert(err, chk.IsNil)
-
-	cURLParts := NewBlobURLParts(container.URL())
-	armURI, err := getARMContainerURI(cURLParts.ContainerName)
-	c.Assert(err, chk.IsNil)
-
-	req, err := http.NewRequest("DELETE", armURI.String(), nil)
-	c.Assert(err, chk.IsNil)
-
-	// set authorization
-	req.Header["Authorization"] = []string{"Bearer " + cred.Token()}
-
-	resp, err := http.DefaultClient.Do(req)
-	c.Assert(err, chk.IsNil)
-	defer resp.Body.Close()
-
-	if !(resp.StatusCode == 200 || resp.StatusCode == 204) {
-		buf, err := ioutil.ReadAll(resp.Body)
+		// While I would definitely prefer not to write my own REST API requests... azure-sdk-for-go's armcore tries to import now nonexistent APIs.
+		cred, err := getOAuthCredential("", "https://management.azure.com/")
 		c.Assert(err, chk.IsNil)
 
-		c.Log(string(buf))
+		cURLParts := NewBlobURLParts(container.URL())
+		armURI, err := getARMContainerURI(cURLParts.ContainerName)
+		c.Assert(err, chk.IsNil)
 
-		c.Assert(resp.StatusCode == 200 || resp.StatusCode == 204, chk.Equals, true)
+		req, err := http.NewRequest("DELETE", armURI.String(), nil)
+		c.Assert(err, chk.IsNil)
+
+		// set authorization
+		req.Header["Authorization"] = []string{"Bearer " + cred.Token()}
+
+		resp, err := http.DefaultClient.Do(req)
+		c.Assert(err, chk.IsNil)
+		defer resp.Body.Close()
+
+		if !(resp.StatusCode == 200 || resp.StatusCode == 204) {
+			buf, err := ioutil.ReadAll(resp.Body)
+			c.Assert(err, chk.IsNil)
+
+			c.Log(string(buf))
+
+			c.Assert(resp.StatusCode == 200 || resp.StatusCode == 204, chk.Equals, true)
+		}
 	}
 }
 
