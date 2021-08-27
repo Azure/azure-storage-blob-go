@@ -264,7 +264,7 @@ func getARMContainerURI(containerName string) (*url.URL, error) {
 
 func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (ContainerURL, string) {
 	cURL, name := getContainerURL(c, bsu)
-	deleteContainer(c, cURL) // ensure that the container doesn't already exist
+	deleteContainer(c, cURL, false) // ensure that the container doesn't already exist
 	cURI, err := getARMContainerURI(name)
 	c.Assert(err, chk.IsNil)
 
@@ -306,7 +306,7 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 	return cURL, name
 }
 
-func deleteContainer(c *chk.C, container ContainerURL) {
+func deleteContainer(c *chk.C, container ContainerURL, hasImmutability bool) {
 	boolv := func (b *bool) bool {
 		if b == nil {
 			return false
@@ -317,7 +317,7 @@ func deleteContainer(c *chk.C, container ContainerURL) {
 
 	// Kill immutability policies
 	var m Marker
-	for m.NotDone() {
+	for hasImmutability && m.NotDone() {
 		resp, err := container.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{ Details: BlobListingDetails{ LegalHold: true, ImmutabilityPolicy: true }})
 
 		if stgErr, ok := err.(StorageError); ok {

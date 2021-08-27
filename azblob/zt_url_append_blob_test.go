@@ -14,7 +14,7 @@ import (
 func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blob := container.NewAppendBlobURL(generateBlobName())
 
@@ -43,7 +43,7 @@ func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	// set up blob to test
 	blob := container.NewAppendBlobURL(generateBlobName())
@@ -80,7 +80,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -151,7 +151,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -224,7 +224,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -238,7 +238,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendMetadataEmpty(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -252,7 +252,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataEmpty(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendMetadataInvalid(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{"In valid!": "bar"}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -262,7 +262,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataInvalid(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendHTTPHeaders(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.Create(ctx, basicHeaders, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -283,7 +283,7 @@ func validateAppendBlobPut(c *chk.C, blobURL AppendBlobURL) {
 func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(-10)
@@ -297,7 +297,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(10)
@@ -309,7 +309,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(10)
@@ -323,7 +323,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(-10)
@@ -335,7 +335,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfMatchTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -349,7 +349,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfMatchFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -359,7 +359,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -371,7 +371,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -383,7 +383,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockNilBody(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, bytes.NewReader(nil), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -394,7 +394,7 @@ func (s *aztestsSuite) TestBlobAppendBlockNilBody(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockEmptyBody(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(""), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -404,7 +404,7 @@ func (s *aztestsSuite) TestBlobAppendBlockEmptyBody(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockNonExistantBlob(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -420,7 +420,7 @@ func validateBlockAppended(c *chk.C, blobURL AppendBlobURL, expectedSize int) {
 func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(-10)
@@ -434,7 +434,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(10)
@@ -445,7 +445,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfModifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(10)
@@ -458,7 +458,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	currentTime := getRelativeTimeGMT(-10)
@@ -469,7 +469,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfUnmodifiedSinceFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfMatchTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -483,7 +483,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfMatchFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
@@ -493,7 +493,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMatchFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
@@ -505,7 +505,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -517,7 +517,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchFalse(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNegOne(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{AppendPositionAccessConditions: AppendPositionAccessConditions{IfAppendPositionEqual: -1}}, nil, ClientProvidedKeyOptions{}) // This will cause the library to set the value of the header to 0
@@ -529,7 +529,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNegOne(c *chk
 func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchZero(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{}) // The position will not match, but the condition should be ignored
@@ -543,7 +543,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchZero(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNonZero(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -557,7 +557,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchTrueNonZero(c *ch
 func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNegOne(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -569,7 +569,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNegOne(c *ch
 func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNonZero(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{AppendPositionAccessConditions: AppendPositionAccessConditions{IfAppendPositionEqual: 12}}, nil, ClientProvidedKeyOptions{})
@@ -579,7 +579,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfAppendPositionMatchFalseNonZero(c *c
 func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{AppendPositionAccessConditions: AppendPositionAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) + 1)}}, nil, ClientProvidedKeyOptions{})
@@ -591,7 +591,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeTrue(c *chk.C) {
 func (s *aztestsSuite) TestBlobAppendBlockIfMaxSizeFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{AppendPositionAccessConditions: AppendPositionAccessConditions{IfMaxSizeLessThanOrEqual: int64(len(blockBlobDefaultData) - 1)}}, nil, ClientProvidedKeyOptions{})

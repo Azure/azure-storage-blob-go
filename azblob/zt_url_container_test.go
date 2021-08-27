@@ -61,7 +61,7 @@ func (s *aztestsSuite) TestContainerCreateNameCollision(c *chk.C) {
 	bsu := getBSU()
 	containerURL, containerName := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	containerURL = bsu.NewContainerURL(containerName)
 	_, err := containerURL.Create(ctx, Metadata{}, PublicAccessBlob)
@@ -84,7 +84,7 @@ func (s *aztestsSuite) TestContainerCreateNilMetadata(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 
 	_, err := containerURL.Create(ctx, nil, PublicAccessNone)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	c.Assert(err, chk.IsNil)
 
 	response, err := containerURL.GetProperties(ctx, LeaseAccessConditions{})
@@ -97,7 +97,7 @@ func (s *aztestsSuite) TestContainerCreateEmptyMetadata(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 
 	_, err := containerURL.Create(ctx, Metadata{}, PublicAccessBlob)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	c.Assert(err, chk.IsNil)
 
 	response, err := containerURL.GetProperties(ctx, LeaseAccessConditions{})
@@ -113,7 +113,7 @@ func (s *aztestsSuite) TestContainerCreateAccessContainer(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 
 	_, err := containerURL.Create(ctx, nil, PublicAccessContainer)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
@@ -138,7 +138,7 @@ func (s *aztestsSuite) TestContainerCreateAccessBlob(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 
 	_, err := containerURL.Create(ctx, nil, PublicAccessBlob)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	c.Assert(err, chk.IsNil)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
@@ -161,7 +161,7 @@ func (s *aztestsSuite) TestContainerCreateAccessNone(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 
 	_, err := containerURL.Create(ctx, nil, PublicAccessNone)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	blobURL := containerURL.NewBlockBlobURL(blobPrefix)
 	blobURL.Upload(ctx, bytes.NewReader([]byte("Content")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -218,7 +218,7 @@ func (s *aztestsSuite) TestContainerDeleteIfModifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	currentTime := getRelativeTimeGMT(10)
 
@@ -245,7 +245,7 @@ func (s *aztestsSuite) TestContainerDeleteIfUnModifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.Delete(ctx,
 		ContainerAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
@@ -257,7 +257,7 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	// that will be ignored by the service
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	invalidEtag := ETag("invalid")
 	_, err := containerURL.SetMetadata(ctx, basicMetadata,
@@ -268,7 +268,7 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	createNewBlockBlob(c, containerURL)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Prefix: blobPrefix + blobPrefix})
@@ -280,7 +280,7 @@ func (s *aztestsSuite) TestContainerListBlobsNonexistantPrefix(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsSpecificValidPrefix(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createNewBlockBlob(c, containerURL)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Prefix: blobPrefix})
@@ -293,7 +293,7 @@ func (s *aztestsSuite) TestContainerListBlobsSpecificValidPrefix(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsValidDelimiter(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	createBlockBlobWithPrefix(c, containerURL, "a/1")
 	createBlockBlobWithPrefix(c, containerURL, "a/2")
 	createBlockBlobWithPrefix(c, containerURL, "b/1")
@@ -312,7 +312,7 @@ func (s *aztestsSuite) TestContainerListBlobsValidDelimiter(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsWithSnapshots(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.ListBlobsHierarchySegment(ctx, Marker{}, "/", ListBlobsSegmentOptions{Details: BlobListingDetails{Snapshots: true}})
 	c.Assert(err, chk.Not(chk.Equals), nil)
@@ -321,7 +321,7 @@ func (s *aztestsSuite) TestContainerListBlobsWithSnapshots(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsInvalidDelimiter(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	createBlockBlobWithPrefix(c, containerURL, "a/1")
 	createBlockBlobWithPrefix(c, containerURL, "a/2")
 	createBlockBlobWithPrefix(c, containerURL, "b/1")
@@ -336,7 +336,7 @@ func (s *aztestsSuite) TestContainerListBlobsInvalidDelimiter(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeMetadata(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 	_, blobNameNoMetadata := createBlockBlobWithPrefix(c, container, "a")
 	blobMetadata, blobNameMetadata := createBlockBlobWithPrefix(c, container, "b")
 	_, err := blobMetadata.SetMetadata(ctx, Metadata{"field": "value"}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -354,7 +354,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeMetadata(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeSnapshots(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blob, blobName := createNewBlockBlob(c, containerURL)
 	_, err := blob.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -373,7 +373,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeSnapshots(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeCopy(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
 	blobCopyURL, blobCopyName := createBlockBlobWithPrefix(c, containerURL, "copy")
 	_, err := blobCopyURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
@@ -396,7 +396,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeCopy(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsIncludeTypeUncommitted(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, blobName := getBlockBlobURL(c, containerURL)
 	_, err := blobURL.StageBlock(ctx, blockID, strings.NewReader(blockBlobDefaultData), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -411,7 +411,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeUncommitted(c *chk.C) {
 
 func testContainerListBlobsIncludeTypeDeletedImpl(c *chk.C, bsu ServiceURL) error {
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{},
@@ -444,7 +444,7 @@ func (s *aztestsSuite) TestContainerListBlobsIncludeTypeDeleted(c *chk.C) {
 
 func testContainerListBlobsIncludeMultipleImpl(c *chk.C, bsu ServiceURL) error {
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	blobURL, _ := createBlockBlobWithPrefix(c, containerURL, "z")
 	_, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -483,7 +483,7 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsNegative(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{MaxResults: -2})
 	c.Assert(err, chk.Not(chk.IsNil))
 }
@@ -491,7 +491,7 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsNegative(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsZero(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	createNewBlockBlob(c, containerURL)
 
 	resp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{MaxResults: 0})
@@ -503,7 +503,7 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsZero(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsInsufficient(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createBlockBlobWithPrefix(c, containerURL, "a")
 	createBlockBlobWithPrefix(c, containerURL, "b")
 
@@ -517,7 +517,7 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsInsufficient(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsExact(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createBlockBlobWithPrefix(c, containerURL, "a")
 	_, blobName2 := createBlockBlobWithPrefix(c, containerURL, "b")
 
@@ -532,7 +532,7 @@ func (s *aztestsSuite) TestContainerListBlobsMaxResultsExact(c *chk.C) {
 func (s *aztestsSuite) TestContainerListBlobsMaxResultsSufficient(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createBlockBlobWithPrefix(c, containerURL, "a")
 	_, blobName2 := createBlockBlobWithPrefix(c, containerURL, "b")
 
@@ -569,7 +569,7 @@ func (s *aztestsSuite) TestContainerGetSetPermissionsMultiplePolicies(c *chk.C) 
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Define the policies
 	start := generateCurrentTimeWithModerateResolution()
@@ -609,7 +609,7 @@ func (s *aztestsSuite) TestContainerGetPermissionsPublicAccessNotNone(c *chk.C) 
 	containerURL, _ := getContainerURL(c, bsu)
 	containerURL.Create(ctx, nil, PublicAccessBlob) // We create the container explicitly so we can be sure the access policy is not empty
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	resp, err := containerURL.GetAccessPolicy(ctx, LeaseAccessConditions{})
 
@@ -622,7 +622,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessNone(c *chk.C) {
 	// For all the others, can just use GetPermissions since we've validated that it at least registers on the server correctly
 	bsu := getBSU()
 	containerURL, containerName := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createNewBlockBlob(c, containerURL)
 
 	// Container is created with PublicAccessBlob, so setting it to None will actually test that it is changed through this method
@@ -647,7 +647,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessBlob(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetAccessPolicy(ctx, PublicAccessBlob, nil, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -661,7 +661,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsPublicAccessContainer(c *chk.C
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetAccessPolicy(ctx, PublicAccessContainer, nil, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -678,7 +678,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLSinglePolicy(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	containerURL, containerName := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, blobName := createNewBlockBlob(c, containerURL)
 
 	start := time.Now().UTC().Add(-15 * time.Second)
@@ -723,7 +723,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsACLMoreThanFive(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	start := time.Now().UTC()
 	expiry := start.Add(5 * time.Minute).UTC()
@@ -748,7 +748,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsDeleteAndModifyACL(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	start := generateCurrentTimeWithModerateResolution()
 	expiry := start.Add(5 * time.Minute).UTC()
@@ -786,7 +786,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsDeleteAllPolicies(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	start := time.Now().UTC()
 	expiry := start.Add(5 * time.Minute).UTC()
@@ -818,7 +818,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsInvalidPolicyTimes(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Swap start and expiry
 	expiry := time.Now().UTC()
@@ -844,7 +844,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsNilPolicySlice(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetAccessPolicy(ctx, PublicAccessBlob, nil, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -854,7 +854,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsSignedIdentifierTooLong(c *chk
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	id := ""
 	for i := 0; i < 65; i++ {
@@ -884,7 +884,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsIfModifiedSinceTrue(c *chk.C) 
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	_, err := container.SetAccessPolicy(ctx, PublicAccessNone, nil,
 		ContainerAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
@@ -899,7 +899,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsIfModifiedSinceFalse(c *chk.C)
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	currentTime := getRelativeTimeGMT(10)
 
@@ -912,7 +912,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsIfUnModifiedSinceTrue(c *chk.C
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	currentTime := getRelativeTimeGMT(10)
 
@@ -931,7 +931,7 @@ func (s *aztestsSuite) TestContainerSetPermissionsIfUnModifiedSinceFalse(c *chk.
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetAccessPolicy(ctx, PublicAccessNone, nil,
 		ContainerAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}})
@@ -942,7 +942,7 @@ func (s *aztestsSuite) TestContainerGetPropertiesAndMetadataNoMetadata(c *chk.C)
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	resp, err := containerURL.GetProperties(ctx, LeaseAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -962,7 +962,7 @@ func (s *aztestsSuite) TestContainerSetMetadataEmpty(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 	_, err := containerURL.Create(ctx, basicMetadata, PublicAccessBlob)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err = containerURL.SetMetadata(ctx, Metadata{}, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -977,7 +977,7 @@ func (*aztestsSuite) TestContainerSetMetadataNil(c *chk.C) {
 	containerURL, _ := getContainerURL(c, bsu)
 	_, err := containerURL.Create(ctx, basicMetadata, PublicAccessBlob)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err = containerURL.SetMetadata(ctx, nil, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -991,7 +991,7 @@ func (*aztestsSuite) TestContainerSetMetadataInvalidField(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetMetadata(ctx, Metadata{"!nval!d Field!@#%": "value"}, ContainerAccessConditions{})
 	c.Assert(err, chk.NotNil)
@@ -1012,7 +1012,7 @@ func (s *aztestsSuite) TestContainerSetMetadataIfModifiedSinceTrue(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	_, err := containerURL.SetMetadata(ctx, basicMetadata,
 		ContainerAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}})
@@ -1029,7 +1029,7 @@ func (s *aztestsSuite) TestContainerSetMetadataIfModifiedSinceFalse(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	currentTime := getRelativeTimeGMT(10)
 

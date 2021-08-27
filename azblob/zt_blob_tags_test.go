@@ -18,7 +18,7 @@ import (
 func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
@@ -44,7 +44,7 @@ func (s *aztestsSuite) TestSetBlobTags(c *chk.C) {
 func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
@@ -84,7 +84,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID(c *chk.C) {
 func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
 	blockBlobUploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -138,7 +138,7 @@ func (s *aztestsSuite) TestSetBlobTagsWithVID2(c *chk.C) {
 func (s *aztestsSuite) TestUploadBlockBlobWithSpecialCharactersInTags(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"+-./:=_ ": "firsttag",
@@ -166,7 +166,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 	}
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 
@@ -223,7 +223,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -306,7 +306,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024 // 1MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -372,7 +372,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 func (s *aztestsSuite) TestGetPropertiesReturnsTagsCount(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
@@ -396,7 +396,7 @@ func (s *aztestsSuite) TestGetPropertiesReturnsTagsCount(c *chk.C) {
 func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"Microsoft Azure": "Azure Storage",
@@ -418,7 +418,7 @@ func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
@@ -461,7 +461,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blob, _ := getPageBlobURL(c, container)
 	blobTagsMap := BlobTagsMap{
@@ -496,7 +496,7 @@ func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 func (s *aztestsSuite) TestCreateAppendBlobWithTags(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
 	blobProp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -513,7 +513,7 @@ func (s *aztestsSuite) TestCreateAppendBlobWithTags(c *chk.C) {
 func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, blobName := createNewBlockBlob(c, containerURL)
 	blobTagsMap := BlobTagsMap{
 		"+-./:=_ ": "firsttag",
@@ -537,11 +537,11 @@ func (s *aztestsSuite) TestListBlobReturnsTags(c *chk.C) {
 func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 	bsu := getBSU()
 	containerURL1, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL1)
+	defer deleteContainer(c, containerURL1, false)
 	containerURL2, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL2)
+	defer deleteContainer(c, containerURL2, false)
 	containerURL3, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL3)
+	defer deleteContainer(c, containerURL3, false)
 
 	blobTagsMap1 := BlobTagsMap{
 		"tag2": "tagsecond",

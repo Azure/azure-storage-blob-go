@@ -29,7 +29,7 @@ func CreateBlockBlobsForTesting(c *chk.C, size int) (ContainerURL, *SharedKeyCre
 
 func (s *aztestsSuite) TestPutBlobFromURLWithIncorrectURL(c *chk.C) {
 	container, _, _, _, sourceDataMD5Value, _, destBlob := CreateBlockBlobsForTesting(c, 8)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	// Invoke put blob from URL with URL without SAS and make sure it fails
 	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, url.URL{}, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
@@ -39,7 +39,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithIncorrectURL(c *chk.C) {
 
 func (s *aztestsSuite) TestPutBlobFromURLWithMissingSAS(c *chk.C) {
 	container, _, r, _, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 8)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	// Prepare source blob for put.
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -54,7 +54,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithMissingSAS(c *chk.C) {
 
 func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 	container, credential, r, _, sourceDataMD5Value, srcBlob, _ := CreateBlockBlobsForTesting(c, 1)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	// Setting blob tier as "cool"
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, AccessTierCool, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -91,7 +91,7 @@ func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 
 func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
 	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 8)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	// Prepare source blob for copy.
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
@@ -138,7 +138,7 @@ func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
 
 func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 4)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -189,7 +189,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 
 func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 1)
-	defer deleteContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blobTagsMap := BlobTagsMap{
 		"Go":         "CPlusPlus",
