@@ -8,7 +8,7 @@ pool:
 steps:
 - task: GoTool@0
   inputs:
-    version: '1.15'
+    version: '1.17'
 - script: |
     go build ./azblob
   displayName: 'Compile the SDK'

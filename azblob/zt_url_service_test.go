@@ -206,7 +206,7 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 	c.Assert(len(response.ContainerItems) >= 2, chk.Equals, true)
 }
 
-func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL) {
+func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL, ServiceURL) {
 	bsu, err := getAlternateBSU()
 	c.Assert(err, chk.IsNil)
 
@@ -228,11 +228,11 @@ func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 
-	return blobURL, containerURL
+	return blobURL, containerURL, bsu
 }
 
 func (s *aztestsSuite) TestUndelete(c *chk.C) {
-	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
+	blobURL, containerURL, bsu := CreateBlobWithRetentionPolicy(c)
 	defer deleteContainer(c, containerURL)
 
 	// Soft delete blob
@@ -251,10 +251,16 @@ func (s *aztestsSuite) TestUndelete(c *chk.C) {
 
 	blobProp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(blobProp.StatusCode(), chk.Equals, 200)
+
+	_, err = bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: false}})
+	c.Assert(err, chk.IsNil)
+
+	// From FE, 30 seconds is guaranteed to be enough.
+	time.Sleep(time.Second * 30)
 }
 
 func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
-	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
+	blobURL, containerURL, bsu := CreateBlobWithRetentionPolicy(c)
 	defer deleteContainer(c, containerURL)
 
 	// Create snapshot for second blob
@@ -293,6 +299,12 @@ func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobResp3.Segment.BlobItems, chk.HasLen, 1)
 	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
+
+	_, err = bsu.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: false}})
+	c.Assert(err, chk.IsNil)
+
+	// From FE, 30 seconds is guaranteed to be enough.
+	time.Sleep(time.Second * 30)
 }
 
 func (s *aztestsSuite) TestAccountDeleteRetentionPolicy(c *chk.C) {
