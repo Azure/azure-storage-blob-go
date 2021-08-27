@@ -13,7 +13,7 @@ steps:
     go build ./azblob
   displayName: 'Compile the SDK'
 - script: |
-    GORACE=history_size=20 go test -race -short -cover -v -timeout 20m ./azblob
+    GORACE=history_size=7 go test -race -short -cover -v -timeout 20m ./azblob
   env:
     ACCOUNT_NAME: $(ACCOUNT_NAME)
     ACCOUNT_KEY: $(ACCOUNT_KEY)
