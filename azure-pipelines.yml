@@ -13,7 +13,7 @@ steps:
     go build ./azblob
   displayName: 'Compile the SDK'
 - script: |
-    go test -race -short -cover -v ./azblob
+    go test -race -short -cover -v -timeout 20m ./azblob
   env:
     ACCOUNT_NAME: $(ACCOUNT_NAME)
     ACCOUNT_KEY: $(ACCOUNT_KEY)

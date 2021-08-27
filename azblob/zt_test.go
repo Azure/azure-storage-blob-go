@@ -292,6 +292,7 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 
 	resp, err := http.DefaultClient.Do(req)
 	c.Assert(err, chk.IsNil)
+	defer resp.Body.Close()
 	// 200 is bad-- We want a *new* container.
 	if resp.StatusCode != 201 {
 		buf, err := ioutil.ReadAll(resp.Body)
@@ -301,7 +302,6 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 
 		c.Assert(resp.StatusCode, chk.Equals, 201)
 	}
-	// c.Assert(resp.StatusCode, chk.Equals, 201)
 
 	return cURL, name
 }
@@ -361,6 +361,7 @@ func deleteContainer(c *chk.C, container ContainerURL, hasImmutability bool) {
 
 	resp, err := http.DefaultClient.Do(req)
 	c.Assert(err, chk.IsNil)
+	defer resp.Body.Close()
 
 	if !(resp.StatusCode == 200 || resp.StatusCode == 204) {
 		buf, err := ioutil.ReadAll(resp.Body)
