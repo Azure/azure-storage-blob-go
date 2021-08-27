@@ -317,7 +317,15 @@ func deleteContainer(c *chk.C, container ContainerURL, hasImmutability bool) {
 
 	if !hasImmutability {
 		_, err := container.Delete(ctx, ContainerAccessConditions{})
-		c.Assert(err, chk.IsNil)
+		if err != nil {
+			if stgErr, ok := err.(StorageError); ok {
+				if stgErr.ServiceCode() == ServiceCodeContainerNotFound {
+					return
+				}
+			}
+
+			c.Assert(err, chk.IsNil)
+		}
 	} else {
 		// Kill immutability policies
 		var m Marker
