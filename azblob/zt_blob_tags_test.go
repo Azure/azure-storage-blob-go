@@ -166,7 +166,7 @@ func (s *aztestsSuite) TestStageBlockWithTags(c *chk.C) {
 	}
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer delContainer(c, containerURL)
+	defer deleteContainer(c, containerURL)
 
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 
@@ -223,7 +223,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -306,7 +306,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024 // 1MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -418,7 +418,7 @@ func (s *aztestsSuite) TestSetBlobTagForSnapshot(c *chk.C) {
 func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blobTagsMap := BlobTagsMap{
 		"azure": "blob",
@@ -461,7 +461,7 @@ func (s *aztestsSuite) TestCreatePageBlobWithTags(c *chk.C) {
 func (s *aztestsSuite) TestSetTagOnPageBlob(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := getPageBlobURL(c, container)
 	blobTagsMap := BlobTagsMap{

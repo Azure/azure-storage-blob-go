@@ -16,7 +16,7 @@ import (
 func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob := container.NewAppendBlobURL(generateBlobName())
 
@@ -45,7 +45,7 @@ func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	// set up blob to test
 	blob := container.NewAppendBlobURL(generateBlobName())
@@ -82,7 +82,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -153,7 +153,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)

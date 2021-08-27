@@ -21,7 +21,7 @@ import (
 func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob := container.NewBlockBlobURL(generateBlobName())
 
@@ -79,7 +79,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -153,7 +153,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -224,7 +224,7 @@ func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, _ := getRandomDataAndReader(testSize)
@@ -274,7 +274,7 @@ func (s *aztestsSuite) TestBlobSASQueryParamOverrideResponseHeaders(c *chk.C) {
 func (s *aztestsSuite) TestStageBlockWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob := container.NewBlockBlobURL(generateBlobName())
 	blockID := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0)))
@@ -923,7 +923,7 @@ func (s *aztestsSuite) TestSetTierOnCopyBlockBlobFromURL(c *chk.C) {
 	bsu := getBSU()
 
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -976,7 +976,7 @@ func (s *aztestsSuite) TestSetTierOnStageBlockFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 8 * 1024 * 1024 // 8MB
 	r, sourceData := getRandomDataAndReader(testSize)

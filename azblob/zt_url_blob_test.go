@@ -1,12 +1,11 @@
 package azblob
 
 import (
+	"bytes"
 	"crypto/md5"
+	"errors"
 	"io"
 	"io/ioutil"
-
-	"bytes"
-	"errors"
 	"net/url"
 	"os"
 	"strings"
@@ -1888,7 +1887,7 @@ func (s *aztestsSuite) TestBlobURLPartsSASQueryTimes(c *chk.C) {
 func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	bsu := getBSU()
 	cURL, _ := createNewContainer(c, bsu)
-	defer delContainer(c, cURL)
+	defer deleteContainer(c, cURL)
 	bURL, _ := createNewBlockBlob(c, cURL) // This uploads for us.
 	resp, err := bURL.Download(ctx, 0, 0, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -1906,4 +1905,42 @@ func (s *aztestsSuite) TestDownloadBlockBlobUnexpectedEOF(c *chk.C) {
 	buf, err := ioutil.ReadAll(reader)
 	c.Assert(err, chk.IsNil)
 	c.Assert(buf, chk.DeepEquals, []byte(blockBlobDefaultData))
+}
+
+func (s *aztestsSuite) TestLegalHoldPolicy(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, cURL)
+
+	bURL, _ := createNewBlockBlob(c, cURL)
+	resp, err := bURL.SetLegalHold(ctx, true)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.LegalHold(), chk.Equals, "true")
+
+	_, err = bURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	c.Assert(err, chk.NotNil) // This should fail with a legal hold.
+
+	resp, err = bURL.SetLegalHold(ctx, false)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.LegalHold(), chk.Equals, "false")
+}
+
+func (s *aztestsSuite) TestImmutabilityPolicyCreateDelete(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, cURL)
+
+	expiry := time.Now().Add(time.Second * 10)
+
+	bURL, _ := createNewBlockBlob(c, cURL)
+	resp, err := bURL.SetImmutabilityPolicy(ctx, expiry, BlobImmutabilityPolicyModeUnlocked, nil)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.ImmutabilityPolicyMode(), chk.Equals, BlobImmutabilityPolicyModeUnlocked)
+	// c.Assert(resp.ImmutabilityPolicyExpiry(), chk.Equals, expiry)
+
+	_, err = bURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	c.Assert(err, chk.NotNil) // This should fail with a immutability policy.
+
+	_, err = bURL.DeleteImmutabilityPolicy(ctx)
+	c.Assert(err, chk.IsNil)
 }

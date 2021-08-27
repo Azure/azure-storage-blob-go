@@ -183,7 +183,7 @@ func (s *aztestsSuite) TestDownloadSpecificBlobVersion(c *chk.C) {
 func (s *aztestsSuite) TestCreateBlobSnapshotReturnsVID(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer delContainer(c, containerURL)
+	defer deleteContainer(c, containerURL)
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 	uploadResp, err := blobURL.Upload(ctx, bytes.NewReader([]byte("updated_data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -220,7 +220,7 @@ func (s *aztestsSuite) TestCopyBlobFromURLWithSASReturnsVID(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -279,7 +279,7 @@ func (s *aztestsSuite) TestCopyBlobFromURLWithSASReturnsVID(c *chk.C) {
 func (s *aztestsSuite) TestCreateBlockBlobReturnsVID(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer delContainer(c, containerURL)
+	defer deleteContainer(c, containerURL)
 
 	testSize := 2 * 1024 * 1024 // 1MB
 	r, _ := getRandomDataAndReader(testSize)
@@ -328,7 +328,7 @@ func (s *aztestsSuite) TestPutBlockListReturnsVID(c *chk.C) {
 	}
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer delContainer(c, containerURL)
+	defer deleteContainer(c, containerURL)
 
 	blobURL := containerURL.NewBlockBlobURL(generateBlobName())
 
@@ -362,7 +362,7 @@ func (s *aztestsSuite) TestSyncCopyBlobReturnsVID(c *chk.C) {
 func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
 	putResp, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(1024), PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})

@@ -2,7 +2,6 @@ package azblob
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"os"
 	"strconv"
@@ -11,12 +10,6 @@ import (
 
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
-
-func delContainer(c *chk.C, container ContainerURL) {
-	resp, err := container.Delete(context.Background(), ContainerAccessConditions{})
-	c.Assert(err, chk.IsNil)
-	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
-}
 
 func (s *aztestsSuite) TestNewContainerURLValidName(c *chk.C) {
 	bsu := getBSU()

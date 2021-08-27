@@ -18,7 +18,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// Test on a container
 	cURL := sa.NewContainerURL(generateContainerName())
-	defer delContainer(c, cURL)
+	defer deleteContainer(c, cURL)
 	_, err = cURL.Create(ctx, Metadata{}, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	cAccInfo, err := cURL.GetAccountInfo(ctx)
@@ -45,7 +45,7 @@ func (s *aztestsSuite) TestListContainers(c *chk.C) {
 	c.Assert(resp.ServiceEndpoint, chk.NotNil)
 
 	container, name := createNewContainer(c, sa)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	md := Metadata{
 		"foo": "foovalue",
@@ -82,7 +82,7 @@ func (s *aztestsSuite) TestListContainersPaged(c *chk.C) {
 
 	defer func() {
 		for i := range containers {
-			delContainer(c, containers[i])
+			deleteContainer(c, containers[i])
 		}
 	}()
 

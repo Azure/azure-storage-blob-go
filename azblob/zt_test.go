@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"os"
 	"reflect"
@@ -241,10 +242,134 @@ func createBlockBlobWithPrefix(c *chk.C, container ContainerURL, prefix string) 
 	return
 }
 
-func deleteContainer(c *chk.C, container ContainerURL) {
-	resp, err := container.Delete(ctx, ContainerAccessConditions{})
+func getARMContainerURI(containerName string) (*url.URL, error) {
+	// this makes testing harder to reproduce for potential contributors, so I'm not a huge fan, but it's mandatory.
+	subscriptionId := os.Getenv("SUBSCRIPTION_ID")
+	rgName := os.Getenv("RESOURCE_GROUP_NAME")
+	accountName := os.Getenv("ACCOUNT_NAME")
+
+	if subscriptionId == "" || rgName == "" || accountName == "" {
+		return nil, errors.New("the SUBSCRIPTION_ID, RESOURCE_GROUP_NAME, or ACCOUNT_NAME environment variable was not specified")
+	}
+
+	fURI := fmt.Sprintf("https://management.azure.com/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Storage/storageAccounts/%s/blobServices/default/containers/%s?api-version=2021-04-01",
+		subscriptionId,
+		rgName,
+		accountName,
+		containerName,
+	)
+
+	return url.Parse(fURI)
+}
+
+func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (ContainerURL, string) {
+	cURL, name := getContainerURL(c, bsu)
+	deleteContainer(c, cURL) // ensure that the container doesn't already exist
+	cURI, err := getARMContainerURI(name)
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.StatusCode(), chk.Equals, 202)
+
+	type j map[string]interface{}
+
+	body, err := json.Marshal(
+		j {
+			"properties": j {
+				"immutableStorageWithVersioning": j {
+					"enabled": true,
+				},
+			},
+		},
+	)
+
+	buf := bytes.NewBuffer(body)
+
+	req, err := http.NewRequest("PUT", cURI.String(), buf)
+	c.Assert(err, chk.IsNil)
+
+	cred, err := getOAuthCredential("", "https://management.azure.com/")
+	c.Assert(err, chk.IsNil)
+
+	req.Header["Authorization"] = []string {"Bearer " + cred.Token()}
+
+	resp, err := http.DefaultClient.Do(req)
+	c.Assert(err, chk.IsNil)
+	// 200 is bad-- We want a *new* container.
+	if resp.StatusCode != 201 {
+		buf, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, chk.IsNil)
+
+		c.Log(string(buf))
+
+		c.Assert(resp.StatusCode, chk.Equals, 201)
+	}
+	// c.Assert(resp.StatusCode, chk.Equals, 201)
+
+	return cURL, name
+}
+
+func deleteContainer(c *chk.C, container ContainerURL) {
+	boolv := func (b *bool) bool {
+		if b == nil {
+			return false
+		}
+
+		return *b
+	}
+
+	// Kill immutability policies
+	var m Marker
+	for m.NotDone() {
+		resp, err := container.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{ Details: BlobListingDetails{ LegalHold: true, ImmutabilityPolicy: true }})
+
+		if stgErr, ok := err.(StorageError); ok {
+			if stgErr.ServiceCode() == ServiceCodeContainerNotFound {
+				return
+			}
+		}
+
+		c.Assert(err, chk.IsNil)
+
+		for _,v := range resp.Segment.BlobItems {
+			if boolv(v.Properties.LegalHold) {
+				_, err := container.NewBlobURL(v.Name).SetLegalHold(ctx, false)
+				c.Assert(err, chk.IsNil)
+			}
+			if v.Properties.ImmutabilityPolicyMode != BlobImmutabilityPolicyModeMutable {
+				_, err := container.NewBlobURL(v.Name).DeleteImmutabilityPolicy(ctx)
+				c.Assert(err, chk.IsNil)
+			}
+
+			_, err := container.NewBlobURL(v.Name).Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+			c.Assert(err, chk.IsNil)
+		}
+
+		m = resp.NextMarker
+	}
+
+	// While I would definitely prefer not to write my own REST API requests... azure-sdk-for-go's armcore tries to import now nonexistent APIs.
+	cred, err := getOAuthCredential("", "https://management.azure.com/")
+	c.Assert(err, chk.IsNil)
+
+	cURLParts := NewBlobURLParts(container.URL())
+	armURI, err := getARMContainerURI(cURLParts.ContainerName)
+	c.Assert(err, chk.IsNil)
+
+	req, err := http.NewRequest("DELETE", armURI.String(), nil)
+	c.Assert(err, chk.IsNil)
+
+	// set authorization
+	req.Header["Authorization"] = []string{"Bearer " + cred.Token()}
+
+	resp, err := http.DefaultClient.Do(req)
+	c.Assert(err, chk.IsNil)
+
+	if !(resp.StatusCode == 200 || resp.StatusCode == 204) {
+		buf, err := ioutil.ReadAll(resp.Body)
+		c.Assert(err, chk.IsNil)
+
+		c.Log(string(buf))
+
+		c.Assert(resp.StatusCode == 200 || resp.StatusCode == 204, chk.Equals, true)
+	}
 }
 
 func getGenericCredential(accountType string) (*SharedKeyCredential, error) {
@@ -261,7 +386,7 @@ func getGenericCredential(accountType string) (*SharedKeyCredential, error) {
 //Direct: Supply a ADAL OAuth token in OAUTH_TOKEN and application ID in APPLICATION_ID to refresh the supplied token.
 //Client secret: Supply a client secret in CLIENT_SECRET and application ID in APPLICATION_ID for SPN auth.
 //TENANT_ID is optional and will be inferred as common if it is not explicitly defined.
-func getOAuthCredential(accountType string) (*TokenCredential, error) {
+func getOAuthCredential(accountType string, resource string) (TokenCredential, error) {
 	oauthTokenEnvVar := accountType + "OAUTH_TOKEN"
 	clientSecretEnvVar := accountType + "CLIENT_SECRET"
 	applicationIdEnvVar := accountType + "APPLICATION_ID"
@@ -272,6 +397,9 @@ func getOAuthCredential(accountType string) (*TokenCredential, error) {
 	}
 	if tenantId == "" {
 		tenantId = "common"
+	}
+	if resource == "" {
+		resource = "https://storage.azure.com"
 	}
 
 	var Token adal.Token
@@ -293,14 +421,14 @@ func getOAuthCredential(accountType string) (*TokenCredential, error) {
 			*oauthConfig,
 			appId,
 			clientSecret,
-			"https://storage.azure.com")
+			resource)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		spt, err = adal.NewServicePrincipalTokenFromManualToken(*oauthConfig,
 			appId,
-			"https://storage.azure.com",
+			resource,
 			Token,
 		)
 		if err != nil {
@@ -318,7 +446,7 @@ func getOAuthCredential(accountType string) (*TokenCredential, error) {
 		return time.Until(spt.Token().Expires())
 	})
 
-	return &tc, nil
+	return tc, nil
 }
 
 func getGenericBSU(accountType string) (ServiceURL, error) {
@@ -333,7 +461,12 @@ func getGenericBSU(accountType string) (ServiceURL, error) {
 }
 
 func getBSU() ServiceURL {
-	bsu, _ := getGenericBSU("")
+	bsu, err := getGenericBSU("")
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	return bsu
 }
 

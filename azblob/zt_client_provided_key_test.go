@@ -51,7 +51,7 @@ func blockIDIntToBase64(blockID int) string {
 func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
@@ -90,7 +90,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
@@ -147,7 +147,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 2 * 1024 // 2KB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -228,7 +228,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 2 * 1024 // 2KB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -303,7 +303,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -330,7 +330,7 @@ func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	appendBlobURL := container.NewAppendBlobURL(generateBlobName())
 
@@ -372,7 +372,7 @@ func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	appendBlobURL := container.NewAppendBlobURL(generateBlobName())
 
@@ -416,7 +416,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 2 * 1024 * 1024 // 2MB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -474,7 +474,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -499,7 +499,7 @@ func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPageBlockWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -526,7 +526,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024 // 1MB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -575,7 +575,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)

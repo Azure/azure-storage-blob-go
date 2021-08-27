@@ -15,7 +15,7 @@ import (
 func (s *aztestsSuite) TestPutGetPages(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
 
@@ -51,7 +51,7 @@ func (s *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -106,7 +106,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	testSize := 4 * 1024 * 1024 // 4MB
 	r, sourceData := getRandomDataAndReader(testSize)
@@ -164,7 +164,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 func (s *aztestsSuite) TestClearDiffPages(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
 	_, err := blob.UploadPages(context.Background(), 0, getReaderToRandomBytes(2048), PageBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -194,7 +194,7 @@ func (s *aztestsSuite) TestClearDiffPages(c *chk.C) {
 func (s *aztestsSuite) TestIncrementalCopy(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 	_, err := container.SetAccessPolicy(context.Background(), PublicAccessBlob, nil, ContainerAccessConditions{})
 	c.Assert(err, chk.IsNil)
 
@@ -223,7 +223,7 @@ func (s *aztestsSuite) TestIncrementalCopy(c *chk.C) {
 func (s *aztestsSuite) TestResizePageBlob(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
 	resp, err := blob.Resize(context.Background(), 2048, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -244,7 +244,7 @@ func (s *aztestsSuite) TestPageSequenceNumbers(c *chk.C) {
 	container, _ := createNewContainer(c, bsu)
 	blob, _ := createNewPageBlob(c, container)
 
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	resp, err := blob.UpdateSequenceNumber(context.Background(), SequenceNumberActionIncrement, 0, BlobAccessConditions{})
 	c.Assert(err, chk.IsNil)
@@ -262,7 +262,7 @@ func (s *aztestsSuite) TestPageSequenceNumbers(c *chk.C) {
 func (s *aztestsSuite) TestPutPagesWithMD5(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container)
 
 	blob, _ := createNewPageBlob(c, container)
 
