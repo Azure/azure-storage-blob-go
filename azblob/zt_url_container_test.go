@@ -2,6 +2,7 @@ package azblob
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"os"
 	"strconv"
@@ -1059,4 +1060,80 @@ func (s *aztestsSuite) TestContainerNewBlockBlobURL(c *chk.C) {
 	tempContainer := containerURL.URL()
 	c.Assert(tempBlob.String(), chk.Equals, tempContainer.String()+"/"+blobPrefix)
 	c.Assert(blobURL, chk.FitsTypeOf, BlockBlobURL{})
+}
+
+func (s *aztestsSuite) TestListLegalHoldsImmutabilityPolicies(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, cURL, true)
+
+	holdState := true
+	expiry := time.Now().UTC().Add(time.Minute * 10).Truncate(time.Second)
+
+	bURL := cURL.NewBlockBlobURL("blockblob")
+	aURL := cURL.NewAppendBlobURL("appendblob")
+	pURL := cURL.NewPageBlobURL("pageblob")
+
+	blockId := base64.StdEncoding.EncodeToString([]byte(newUUID().String()))
+	_, err := bURL.StageBlock(ctx, blockId, strings.NewReader("Hello world!"), LeaseAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+
+	_, err = bURL.CommitBlockList(ctx, []string{blockId}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		LegalHold: &holdState,
+	})
+	c.Assert(err, chk.IsNil)
+
+	bgpr, err := bURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(bgpr.LegalHold(), chk.Equals, "true")
+
+	_, err = aURL.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		ImmutabilityPolicyUntilDate: &expiry,
+		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+	})
+	c.Assert(err, chk.IsNil)
+
+	bgpr, err = aURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(bgpr.ImmutabilityPolicyMode(), chk.Equals, BlobImmutabilityPolicyModeUnlocked)
+	c.Assert(bgpr.ImmutabilityPolicyExpiresOn().UTC(), chk.Equals, expiry)
+
+	_, err = pURL.Create(ctx, 1024, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		LegalHold: &holdState,
+	})
+	c.Assert(err, chk.IsNil)
+
+	bgpr, err = pURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(bgpr.LegalHold(), chk.Equals, "true")
+
+	legalHolds, immutabilityPolicies := 0, 0
+
+	boolv := func (b *bool) bool {
+		if b == nil {
+			return false
+		}
+
+		return *b
+	}
+
+	var m Marker
+	for m.NotDone() {
+		resp, err := cURL.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{Details: BlobListingDetails{LegalHold: true, ImmutabilityPolicy: true}})
+		c.Assert(err, chk.IsNil)
+
+		for _,v := range resp.Segment.BlobItems {
+			if boolv(v.Properties.LegalHold) {
+				legalHolds++
+			}
+			if v.Properties.ImmutabilityPolicyMode != BlobImmutabilityPolicyModeNone {
+				immutabilityPolicies++
+			}
+		}
+
+		m = resp.NextMarker
+	}
+
+	c.Assert(legalHolds, chk.Equals, 2)
+	c.Assert(immutabilityPolicies, chk.Equals, 1)
 }
