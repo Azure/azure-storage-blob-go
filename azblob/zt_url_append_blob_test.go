@@ -1,14 +1,12 @@
 package azblob
 
 import (
-	"context"
-	"io/ioutil"
-	"time"
-
-	"crypto/md5"
-
 	"bytes"
+	"context"
+	"crypto/md5"
+	"io/ioutil"
 	"strings"
+	"time"
 
 	chk "gopkg.in/check.v1" // go get gopkg.in/check.v1
 )
@@ -20,7 +18,7 @@ func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 
 	blob := container.NewAppendBlobURL(generateBlobName())
 
-	resp, err := blob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	resp, err := blob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
@@ -49,7 +47,7 @@ func (s *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 
 	// set up blob to test
 	blob := container.NewAppendBlobURL(generateBlobName())
-	resp, err := blob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	resp, err := blob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
@@ -91,7 +89,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	destBlob := container.NewAppendBlobURL(generateName("appenddest"))
 
 	// Prepare source blob for copy.
-	cResp1, err := srcBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	cResp1, err := srcBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp1.StatusCode(), chk.Equals, 201)
 	appendResp, err := srcBlob.AppendBlock(context.Background(), r, AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -123,7 +121,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Append block from URL.
-	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
 	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -163,7 +161,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	destBlob := container.NewAppendBlobURL(generateName("appenddest"))
 
 	// Prepare source blob for copy.
-	cResp1, err := srcBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	cResp1, err := srcBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp1.StatusCode(), chk.Equals, 201)
 	appendResp, err := srcBlob.AppendBlock(context.Background(), r, AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
@@ -195,7 +193,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Append block from URL.
-	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
 	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, md5Value[:], ClientProvidedKeyOptions{})
@@ -229,7 +227,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataNonEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -243,7 +241,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -257,7 +255,7 @@ func (s *aztestsSuite) TestBlobCreateAppendMetadataInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{"In valid!": "bar"}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, Metadata{"In valid!": "bar"}, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(strings.Contains(err.Error(), invalidHeaderErrorSubstring), chk.Equals, true)
 }
 
@@ -267,7 +265,7 @@ func (s *aztestsSuite) TestBlobCreateAppendHTTPHeaders(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getAppendBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, basicHeaders, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, basicHeaders, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -290,7 +288,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateAppendBlobPut(c, blobURL)
@@ -304,7 +302,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfModifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -316,7 +314,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateAppendBlobPut(c, blobURL)
@@ -330,7 +328,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfUnmodifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -342,7 +340,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchTrue(c *chk.C) {
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateAppendBlobPut(c, blobURL)
@@ -354,7 +352,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -364,7 +362,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateAppendBlobPut(c, blobURL)
@@ -378,7 +376,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchFalse(c *chk.C) {
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 

@@ -37,6 +37,7 @@ func NewClientProvidedKeyOptions(ek *string, eksha256 *string, es *string) (cpk 
 }
 
 type ImmutabilityPolicyOptions struct {
+	// A container with object-level immutability enabled is required for any options.
 	// Both ImmutabilityPolicy options must be filled to set an immutability policy.
 	ImmutabilityPolicyUntilDate *time.Time
 	ImmutabilityPolicyMode BlobImmutabilityPolicyModeType

@@ -3,10 +3,11 @@ package azblob
 import (
 	"bytes"
 	"crypto/md5"
-	chk "gopkg.in/check.v1"
 	"io/ioutil"
 	"net/url"
 	"time"
+
+	chk "gopkg.in/check.v1"
 )
 
 func CreateBlockBlobsForTesting(c *chk.C, size int) (ContainerURL, *SharedKeyCredential, *bytes.Reader, []uint8, [16]uint8, BlockBlobURL, BlockBlobURL) {
@@ -41,7 +42,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithMissingSAS(c *chk.C) {
 	defer deleteContainer(c, container)
 
 	// Prepare source blob for put.
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -56,7 +57,7 @@ func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 	defer deleteContainer(c, container)
 
 	// Setting blob tier as "cool"
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, AccessTierCool, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, AccessTierCool, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -93,7 +94,7 @@ func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
 	defer deleteContainer(c, container)
 
 	// Prepare source blob for copy.
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -139,7 +140,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 	container, credential, r, sourceData, sourceDataMD5Value, srcBlob, destBlob := CreateBlockBlobsForTesting(c, 4)
 	defer deleteContainer(c, container)
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(uploadSrcResp.Response().Header.Get("x-ms-version-id"), chk.NotNil)
@@ -196,7 +197,7 @@ func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 		"Javascript": "Android",
 	}
 
-	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := srcBlob.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 

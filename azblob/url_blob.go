@@ -339,6 +339,7 @@ func (b BlobURL) AbortCopyFromURL(ctx context.Context, copyID string, ac LeaseAc
 // While the immutability policy is active, the blob can be read but not modified or deleted.
 // For more information, see https://docs.microsoft.com/en-us/azure/storage/blobs/immutable-time-based-retention-policy-overview (Feature overview)
 // and https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-immutability-policy (REST API reference)
+// A container with object-level immutability enabled is required.
 func (b BlobURL) SetImmutabilityPolicy(ctx context.Context, expiry time.Time, mode BlobImmutabilityPolicyModeType, ifUnmodifiedSince *time.Time) (*BlobSetImmutabilityPolicyResponse, error) {
 	return b.blobClient.SetImmutabilityPolicy(ctx, nil, nil, ifUnmodifiedSince, &expiry, mode)
 }
@@ -347,6 +348,7 @@ func (b BlobURL) SetImmutabilityPolicy(ctx context.Context, expiry time.Time, mo
 // While the immutability policy is active, the blob can be read but not modified or deleted.
 // For more information, see https://docs.microsoft.com/en-us/azure/storage/blobs/immutable-time-based-retention-policy-overview (Feature overview)
 // and https://docs.microsoft.com/en-us/rest/api/storageservices/delete-blob-immutability-policy (REST API reference)
+// A container with object-level immutability enabled is required.
 func (b BlobURL) DeleteImmutabilityPolicy(ctx context.Context) (*BlobDeleteImmutabilityPolicyResponse, error) {
 	return b.blobClient.DeleteImmutabilityPolicy(ctx, nil, nil)
 }
@@ -355,6 +357,7 @@ func (b BlobURL) DeleteImmutabilityPolicy(ctx context.Context) (*BlobDeleteImmut
 // It stores the current blob version in a WORM (Write-Once Read-Many) state. While in effect, the blob can be read but not modified or deleted.
 // For more information, see https://docs.microsoft.com/en-us/azure/storage/blobs/immutable-legal-hold-overview (Feature overview)
 // and https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-legal-hold (REST API reference)
+// A container with object-level immutability enabled is required.
 func (b BlobURL) SetLegalHold(ctx context.Context, legalHold bool) (*BlobSetLegalHoldResponse, error) {
 	return b.blobClient.SetLegalHold(ctx, legalHold, nil, nil)
 }

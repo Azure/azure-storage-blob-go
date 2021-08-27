@@ -27,7 +27,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// test on a block blob URL. They all call the same thing on the base URL, so only one test is needed for that.
 	bbURL := cURL.NewBlockBlobURL(generateBlobName())
-	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	bAccInfo, err := bbURL.GetAccountInfo(ctx)
 	c.Assert(err, chk.IsNil)
@@ -224,7 +224,7 @@ func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL) {
 	r, _ := getRandomDataAndReader(testSize)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	cResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	cResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 

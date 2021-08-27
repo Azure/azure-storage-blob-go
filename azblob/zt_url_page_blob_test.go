@@ -1,11 +1,10 @@
 package azblob
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"io/ioutil"
-
-	"bytes"
 	"strings"
 	"time"
 
@@ -293,7 +292,7 @@ func (s *aztestsSuite) TestBlobCreatePageSizeInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, 1, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, 1, 0, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeInvalidHeaderValue)
 }
 
@@ -303,7 +302,7 @@ func (s *aztestsSuite) TestBlobCreatePageSequenceInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, -1, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, -1, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.Not(chk.IsNil))
 }
 
@@ -313,7 +312,7 @@ func (s *aztestsSuite) TestBlobCreatePageMetadataNonEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -326,7 +325,7 @@ func (s *aztestsSuite) TestBlobCreatePageMetadataEmpty(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -339,7 +338,7 @@ func (s *aztestsSuite) TestBlobCreatePageMetadataInvalid(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, Metadata{"In valid1": "bar"}, BlobAccessConditions{}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, Metadata{"In valid1": "bar"}, BlobAccessConditions{}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(strings.Contains(err.Error(), invalidHeaderErrorSubstring), chk.Equals, true)
 
 }
@@ -350,7 +349,7 @@ func (s *aztestsSuite) TestBlobCreatePageHTTPHeaders(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := getPageBlobURL(c, containerURL)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, basicHeaders, nil, BlobAccessConditions{}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, basicHeaders, nil, BlobAccessConditions{}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -373,7 +372,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfModifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validatePageBlobPut(c, blobURL)
@@ -387,7 +386,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfModifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfModifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -399,7 +398,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfUnmodifiedSinceTrue(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(10)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validatePageBlobPut(c, blobURL)
@@ -413,7 +412,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfUnmodifiedSinceFalse(c *chk.C) {
 
 	currentTime := getRelativeTimeGMT(-10)
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfUnmodifiedSince: currentTime}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -425,7 +424,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfMatchTrue(c *chk.C) {
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: resp.ETag()}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validatePageBlobPut(c, blobURL)
@@ -437,7 +436,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL) // Originally created without metadata
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -447,7 +446,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL) // Originally created without metadata
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validatePageBlobPut(c, blobURL)
@@ -461,7 +460,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfNoneMatchFalse(c *chk.C) {
 
 	resp, _ := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: resp.ETag()}}, DefaultPremiumBlobAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }

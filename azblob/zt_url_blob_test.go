@@ -131,7 +131,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataNil(c *chk.C) {
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Have the destination start with metadata so we ensure the nil metadata passed later takes effect
-	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), nil, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
@@ -152,7 +152,7 @@ func (s *aztestsSuite) TestBlobStartCopyMetadataEmpty(c *chk.C) {
 	copyBlobURL, _ := getBlockBlobURL(c, containerURL)
 
 	// Have the destination start with metadata so we ensure the empty metadata passed later takes effect
-	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := copyBlobURL.Upload(ctx, bytes.NewReader([]byte("data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	resp, err := copyBlobURL.StartCopyFromURL(ctx, blobURL.URL(), Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, DefaultAccessTier, nil)
@@ -593,7 +593,7 @@ func (s *aztestsSuite) TestBlobAbortCopyInProgress(c *chk.C) {
 	for i := range blobData {
 		blobData[i] = byte('a' + i%26)
 	}
-	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Upload(ctx, bytes.NewReader(blobData), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	containerURL.SetAccessPolicy(ctx, PublicAccessBlob, nil, ContainerAccessConditions{}) // So that we don't have to create a SAS
 
@@ -1930,17 +1930,67 @@ func (s *aztestsSuite) TestImmutabilityPolicyCreateDelete(c *chk.C) {
 	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
 	defer deleteContainer(c, cURL)
 
-	expiry := time.Now().Add(time.Second * 10)
+	expiry := time.Now().UTC().Add(time.Second * 10).Truncate(time.Second) // The service acts in seconds.
 
 	bURL, _ := createNewBlockBlob(c, cURL)
 	resp, err := bURL.SetImmutabilityPolicy(ctx, expiry, BlobImmutabilityPolicyModeUnlocked, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ImmutabilityPolicyMode(), chk.Equals, BlobImmutabilityPolicyModeUnlocked)
-	// c.Assert(resp.ImmutabilityPolicyExpiry(), chk.Equals, expiry)
+	c.Assert(resp.ImmutabilityPolicyExpiry().UTC(), chk.Equals, expiry)
 
 	_, err = bURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
 	c.Assert(err, chk.NotNil) // This should fail with a immutability policy.
 
 	_, err = bURL.DeleteImmutabilityPolicy(ctx)
+	c.Assert(err, chk.IsNil)
+}
+
+func (s *aztestsSuite) TestImmutabilityPolicyOnUpload(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, cURL)
+	bURL := cURL.NewBlockBlobURL("test")
+
+	expiry := time.Now().UTC().Add(time.Second * 30).Truncate(time.Second)
+
+	_, err := bURL.Upload(ctx, strings.NewReader("Hello world!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		ImmutabilityPolicyUntilDate: &expiry,
+		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+	})
+	c.Assert(err, chk.IsNil)
+
+
+	bgpr, err := bURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(bgpr.ImmutabilityPolicyExpiresOn().UTC(), chk.Equals, expiry)
+
+	_, err = bURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	c.Assert(err, chk.NotNil) // This should fail with a immutability policy.
+
+	_, err = bURL.DeleteImmutabilityPolicy(ctx)
+	c.Assert(err, chk.IsNil)
+}
+
+func (s *aztestsSuite) TestLegalHoldOnUpload(c *chk.C) {
+	bsu := getBSU()
+	cURL, _ := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, cURL)
+	bURL := cURL.NewBlockBlobURL("test")
+
+	holdState := true
+
+	_, err := bURL.Upload(ctx, strings.NewReader("Hello world!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		LegalHold: &holdState,
+	})
+	c.Assert(err, chk.IsNil)
+
+	bgpr, err := bURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(bgpr.LegalHold(), chk.Equals, "true")
+
+	_, err = bURL.Delete(ctx, DeleteSnapshotsOptionInclude, BlobAccessConditions{})
+	c.Assert(err, chk.NotNil) // This should fail with a immutability policy.
+
+	_, err = bURL.SetLegalHold(ctx, false)
 	c.Assert(err, chk.IsNil)
 }
