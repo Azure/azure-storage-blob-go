@@ -13,7 +13,7 @@ steps:
     go build ./azblob
   displayName: 'Compile the SDK'
 - script: |
-    go test -race -short -cover -v -timeout 20m ./azblob
+    GORACE=history_size=20 go test -race -short -cover -v -timeout 20m ./azblob
   env:
     ACCOUNT_NAME: $(ACCOUNT_NAME)
     ACCOUNT_KEY: $(ACCOUNT_KEY)
@@ -28,4 +28,3 @@ steps:
     TENANT_ID: $(TENANT_ID)
     SUBSCRIPTION_ID: $(SUBSCRIPTION_ID)
     RESOURCE_GROUP_NAME: $(RESOURCE_GROUP_NAME)
-    GORACE: history_size=7
