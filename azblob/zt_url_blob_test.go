@@ -1994,3 +1994,141 @@ func (s *aztestsSuite) TestLegalHoldOnUpload(c *chk.C) {
 	_, err = bURL.SetLegalHold(ctx, false)
 	c.Assert(err, chk.IsNil)
 }
+
+func (s *aztestsSuite) TestLegalHoldWithSAS(c *chk.C) {
+	cred, err := getGenericCredential("")
+	c.Assert(err, chk.IsNil)
+
+	bsu := getBSU()
+	akeyCURL, cName := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, akeyCURL, true)
+
+	containerParams, err := BlobSASSignatureValues{
+		Protocol:           SASProtocolHTTPS,
+		StartTime:          time.Now().UTC(),
+		ExpiryTime:         time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions:        ContainerSASPermissions{
+			Read: true,
+			Add: true,
+			Create: true,
+			Write: true,
+			Delete: true,
+			List: true,
+			Immutability: true,
+		}.String(),
+		ContainerName: cName,
+	}.NewSASQueryParameters(cred)
+	c.Assert(err, chk.IsNil)
+
+	accountParams, err := AccountSASSignatureValues{
+		Protocol: SASProtocolHTTPS,
+		StartTime: time.Now().UTC(),
+		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions: AccountSASPermissions{
+			Read: true,
+			Add: true,
+			Create: true,
+			Write: true,
+			Delete: true,
+			List: true,
+			Immutability: true,
+		}.String(),
+		Services: AccountSASServices{
+			Blob: true,
+		}.String(),
+		ResourceTypes: AccountSASResourceTypes{
+			Service: true,
+			Container: true,
+			Object: true,
+		}.String(),
+	}.NewSASQueryParameters(cred)
+	c.Assert(err, chk.IsNil)
+
+	baseURI := akeyCURL.URL()
+	cSASURI, err := url.Parse(baseURI.String() + "?" + containerParams.Encode())
+	c.Assert(err, chk.IsNil)
+	aSASURI, err := url.Parse(baseURI.String() + "?" + accountParams.Encode())
+
+	cSAS := NewContainerURL(*cSASURI, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+	aSAS := NewContainerURL(*aSASURI, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+
+	holdState := true
+
+	_, err = cSAS.NewBlockBlobURL("test").Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		LegalHold: &holdState,
+	})
+	c.Assert(err, chk.IsNil)
+
+	resp, err := aSAS.NewBlockBlobURL("test").SetLegalHold(ctx, false)
+	c.Assert(err, chk.IsNil)
+	c.Assert(resp.LegalHold(), chk.Not(chk.Equals), "true")
+}
+
+func (s *aztestsSuite) TestImmutabilityPolicyWithSAS(c *chk.C) {
+	cred, err := getGenericCredential("")
+	c.Assert(err, chk.IsNil)
+
+	bsu := getBSU()
+	akeyCURL, cName := createNewContainerWithVersionLevelWORM(c, bsu)
+	defer deleteContainer(c, akeyCURL, true)
+
+	containerParams, err := BlobSASSignatureValues{
+		Protocol:           SASProtocolHTTPS,
+		StartTime:          time.Now().UTC(),
+		ExpiryTime:         time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions:        ContainerSASPermissions{
+			Read: true,
+			Add: true,
+			Create: true,
+			Write: true,
+			Delete: true,
+			List: true,
+			Immutability: true,
+		}.String(),
+		ContainerName: cName,
+	}.NewSASQueryParameters(cred)
+	c.Assert(err, chk.IsNil)
+
+	accountParams, err := AccountSASSignatureValues{
+		Protocol: SASProtocolHTTPS,
+		StartTime: time.Now().UTC(),
+		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions: AccountSASPermissions{
+			Read: true,
+			Add: true,
+			Create: true,
+			Write: true,
+			Delete: true,
+			List: true,
+			Immutability: true,
+		}.String(),
+		Services: AccountSASServices{
+			Blob: true,
+		}.String(),
+		ResourceTypes: AccountSASResourceTypes{
+			Service: true,
+			Container: true,
+			Object: true,
+		}.String(),
+	}.NewSASQueryParameters(cred)
+	c.Assert(err, chk.IsNil)
+
+	baseURI := akeyCURL.URL()
+	cSASURI, err := url.Parse(baseURI.String() + "?" + containerParams.Encode())
+	c.Assert(err, chk.IsNil)
+	aSASURI, err := url.Parse(baseURI.String() + "?" + accountParams.Encode())
+
+	cSAS := NewContainerURL(*cSASURI, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+	aSAS := NewContainerURL(*aSASURI, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+
+	expiry := time.Now().UTC().Add(time.Hour).Truncate(time.Second)
+
+	_, err = cSAS.NewBlockBlobURL("test").Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
+		ImmutabilityPolicyUntilDate: &expiry,
+		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+	})
+	c.Assert(err, chk.IsNil)
+
+	_, err = aSAS.NewBlockBlobURL("test").DeleteImmutabilityPolicy(ctx)
+	c.Assert(err, chk.IsNil)
+}
