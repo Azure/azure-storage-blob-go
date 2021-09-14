@@ -257,7 +257,7 @@ func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
 	defer deleteContainer(c, containerURL)
 
-	// Create snapshot for second blob
+	// Create snapshot for blob
 	snapResp, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(snapResp, chk.NotNil)
 	c.Assert(err, chk.IsNil)
