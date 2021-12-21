@@ -29,7 +29,7 @@ func (s *aztestsSuite) TestAppendBlock(c *chk.C) {
 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
@@ -61,7 +61,7 @@ func (s *aztestsSuite) TestAppendBlockWithMD5(c *chk.C) {
 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendResp.ContentMD5(), chk.DeepEquals, md5Value[:])
 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
@@ -99,7 +99,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
@@ -131,7 +131,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendFromURLResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendFromURLResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendFromURLResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(appendFromURLResp.RequestID(), chk.Not(chk.Equals), "")
@@ -171,7 +171,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	c.Assert(appendResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.RequestID(), chk.Not(chk.Equals), "")
@@ -203,7 +203,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
 	c.Assert(appendFromURLResp.BlobCommittedBlockCount(), chk.Equals, int32(1))
-	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendFromURLResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendFromURLResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendFromURLResp.ContentMD5(), chk.DeepEquals, md5Value[:])
 	c.Assert(appendFromURLResp.RequestID(), chk.Not(chk.Equals), "")
@@ -354,7 +354,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -364,7 +364,7 @@ func (s *aztestsSuite) TestBlobCreateAppendIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateAppendBlobPut(c, blobURL)
@@ -488,7 +488,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -498,7 +498,7 @@ func (s *aztestsSuite) TestBlobAppendBlockIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewAppendBlob(c, containerURL)
 
-	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.AppendBlock(ctx, strings.NewReader(blockBlobDefaultData), AppendBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateBlockAppended(c, blobURL, len(blockBlobDefaultData))

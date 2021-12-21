@@ -107,7 +107,7 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, nil,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
 		cpk.EncryptionScope, // CPK-N
-		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, nil)
 }
 
 // CommitBlockList writes a blob by specifying the list of block IDs that make up the blob.
@@ -159,8 +159,7 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
 		// immutability policy
-		nil, BlobImmutabilityPolicyModeNone, nil,
-	)
+		nil, BlobImmutabilityPolicyModeNone, nil, nil)
 }
 
 // PutBlobFromURL synchronously creates a new Block Blob with data from the source URL up to a max length of 256MB.
@@ -177,5 +176,5 @@ func (bb BlockBlobURL) PutBlobFromURL(ctx context.Context, h BlobHTTPHeaders, so
 		metadata, dstLeaseID, &h.ContentDisposition, cpk.EncryptionKey, cpk.EncryptionKeySha256,
 		cpk.EncryptionAlgorithm, cpk.EncryptionScope, tier, dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag, nil, srcIfModifiedSince, srcIfUnmodifiedSince,
-		srcIfMatchETag, srcIfNoneMatchETag, nil, nil, srcContentMD5, blobTagsString, nil)
+		srcIfMatchETag, srcIfNoneMatchETag, nil, nil, srcContentMD5, blobTagsString, nil, nil)
 }

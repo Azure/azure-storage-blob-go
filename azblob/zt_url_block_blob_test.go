@@ -39,7 +39,7 @@ func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockList.Response().StatusCode, chk.Equals, 200)
 	c.Assert(blockList.LastModified().IsZero(), chk.Equals, true)
-	c.Assert(blockList.ETag(), chk.Equals, ETagNone)
+	c.Assert(blockList.ETag(), chk.Equals, "")
 	c.Assert(blockList.ContentType(), chk.Not(chk.Equals), "")
 	c.Assert(blockList.BlobContentLength(), chk.Equals, int64(-1))
 	c.Assert(blockList.RequestID(), chk.Not(chk.Equals), "")
@@ -52,7 +52,7 @@ func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(listResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(listResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(listResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(listResp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(listResp.Version(), chk.Not(chk.Equals), "")
@@ -62,7 +62,7 @@ func (s *aztestsSuite) TestStageGetBlocks(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(blockList.Response().StatusCode, chk.Equals, 200)
 	c.Assert(blockList.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(blockList.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(blockList.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(blockList.ContentType(), chk.Not(chk.Equals), "")
 	c.Assert(blockList.BlobContentLength(), chk.Equals, int64(1024))
 	c.Assert(blockList.RequestID(), chk.Not(chk.Equals), "")
@@ -442,7 +442,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfMatchFalse(c *chk.C) {
 	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -455,7 +455,7 @@ func (s *aztestsSuite) TestBlobPutBlobIfNoneMatchTrue(c *chk.C) {
 	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = blobURL.Upload(ctx, bytes.NewReader(nil), BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateUpload(c, blobURL)
@@ -816,7 +816,7 @@ func (s *aztestsSuite) TestBlobPutBlockListIfMatchFalse(c *chk.C) {
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
@@ -827,7 +827,7 @@ func (s *aztestsSuite) TestBlobPutBlockListIfNoneMatchTrue(c *chk.C) {
 	_, err := blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}) // The blob must actually exist to have a modifed time
 	c.Assert(err, chk.IsNil)
 
-	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = blobURL.CommitBlockList(ctx, []string{id}, BlobHTTPHeaders{}, nil, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateBlobCommitted(c, blobURL)

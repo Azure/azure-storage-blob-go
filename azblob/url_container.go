@@ -92,7 +92,7 @@ func (c ContainerURL) Create(ctx context.Context, metadata Metadata, publicAcces
 // Delete marks the specified container for deletion. The container and any blobs contained within it are later deleted during garbage collection.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/delete-container.
 func (c ContainerURL) Delete(ctx context.Context, ac ContainerAccessConditions) (*ContainerDeleteResponse, error) {
-	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+	if ac.IfMatch != "" || ac.IfNoneMatch != "" {
 		return nil, errors.New("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
 
@@ -112,7 +112,7 @@ func (c ContainerURL) GetProperties(ctx context.Context, ac LeaseAccessCondition
 // SetMetadata sets the container's metadata.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-container-metadata.
 func (c ContainerURL) SetMetadata(ctx context.Context, metadata Metadata, ac ContainerAccessConditions) (*ContainerSetMetadataResponse, error) {
-	if !ac.IfUnmodifiedSince.IsZero() || ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+	if !ac.IfUnmodifiedSince.IsZero() || ac.IfMatch != "" || ac.IfNoneMatch != "" {
 		return nil, errors.New("the IfUnmodifiedSince, IfMatch, and IfNoneMatch must have their default values because they are ignored by the blob service")
 	}
 	ifModifiedSince, _, _, _ := ac.ModifiedAccessConditions.pointers()
@@ -184,7 +184,7 @@ func (p *AccessPolicyPermission) Parse(s string) error {
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/set-container-acl.
 func (c ContainerURL) SetAccessPolicy(ctx context.Context, accessType PublicAccessType, si []SignedIdentifier,
 	ac ContainerAccessConditions) (*ContainerSetAccessPolicyResponse, error) {
-	if ac.IfMatch != ETagNone || ac.IfNoneMatch != ETagNone {
+	if ac.IfMatch != "" || ac.IfNoneMatch != "" {
 		return nil, errors.New("the IfMatch and IfNoneMatch access conditions must have their default values because they are ignored by the service")
 	}
 	ifModifiedSince, ifUnmodifiedSince, _, _ := ac.ModifiedAccessConditions.pointers()

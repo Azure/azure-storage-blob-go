@@ -369,7 +369,7 @@ func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(putResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(putResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.Version(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.rawResponse.Header.Get("x-ms-version-id"), chk.NotNil)
 

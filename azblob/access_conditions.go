@@ -8,22 +8,22 @@ import (
 type ModifiedAccessConditions struct {
 	IfModifiedSince   time.Time
 	IfUnmodifiedSince time.Time
-	IfMatch           ETag
-	IfNoneMatch       ETag
+	IfMatch           string
+	IfNoneMatch       string
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *ETag, inme *ETag) {
+func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *string, inme *string) {
 	if !ac.IfModifiedSince.IsZero() {
 		ims = &ac.IfModifiedSince
 	}
 	if !ac.IfUnmodifiedSince.IsZero() {
 		ius = &ac.IfUnmodifiedSince
 	}
-	if ac.IfMatch != ETagNone {
+	if ac.IfMatch != "" {
 		ime = &ac.IfMatch
 	}
-	if ac.IfNoneMatch != ETagNone {
+	if ac.IfNoneMatch != "" {
 		inme = &ac.IfNoneMatch
 	}
 	return

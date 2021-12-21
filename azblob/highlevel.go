@@ -20,7 +20,7 @@ import (
 // CommonResponse returns the headers common to all blob REST API responses.
 type CommonResponse interface {
 	// ETag returns the value for header ETag.
-	ETag() ETag
+	ETag() string
 
 	// LastModified returns the value for header Last-Modified.
 	LastModified() time.Time

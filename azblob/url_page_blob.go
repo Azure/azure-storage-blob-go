@@ -3,11 +3,10 @@ package azblob
 import (
 	"context"
 	"fmt"
+	"github.com/Azure/azure-pipeline-go/pipeline"
 	"io"
 	"net/url"
 	"strconv"
-
-	"github.com/Azure/azure-pipeline-go/pipeline"
 )
 
 const (
@@ -103,9 +102,11 @@ func (pb PageBlobURL) UploadPages(ctx context.Context, offset int64, body io.Rea
 // The count must be a multiple of 512 bytes.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-page-from-url.
 func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL, sourceOffset int64, destOffset int64, count int64, transactionalMD5 []byte, destinationAccessConditions PageBlobAccessConditions, sourceAccessConditions ModifiedAccessConditions, cpk ClientProvidedKeyOptions) (*PageBlobUploadPagesFromURLResponse, error) {
+
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := destinationAccessConditions.ModifiedAccessConditions.pointers()
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual := destinationAccessConditions.SequenceNumberAccessConditions.pointers()
+
 	return pb.pbClient.UploadPagesFromURL(ctx, sourceURL.String(), *PageRange{Start: sourceOffset, End: sourceOffset + count - 1}.pointers(), 0,
 		*PageRange{Start: destOffset, End: destOffset + count - 1}.pointers(), transactionalMD5, nil, nil,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK-V
@@ -114,7 +115,7 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, nil)
 }
 
 // ClearPages frees the specified pages from the page blob.

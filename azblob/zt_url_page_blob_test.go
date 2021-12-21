@@ -24,7 +24,7 @@ func (s *aztestsSuite) TestPutGetPages(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(putResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(putResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.ContentMD5(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.BlobSequenceNumber(), chk.Equals, int64(0))
 	c.Assert(putResp.RequestID(), chk.Not(chk.Equals), "")
@@ -35,7 +35,7 @@ func (s *aztestsSuite) TestPutGetPages(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(pageList.Response().StatusCode, chk.Equals, 200)
 	c.Assert(pageList.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(pageList.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(pageList.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(pageList.BlobContentLength(), chk.Equals, int64(512*10))
 	c.Assert(pageList.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(pageList.Version(), chk.Not(chk.Equals), "")
@@ -210,7 +210,7 @@ func (s *aztestsSuite) TestIncrementalCopy(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
 	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
 	c.Assert(resp.Date().IsZero(), chk.Equals, false)
@@ -273,7 +273,7 @@ func (s *aztestsSuite) TestPutPagesWithMD5(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(putResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(putResp.LastModified().IsZero(), chk.Equals, false)
-	c.Assert(putResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(putResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(putResp.ContentMD5(), chk.DeepEquals, md5Value[:])
 	c.Assert(putResp.BlobSequenceNumber(), chk.Equals, int64(0))
 	c.Assert(putResp.RequestID(), chk.Not(chk.Equals), "")
@@ -437,7 +437,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL) // Originally created without metadata
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -447,7 +447,7 @@ func (s *aztestsSuite) TestBlobCreatePageIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL) // Originally created without metadata
 
-	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.Create(ctx, PageBlobPageBytes, 0, BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, PremiumPageBlobAccessTierNone, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validatePageBlobPut(c, blobURL)
@@ -585,7 +585,7 @@ func (s *aztestsSuite) TestBlobPutPagesIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	_, err := blobURL.UploadPages(ctx, 0, getReaderToRandomBytes(PageBlobPageBytes), PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.UploadPages(ctx, 0, getReaderToRandomBytes(PageBlobPageBytes), PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -595,7 +595,7 @@ func (s *aztestsSuite) TestBlobPutPagesIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	_, err := blobURL.UploadPages(ctx, 0, getReaderToRandomBytes(PageBlobPageBytes), PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, nil, ClientProvidedKeyOptions{})
+	_, err := blobURL.UploadPages(ctx, 0, getReaderToRandomBytes(PageBlobPageBytes), PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateUploadPages(c, blobURL)
@@ -802,7 +802,7 @@ func (s *aztestsSuite) TestBlobClearPagesIfMatchFalse(c *chk.C) {
 	containerURL, blobURL := setupClearPagesTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.ClearPages(ctx, 0, PageBlobPageBytes, PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.ClearPages(ctx, 0, PageBlobPageBytes, PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -810,7 +810,7 @@ func (s *aztestsSuite) TestBlobClearPagesIfNoneMatchTrue(c *chk.C) {
 	containerURL, blobURL := setupClearPagesTest(c)
 	defer deleteContainer(c, containerURL)
 
-	_, err := blobURL.ClearPages(ctx, 0, PageBlobPageBytes, PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.ClearPages(ctx, 0, PageBlobPageBytes, PageBlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateClearPagesTest(c, blobURL)
@@ -1053,7 +1053,7 @@ func (s *aztestsSuite) TestBlobGetPageRangesIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	_, err := blobURL.GetPageRanges(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1062,7 +1062,7 @@ func (s *aztestsSuite) TestBlobGetPageRangesIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	resp, err := blobURL.GetPageRanges(ctx, 0, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}})
 	validateBasicGetPageRanges(c, resp, err)
 }
 
@@ -1180,7 +1180,7 @@ func (s *aztestsSuite) TestBlobDiffPageRangeIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	_, err := blobURL.GetPageRangesDiff(ctx, 0, 0, snapshot,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1189,7 +1189,7 @@ func (s *aztestsSuite) TestBlobDiffPageRangeIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	resp, err := blobURL.GetPageRangesDiff(ctx, 0, 0, snapshot,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}})
 	validateDiffPageRanges(c, resp, err)
 }
 
@@ -1317,7 +1317,7 @@ func (s *aztestsSuite) TestBlobResizeIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	_, err := blobURL.Resize(ctx, PageBlobPageBytes, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.Resize(ctx, PageBlobPageBytes, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1327,7 +1327,7 @@ func (s *aztestsSuite) TestBlobResizeIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
-	_, err := blobURL.Resize(ctx, PageBlobPageBytes, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.Resize(ctx, PageBlobPageBytes, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateResize(c, blobURL)
@@ -1452,7 +1452,7 @@ func (s *aztestsSuite) TestBlobSetSequenceNumberIfMatchFalse(c *chk.C) {
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
 	_, err := blobURL.UpdateSequenceNumber(ctx, SequenceNumberActionIncrement, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1463,7 +1463,7 @@ func (s *aztestsSuite) TestBlobSetSequenceNumberIfNoneMatchTrue(c *chk.C) {
 	blobURL, _ := createNewPageBlob(c, containerURL)
 
 	_, err := blobURL.UpdateSequenceNumber(ctx, SequenceNumberActionIncrement, 0,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}})
 	c.Assert(err, chk.IsNil)
 
 	validateSequenceNumberSet(c, blobURL)
@@ -1609,7 +1609,7 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopyIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	_, err := copyBlobURL.StartCopyIncremental(ctx, blobURL.URL(), snapshot,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}})
 	validateStorageError(c, err, ServiceCodeTargetConditionNotMet)
 }
 
@@ -1619,7 +1619,7 @@ func (s *aztestsSuite) TestBlobStartIncrementalCopyIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 
 	resp, err := copyBlobURL.StartCopyIncremental(ctx, blobURL.URL(), snapshot,
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}})
 	c.Assert(err, chk.IsNil)
 
 	validateIncrementalCopy(c, copyBlobURL, resp)

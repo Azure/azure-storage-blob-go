@@ -266,7 +266,7 @@ func (s *aztestsSuite) TestContainerAccessConditionsUnsupportedConditions(c *chk
 	containerURL, _ := createNewContainer(c, bsu)
 	defer deleteContainer(c, containerURL)
 
-	invalidEtag := ETag("invalid")
+	invalidEtag := "invalid"
 	_, err := containerURL.SetMetadata(ctx, basicMetadata,
 		ContainerAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: invalidEtag}})
 	c.Assert(err, chk.Not(chk.Equals), nil)

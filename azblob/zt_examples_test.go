@@ -513,7 +513,7 @@ func ExampleBlobAccessConditions() {
 	showResult(blobURL.Download(ctx, 0, 0, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: upload.ETag()}}, false, ClientProvidedKeyOptions{}))
 
 	// Upload content if the blob doesn't already exist (fails):
-	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETagAny}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}))
+	showResult(blobURL.Upload(ctx, strings.NewReader("Text-3"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "any"}}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}))
 }
 
 // This examples shows how to create a container with metadata and then how to read & update the metadata.

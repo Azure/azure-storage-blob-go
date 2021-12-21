@@ -27,7 +27,7 @@ type HTTPGetterInfo struct {
 
 	// ETag specifies the resource's etag that should be used when creating
 	// the HTTP GET request's If-Match header
-	ETag ETag
+	ETag string
 }
 
 // FailedReadNotifier is a function type that represents the notification function called when a read fails

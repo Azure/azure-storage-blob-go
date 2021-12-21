@@ -346,7 +346,7 @@ func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 		c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 		c.Assert(resp.BlobAppendOffset(), chk.Equals, strconv.Itoa(index*4))
 		c.Assert(resp.BlobCommittedBlockCount(), chk.Equals, int32(index+1))
-		c.Assert(resp.ETag(), chk.Not(chk.Equals), ETagNone)
+		c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
 		c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
 		c.Assert(resp.ContentMD5(), chk.Not(chk.Equals), "")
 		c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
@@ -388,7 +388,7 @@ func (s *aztestsSuite) TestAppendBlockWithCPKByScope(c *chk.C) {
 		c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 		c.Assert(resp.BlobAppendOffset(), chk.Equals, strconv.Itoa(index*4))
 		c.Assert(resp.BlobCommittedBlockCount(), chk.Equals, int32(index+1))
-		c.Assert(resp.ETag(), chk.Not(chk.Equals), ETagNone)
+		c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
 		c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
 		c.Assert(resp.ContentMD5(), chk.Not(chk.Equals), "")
 		c.Assert(resp.RequestID(), chk.Not(chk.Equals), "")
@@ -430,7 +430,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 
 	resp, err := blobURL.AppendBlock(context.Background(), r, AppendBlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
-	c.Assert(resp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(resp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(resp.ContentMD5(), chk.Not(chk.Equals), "")
 
@@ -455,7 +455,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 
 	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK)
 	c.Assert(err, chk.IsNil)
-	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
+	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), "")
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
 	c.Assert(appendResp.IsServerEncrypted(), chk.Equals, "true")
 

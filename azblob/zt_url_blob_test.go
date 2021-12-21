@@ -1338,7 +1338,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.GetProperties(ctx, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.NotNil)
 	serr := err.(StorageError)
 	c.Assert(serr.Response().StatusCode, chk.Equals, 412)
@@ -1353,7 +1353,7 @@ func (s *aztestsSuite) TestBlobGetPropsAndMetadataIfNoneMatchTrue(c *chk.C) {
 	_, err := blobURL.SetMetadata(ctx, basicMetadata, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
-	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.NewMetadata(), chk.DeepEquals, basicMetadata)
 }
@@ -1489,7 +1489,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesIfMatchFalse(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.SetHTTPHeaders(ctx, BlobHTTPHeaders{ContentDisposition: "my_disposition"},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1500,7 +1500,7 @@ func (s *aztestsSuite) TestBlobSetPropertiesIfNoneMatchTrue(c *chk.C) {
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
 	_, err := blobURL.SetHTTPHeaders(ctx, BlobHTTPHeaders{ContentDisposition: "my_disposition"},
-		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}})
+		BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}})
 	c.Assert(err, chk.IsNil)
 
 	validatePropertiesSet(c, blobURL, "my_disposition")
@@ -1644,7 +1644,7 @@ func (s *aztestsSuite) TestBlobSetMetadataIfMatchFalse(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.SetMetadata(ctx, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.SetMetadata(ctx, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	validateStorageError(c, err, ServiceCodeConditionNotMet)
 }
 
@@ -1654,7 +1654,7 @@ func (s *aztestsSuite) TestBlobSetMetadataIfNoneMatchTrue(c *chk.C) {
 	defer deleteContainer(c, containerURL)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err := blobURL.SetMetadata(ctx, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: ETag("garbage")}}, ClientProvidedKeyOptions{})
+	_, err := blobURL.SetMetadata(ctx, basicMetadata, BlobAccessConditions{ModifiedAccessConditions: ModifiedAccessConditions{IfNoneMatch: "garbage"}}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	validateMetadataSet(c, blobURL)

@@ -195,7 +195,7 @@ func (r DownloadResponse) Date() time.Time {
 }
 
 // ETag returns the value for header ETag.
-func (r DownloadResponse) ETag() ETag {
+func (r DownloadResponse) ETag() string {
 	return r.r.ETag()
 }
 
