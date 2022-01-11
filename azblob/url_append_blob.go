@@ -110,7 +110,7 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, nil)
 }
 
 type AppendBlobAccessConditions struct {

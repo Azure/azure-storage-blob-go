@@ -15,8 +15,8 @@ type BlobURL struct {
 
 type BlobTagsMap map[string]string
 
-var DefaultAccessTier AccessTierType = AccessTierNone
-var DefaultPremiumBlobAccessTier PremiumPageBlobAccessTierType = PremiumPageBlobAccessTierNone
+var DefaultAccessTier = AccessTierNone
+var DefaultPremiumBlobAccessTier = PremiumPageBlobAccessTierNone
 
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
@@ -115,7 +115,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 		httpRange{offset: offset, count: count}.pointers(),
 		ac.LeaseAccessConditions.pointers(), xRangeGetContentMD5, nil,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
-		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
+		ifModifiedSince, ifUnmodifiedSince, (*string)(ifMatchETag), (*string)(ifNoneMatchETag),
 		nil, // Blob ifTags
 		nil)
 	if err != nil {
@@ -125,7 +125,7 @@ func (b BlobURL) Download(ctx context.Context, offset int64, count int64, ac Blo
 		b:       b,
 		r:       dr,
 		ctx:     ctx,
-		getInfo: HTTPGetterInfo{Offset: offset, Count: count, ETag: dr.ETag()},
+		getInfo: HTTPGetterInfo{Offset: offset, Count: count, ETag: ETag(dr.ETag())},
 	}, err
 }
 
