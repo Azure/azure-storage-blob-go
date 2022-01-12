@@ -204,13 +204,13 @@ type BlobImmutabilityPolicyModeType string
 
 const (
 	// BlobImmutabilityPolicyModeLocked ...
-	BlobImmutabilityPolicyModeLocked BlobImmutabilityPolicyModeType = "Locked"
+	BlobImmutabilityPolicyModeLocked BlobImmutabilityPolicyModeType = "locked"
 	// BlobImmutabilityPolicyModeMutable ...
-	BlobImmutabilityPolicyModeMutable BlobImmutabilityPolicyModeType = "Mutable"
+	BlobImmutabilityPolicyModeMutable BlobImmutabilityPolicyModeType = "mutable"
 	// BlobImmutabilityPolicyModeNone represents an empty BlobImmutabilityPolicyModeType.
 	BlobImmutabilityPolicyModeNone BlobImmutabilityPolicyModeType = ""
 	// BlobImmutabilityPolicyModeUnlocked ...
-	BlobImmutabilityPolicyModeUnlocked BlobImmutabilityPolicyModeType = "Unlocked"
+	BlobImmutabilityPolicyModeUnlocked BlobImmutabilityPolicyModeType = "unlocked"
 )
 
 // PossibleBlobImmutabilityPolicyModeTypeValues returns an array of possible values for the BlobImmutabilityPolicyModeType const type.
@@ -5529,7 +5529,7 @@ func (dr downloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
 
 // ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
 func (dr downloadResponse) ImmutabilityPolicyMode() string {
-	return dr.rawResponse.Header.Get("x-ms-immutability-policy-mode")
+	return string(dr.rawResponse.Header.Get("x-ms-immutability-policy-mode"))
 }
 
 // IsCurrentVersion returns the value for header x-ms-is-current-version.

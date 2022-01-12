@@ -192,8 +192,8 @@ func getCanonicalName(account string, containerName string, blobName string, dir
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
 // All permissions descriptions can be found here: https://docs.microsoft.com/en-us/rest/api/storageservices/create-service-sas#permissions-for-a-directory-container-or-blob
 type ContainerSASPermissions struct {
-	Read, Add, Create, Write, Delete, DeletePreviousVersion, List, Tag bool
-	Execute, ModifyOwnership, ModifyPermissions                        bool // Hierarchical Namespace only
+	Read, Add, Create, Write, Delete, DeletePreviousVersion, List, Tag, Immutability bool
+	Execute, ModifyOwnership, ModifyPermissions                                      bool // Hierarchical Namespace only
 }
 
 // String produces the SAS permissions string for an Azure Storage container.
@@ -233,6 +233,9 @@ func (p ContainerSASPermissions) String() string {
 	if p.ModifyPermissions {
 		b.WriteRune('p')
 	}
+	if p.Immutability {
+		b.WriteRune('i')
+	}
 	return b.String()
 }
 
@@ -263,6 +266,8 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 			p.ModifyOwnership = true
 		case 'p':
 			p.ModifyPermissions = true
+		case 'i':
+			p.Immutability = true
 		default:
 			return fmt.Errorf("invalid permission: '%v'", r)
 		}
@@ -273,7 +278,7 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 // The BlobSASPermissions type simplifies creating the permissions string for an Azure Storage blob SAS.
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
 type BlobSASPermissions struct {
-	Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List, Move, Execute, Ownership, Permissions bool
+	Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List, Move, Execute, Ownership, Permissions, Immutability bool
 }
 
 // String produces the SAS permissions string for an Azure Storage blob.
@@ -316,6 +321,9 @@ func (p BlobSASPermissions) String() string {
 	if p.Permissions {
 		b.WriteRune('p')
 	}
+	if p.Immutability {
+		b.WriteRune('i')
+	}
 	return b.String()
 }
 
@@ -348,6 +356,8 @@ func (p *BlobSASPermissions) Parse(s string) error {
 			p.Ownership = true
 		case 'p':
 			p.Permissions = true
+		case 'i':
+			p.Immutability = true
 		default:
 			return fmt.Errorf("invalid permission: '%v'", r)
 		}

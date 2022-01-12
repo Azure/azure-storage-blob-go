@@ -2,11 +2,12 @@ package azblob
 
 import (
 	"bytes"
-	"github.com/Azure/azure-pipeline-go/pipeline"
-	chk "gopkg.in/check.v1"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/Azure/azure-pipeline-go/pipeline"
+	chk "gopkg.in/check.v1"
 )
 
 func CreateUserDelegationKey(c *chk.C) (containerURL ContainerURL, containerName string, blobURL BlockBlobURL, blobName string, budk UserDelegationCredential, currentTime time.Time, p pipeline.Pipeline) {
@@ -15,13 +16,13 @@ func CreateUserDelegationKey(c *chk.C) (containerURL ContainerURL, containerName
 	containerURL, containerName = getContainerURL(c, bsu)
 	blobURL, blobName = getBlockBlobURL(c, containerURL)
 	currentTime = time.Now().UTC().Add(-10 * time.Second)
-	ocred, err := getOAuthCredential("")
+	ocred, err := getOAuthCredential("", "")
 	if err != nil {
 		c.Fatal(err)
 	}
 
 	// Create pipeline to handle requests
-	p = NewPipeline(*ocred, PipelineOptions{})
+	p = NewPipeline(ocred, PipelineOptions{})
 
 	// Prepare user delegation key
 	bsu = bsu.WithPipeline(p)
@@ -90,7 +91,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainerNoPermissions(c *chk.C) {
 
 	// Create blob; upload returns err due to lack of permissions
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.NotNil)
 }
 
@@ -125,7 +126,7 @@ func (s *aztestsSuite) TestUserDelegationSASContainerAllPermissions(c *chk.C) {
 	cSASURL := NewContainerURL(cURL, p)
 
 	bblob := cSASURL.NewBlockBlobURL("test")
-	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = bblob.Upload(ctx, strings.NewReader("hello world!"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}
@@ -184,7 +185,7 @@ func (s *aztestsSuite) TestUserDelegationSASBlobAllPermissions(c *chk.C) {
 		c.Fatal(err)
 	}
 	data := "Hello World!"
-	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = blobURL.Upload(ctx, strings.NewReader(data), BlobHTTPHeaders{ContentType: "text/plain"}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	if err != nil {
 		c.Fatal(err)
 	}

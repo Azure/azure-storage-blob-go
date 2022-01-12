@@ -65,9 +65,33 @@ directive:
     where: $.parameters.ImmutabilityPolicyMode
     transform: >
       $.enum = [
-        "Mutable",
-        "Unlocked",
-        "Locked"
+        "mutable",
+        "unlocked",
+        "locked"
+      ]
+```
+
+```yaml
+directive:
+ - from: swagger-document
+   where: $["x-ms-paths"].*.*.responses.*.headers["x-ms-immutability-policy-mode"]
+   transform: >
+     $.enum = [
+        "mutable",
+        "unlocked",
+        "locked"
+      ]
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.BlobPropertiesInternal.properties.ImmutabilityPolicyMode
+    transform: >
+      $.enum = [
+        "mutable",
+        "unlocked",
+        "locked"
       ]
 ```
 
