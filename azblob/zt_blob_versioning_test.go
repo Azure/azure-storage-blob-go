@@ -353,10 +353,6 @@ func (s *aztestsSuite) TestPutBlockListReturnsVID(c *chk.C) {
 	c.Assert(contentData, chk.DeepEquals, []uint8(strings.Join(data, "")))
 }
 
-func (s *aztestsSuite) TestSyncCopyBlobReturnsVID(c *chk.C) {
-
-}
-
 func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
@@ -374,4 +370,74 @@ func (s *aztestsSuite) TestCreatePageBlobReturnsVID(c *chk.C) {
 	gpResp, err := blob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(gpResp, chk.NotNil)
+}
+
+func (s *aztestsSuite) TestListBlobsIncludeDeletedWithVersion(c *chk.C) {
+	bsu := getBSU()
+	containerURL, _ := createNewContainer(c, bsu)
+	defer deleteContainer(c, containerURL, false)
+
+	blob1name := "blob1"
+	blob1 := containerURL.NewBlockBlobURL(blob1name)
+	data1 := "hello world"
+	cResp, err := blob1.Upload(ctx, strings.NewReader(data1), BlobHTTPHeaders{ContentLanguage: "spanish", ContentDisposition: "inline"},
+		Metadata{"number": "1", "name": "bob"}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
+	c.Assert(err, chk.IsNil)
+	versionId1 := cResp.VersionID()
+
+	data2 := "hello again world!!"
+	cResp, err = blob1.Upload(ctx, strings.NewReader(data2), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
+	c.Assert(err, chk.IsNil)
+	versionId2 := cResp.VersionID()
+
+	data3 := "hello yet again world!!"
+	cResp, err = blob1.Upload(ctx, strings.NewReader(data3), BlobHTTPHeaders{},
+		nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
+	c.Assert(err, chk.IsNil)
+	versionId3 := cResp.VersionID()
+
+	_, err = blob1.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+
+	blob2name := "blob2"
+	blob2 := containerURL.NewBlockBlobURL(blob2name)
+	_, err = blob2.Upload(ctx, strings.NewReader("this is blob 2"), BlobHTTPHeaders{ContentLanguage: "spanish", ContentDisposition: "inline"},
+		Metadata{"number": "2", "name": "car"}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
+	c.Assert(err, chk.IsNil)
+
+	blob3name := "blob3"
+	blob3 := containerURL.NewBlockBlobURL(blob3name)
+	_, err = blob3.Upload(ctx, strings.NewReader("this is blob 3"), BlobHTTPHeaders{ContentLanguage: "spanish", ContentDisposition: "inline"},
+		Metadata{"number": "2", "name": "car"}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
+	c.Assert(err, chk.IsNil)
+
+	listBlobResp, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{DeletedWithVersions: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobResp.Segment.BlobItems[0].Name, chk.Equals, blob1name)
+	c.Assert(*listBlobResp.Segment.BlobItems[0].HasVersionsOnly, chk.Equals, true)
+
+	c.Assert(listBlobResp.Segment.BlobItems[1].Name, chk.Equals, blob2name)
+	c.Assert(listBlobResp.Segment.BlobItems[1].HasVersionsOnly, chk.IsNil)
+
+	c.Assert(listBlobResp.Segment.BlobItems[2].Name, chk.Equals, blob3name)
+	c.Assert(listBlobResp.Segment.BlobItems[2].HasVersionsOnly, chk.IsNil)
+
+	dResp, err := blob1.WithVersionID(versionId1).Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	d1, err := ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
+	c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(string(d1), chk.DeepEquals, data1)
+
+	dResp, err = blob1.WithVersionID(versionId2).Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	d1, err = ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
+	c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(string(d1), chk.DeepEquals, data2)
+
+	dResp, err = blob1.WithVersionID(versionId3).Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.IsNil)
+	d1, err = ioutil.ReadAll(dResp.Body(RetryReaderOptions{}))
+	c.Assert(dResp.Version(), chk.Not(chk.Equals), "")
+	c.Assert(string(d1), chk.DeepEquals, data3)
 }
