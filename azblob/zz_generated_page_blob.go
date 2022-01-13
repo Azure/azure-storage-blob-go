@@ -51,7 +51,7 @@ func newPageBlobClient(url url.URL, p pipeline.Pipeline) pageBlobClient {
 // without a matching value. ifTags is specify a SQL where clause on blob tags to operate only on blobs with a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) ClearPages(ctx context.Context, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageBlobClearPagesResponse, error) {
+func (client pageBlobClient) ClearPages(ctx context.Context, contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageBlobClearPagesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -70,7 +70,7 @@ func (client pageBlobClient) ClearPages(ctx context.Context, contentLength int64
 }
 
 // clearPagesPreparer prepares the ClearPages request.
-func (client pageBlobClient) clearPagesPreparer(contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) clearPagesPreparer(contentLength int64, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -116,10 +116,10 @@ func (client pageBlobClient) clearPagesPreparer(contentLength int64, timeout *in
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -160,7 +160,7 @@ func (client pageBlobClient) clearPagesResponder(resp pipeline.Response) (pipeli
 // matching value. ifTags is specify a SQL where clause on blob tags to operate only on blobs with a matching value.
 // requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics
 // logs when storage analytics logging is enabled.
-func (client pageBlobClient) CopyIncremental(ctx context.Context, copySource string, timeout *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageBlobCopyIncrementalResponse, error) {
+func (client pageBlobClient) CopyIncremental(ctx context.Context, copySource string, timeout *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageBlobCopyIncrementalResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -179,7 +179,7 @@ func (client pageBlobClient) CopyIncremental(ctx context.Context, copySource str
 }
 
 // copyIncrementalPreparer prepares the CopyIncremental request.
-func (client pageBlobClient) copyIncrementalPreparer(copySource string, timeout *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) copyIncrementalPreparer(copySource string, timeout *int32, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -197,10 +197,10 @@ func (client pageBlobClient) copyIncrementalPreparer(copySource string, timeout 
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -264,7 +264,7 @@ func (client pageBlobClient) copyIncrementalResponder(resp pipeline.Response) (p
 // immutabilityPolicyExpiry is specifies the date time when the blobs immutability policy is set to expire.
 // immutabilityPolicyMode is specifies the immutability policy mode to set on the blob. legalHold is specified if a
 // legal hold should be set on the blob.
-func (client pageBlobClient) Create(ctx context.Context, contentLength int64, blobContentLength int64, timeout *int32, tier PremiumPageBlobAccessTierType, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, blobSequenceNumber *int64, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*PageBlobCreateResponse, error) {
+func (client pageBlobClient) Create(ctx context.Context, contentLength int64, blobContentLength int64, timeout *int32, tier PremiumPageBlobAccessTierType, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, blobSequenceNumber *int64, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*PageBlobCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -283,7 +283,7 @@ func (client pageBlobClient) Create(ctx context.Context, contentLength int64, bl
 }
 
 // createPreparer prepares the Create request.
-func (client pageBlobClient) createPreparer(contentLength int64, blobContentLength int64, timeout *int32, tier PremiumPageBlobAccessTierType, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, blobSequenceNumber *int64, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
+func (client pageBlobClient) createPreparer(contentLength int64, blobContentLength int64, timeout *int32, tier PremiumPageBlobAccessTierType, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, blobSequenceNumber *int64, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -342,10 +342,10 @@ func (client pageBlobClient) createPreparer(contentLength int64, blobContentLeng
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -402,7 +402,7 @@ func (client pageBlobClient) createResponder(resp pipeline.Response) (pipeline.R
 // where clause on blob tags to operate only on blobs with a matching value. requestID is provides a client-generated,
 // opaque value with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is
 // enabled.
-func (client pageBlobClient) GetPageRanges(ctx context.Context, snapshot *string, timeout *int32, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageList, error) {
+func (client pageBlobClient) GetPageRanges(ctx context.Context, snapshot *string, timeout *int32, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageList, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -421,7 +421,7 @@ func (client pageBlobClient) GetPageRanges(ctx context.Context, snapshot *string
 }
 
 // getPageRangesPreparer prepares the GetPageRanges request.
-func (client pageBlobClient) getPageRangesPreparer(snapshot *string, timeout *int32, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) getPageRangesPreparer(snapshot *string, timeout *int32, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -448,10 +448,10 @@ func (client pageBlobClient) getPageRangesPreparer(snapshot *string, timeout *in
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -511,7 +511,7 @@ func (client pageBlobClient) getPageRangesResponder(resp pipeline.Response) (pip
 // value to operate only on blobs without a matching value. ifTags is specify a SQL where clause on blob tags to
 // operate only on blobs with a matching value. requestID is provides a client-generated, opaque value with a 1 KB
 // character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) GetPageRangesDiff(ctx context.Context, snapshot *string, timeout *int32, prevsnapshot *string, prevSnapshotURL *string, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageList, error) {
+func (client pageBlobClient) GetPageRangesDiff(ctx context.Context, snapshot *string, timeout *int32, prevsnapshot *string, prevSnapshotURL *string, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageList, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -530,7 +530,7 @@ func (client pageBlobClient) GetPageRangesDiff(ctx context.Context, snapshot *st
 }
 
 // getPageRangesDiffPreparer prepares the GetPageRangesDiff request.
-func (client pageBlobClient) getPageRangesDiffPreparer(snapshot *string, timeout *int32, prevsnapshot *string, prevSnapshotURL *string, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) getPageRangesDiffPreparer(snapshot *string, timeout *int32, prevsnapshot *string, prevSnapshotURL *string, rangeParameter *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("GET", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -563,10 +563,10 @@ func (client pageBlobClient) getPageRangesDiffPreparer(snapshot *string, timeout
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -625,7 +625,7 @@ func (client pageBlobClient) getPageRangesDiffResponder(resp pipeline.Response) 
 // SQL where clause on blob tags to operate only on blobs with a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client pageBlobClient) Resize(ctx context.Context, blobContentLength int64, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageBlobResizeResponse, error) {
+func (client pageBlobClient) Resize(ctx context.Context, blobContentLength int64, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageBlobResizeResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -644,7 +644,7 @@ func (client pageBlobClient) Resize(ctx context.Context, blobContentLength int64
 }
 
 // resizePreparer prepares the Resize request.
-func (client pageBlobClient) resizePreparer(blobContentLength int64, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) resizePreparer(blobContentLength int64, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -677,10 +677,10 @@ func (client pageBlobClient) resizePreparer(blobContentLength int64, timeout *in
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -719,7 +719,7 @@ func (client pageBlobClient) resizeResponder(resp pipeline.Response) (pipeline.R
 // is set for page blobs only. The sequence number is a user-controlled value that you can use to track requests. The
 // value of the sequence number must be between 0 and 2^63 - 1. requestID is provides a client-generated, opaque value
 // with a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) UpdateSequenceNumber(ctx context.Context, sequenceNumberAction SequenceNumberActionType, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, blobSequenceNumber *int64, requestID *string) (*PageBlobUpdateSequenceNumberResponse, error) {
+func (client pageBlobClient) UpdateSequenceNumber(ctx context.Context, sequenceNumberAction SequenceNumberActionType, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, blobSequenceNumber *int64, requestID *string) (*PageBlobUpdateSequenceNumberResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -738,7 +738,7 @@ func (client pageBlobClient) UpdateSequenceNumber(ctx context.Context, sequenceN
 }
 
 // updateSequenceNumberPreparer prepares the UpdateSequenceNumber request.
-func (client pageBlobClient) updateSequenceNumberPreparer(sequenceNumberAction SequenceNumberActionType, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) updateSequenceNumberPreparer(sequenceNumberAction SequenceNumberActionType, timeout *int32, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, blobSequenceNumber *int64, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -759,10 +759,10 @@ func (client pageBlobClient) updateSequenceNumberPreparer(sequenceNumberAction S
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -816,7 +816,7 @@ func (client pageBlobClient) updateSequenceNumberResponder(resp pipeline.Respons
 // without a matching value. ifTags is specify a SQL where clause on blob tags to operate only on blobs with a matching
 // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
 // analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*PageBlobUploadPagesResponse, error) {
+func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*PageBlobUploadPagesResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -837,7 +837,7 @@ func (client pageBlobClient) UploadPages(ctx context.Context, body io.ReadSeeker
 }
 
 // uploadPagesPreparer prepares the UploadPages request.
-func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLength int64, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, timeout *int32, rangeParameter *string, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -889,10 +889,10 @@ func (client pageBlobClient) uploadPagesPreparer(body io.ReadSeeker, contentLeng
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -949,15 +949,16 @@ func (client pageBlobClient) uploadPagesResponder(resp pipeline.Response) (pipel
 // operate only on a blob if it has not been modified since the specified date/time. sourceIfMatch is specify an ETag
 // value to operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate only on
 // blobs without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit
-// that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client pageBlobClient) UploadPagesFromURL(ctx context.Context, sourceURL string, sourceRange string, contentLength int64, rangeParameter string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*PageBlobUploadPagesFromURLResponse, error) {
+// that is recorded in the analytics logs when storage analytics logging is enabled. copySourceAuthorization is only
+// Bearer type is supported. Credentials should be a valid OAuth access token to copy source.
+func (client pageBlobClient) UploadPagesFromURL(ctx context.Context, sourceURL string, sourceRange string, contentLength int64, rangeParameter string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string, copySourceAuthorization *string) (*PageBlobUploadPagesFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.uploadPagesFromURLPreparer(sourceURL, sourceRange, contentLength, rangeParameter, sourceContentMD5, sourceContentcrc64, timeout, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
+	req, err := client.uploadPagesFromURLPreparer(sourceURL, sourceRange, contentLength, rangeParameter, sourceContentMD5, sourceContentcrc64, timeout, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, leaseID, ifSequenceNumberLessThanOrEqualTo, ifSequenceNumberLessThan, ifSequenceNumberEqualTo, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID, copySourceAuthorization)
 	if err != nil {
 		return nil, err
 	}
@@ -969,7 +970,7 @@ func (client pageBlobClient) UploadPagesFromURL(ctx context.Context, sourceURL s
 }
 
 // uploadPagesFromURLPreparer prepares the UploadPagesFromURL request.
-func (client pageBlobClient) uploadPagesFromURLPreparer(sourceURL string, sourceRange string, contentLength int64, rangeParameter string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client pageBlobClient) uploadPagesFromURLPreparer(sourceURL string, sourceRange string, contentLength int64, rangeParameter string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, ifSequenceNumberLessThanOrEqualTo *int64, ifSequenceNumberLessThan *int64, ifSequenceNumberEqualTo *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string, copySourceAuthorization *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -1021,10 +1022,10 @@ func (client pageBlobClient) uploadPagesFromURLPreparer(sourceURL string, source
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", string(*ifMatch))
+		req.Header.Set("If-Match", *ifMatch)
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", string(*ifNoneMatch))
+		req.Header.Set("If-None-Match", *ifNoneMatch)
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -1036,14 +1037,17 @@ func (client pageBlobClient) uploadPagesFromURLPreparer(sourceURL string, source
 		req.Header.Set("x-ms-source-if-unmodified-since", (*sourceIfUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if sourceIfMatch != nil {
-		req.Header.Set("x-ms-source-if-match", string(*sourceIfMatch))
+		req.Header.Set("x-ms-source-if-match", *sourceIfMatch)
 	}
 	if sourceIfNoneMatch != nil {
-		req.Header.Set("x-ms-source-if-none-match", string(*sourceIfNoneMatch))
+		req.Header.Set("x-ms-source-if-none-match", *sourceIfNoneMatch)
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
 		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	if copySourceAuthorization != nil {
+		req.Header.Set("x-ms-copy-source-authorization", *copySourceAuthorization)
 	}
 	req.Header.Set("x-ms-page-write", "update")
 	return req, nil

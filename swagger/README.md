@@ -11,13 +11,32 @@ gofmt -w Go_BlobStorage/*
 
 ### Settings
 ``` yaml
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/storage-dataplane-preview/specification/storage/data-plane/Microsoft.BlobStorage/preview/2020-08-04/blob.json
+input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/main/specification/storage/data-plane/Microsoft.BlobStorage/preview/2020-10-02/blob.json
 go: true
 output-folder: Go_BlobStorage
 namespace: azblob
 go-export-clients: false
 enable-xml: true
 file-prefix: zz_generated_
+```
+
+### Remove ContainerName and BlobName from parameter list since they are not needed
+```yaml
+directive:
+- from: swagger-document
+  where: $["x-ms-paths"]
+  transform: >
+    for (const property in $)
+    {
+        if (property.includes('/{containerName}/{blob}'))
+        {
+            $[property]["parameters"] = $[property]["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/ContainerName") && false == param['$ref'].endsWith("#/parameters/Blob"))});
+        } 
+        else if (property.includes('/{containerName}'))
+        {
+            $[property]["parameters"] = $[property]["parameters"].filter(function(param) { return (typeof param['$ref'] === "undefined") || (false == param['$ref'].endsWith("#/parameters/ContainerName"))});
+        }
+    }
 ```
 
 ### Set blob metadata to the right type

@@ -52,7 +52,7 @@ func newDirectoryClient(url url.URL, p pipeline.Pipeline) directoryClient {
 // value. ifNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides
 // a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client directoryClient) Create(ctx context.Context, timeout *int32, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*DirectoryCreateResponse, error) {
+func (client directoryClient) Create(ctx context.Context, timeout *int32, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, requestID *string) (*DirectoryCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -71,7 +71,7 @@ func (client directoryClient) Create(ctx context.Context, timeout *int32, direct
 }
 
 // createPreparer prepares the Create request.
-func (client directoryClient) createPreparer(timeout *int32, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client directoryClient) createPreparer(timeout *int32, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -155,7 +155,7 @@ func (client directoryClient) createResponder(resp pipeline.Response) (pipeline.
 // ifMatch is specify an ETag value to operate only on blobs with a matching value. ifNoneMatch is specify an ETag
 // value to operate only on blobs without a matching value. requestID is provides a client-generated, opaque value with
 // a 1 KB character limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client directoryClient) Delete(ctx context.Context, recursiveDirectoryDelete bool, timeout *int32, marker *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (*DirectoryDeleteResponse, error) {
+func (client directoryClient) Delete(ctx context.Context, recursiveDirectoryDelete bool, timeout *int32, marker *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, requestID *string) (*DirectoryDeleteResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -174,7 +174,7 @@ func (client directoryClient) Delete(ctx context.Context, recursiveDirectoryDele
 }
 
 // deletePreparer prepares the Delete request.
-func (client directoryClient) deletePreparer(recursiveDirectoryDelete bool, timeout *int32, marker *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client directoryClient) deletePreparer(recursiveDirectoryDelete bool, timeout *int32, marker *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("DELETE", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -235,7 +235,7 @@ func (client directoryClient) deleteResponder(resp pipeline.Response) (pipeline.
 // the specified date/time. ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been
 // modified since the specified date/time. requestID is provides a client-generated, opaque value with a 1 KB character
 // limit that is recorded in the analytics logs when storage analytics logging is enabled.
-func (client directoryClient) GetAccessControl(ctx context.Context, timeout *int32, upn *bool, leaseID *string, ifMatch *ETag, ifNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*DirectoryGetAccessControlResponse, error) {
+func (client directoryClient) GetAccessControl(ctx context.Context, timeout *int32, upn *bool, leaseID *string, ifMatch *string, ifNoneMatch *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*DirectoryGetAccessControlResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -254,7 +254,7 @@ func (client directoryClient) GetAccessControl(ctx context.Context, timeout *int
 }
 
 // getAccessControlPreparer prepares the GetAccessControl request.
-func (client directoryClient) getAccessControlPreparer(timeout *int32, upn *bool, leaseID *string, ifMatch *ETag, ifNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
+func (client directoryClient) getAccessControlPreparer(timeout *int32, upn *bool, leaseID *string, ifMatch *string, ifNoneMatch *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("HEAD", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -339,7 +339,7 @@ func (client directoryClient) getAccessControlResponder(resp pipeline.Response) 
 // operate only on blobs with a matching value. sourceIfNoneMatch is specify an ETag value to operate only on blobs
 // without a matching value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client directoryClient) Rename(ctx context.Context, renameSource string, timeout *int32, marker *string, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, sourceLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*DirectoryRenameResponse, error) {
+func (client directoryClient) Rename(ctx context.Context, renameSource string, timeout *int32, marker *string, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, sourceLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string) (*DirectoryRenameResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -358,7 +358,7 @@ func (client directoryClient) Rename(ctx context.Context, renameSource string, t
 }
 
 // renamePreparer prepares the Rename request.
-func (client directoryClient) renamePreparer(renameSource string, timeout *int32, marker *string, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, sourceLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client directoryClient) renamePreparer(renameSource string, timeout *int32, marker *string, directoryProperties *string, posixPermissions *string, posixUmask *string, cacheControl *string, contentType *string, contentEncoding *string, contentLanguage *string, contentDisposition *string, leaseID *string, sourceLeaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -465,7 +465,7 @@ func (client directoryClient) renameResponder(resp pipeline.Response) (pipeline.
 // ifUnmodifiedSince is specify this header value to operate only on a blob if it has not been modified since the
 // specified date/time. requestID is provides a client-generated, opaque value with a 1 KB character limit that is
 // recorded in the analytics logs when storage analytics logging is enabled.
-func (client directoryClient) SetAccessControl(ctx context.Context, timeout *int32, leaseID *string, owner *string, group *string, posixPermissions *string, posixACL *string, ifMatch *ETag, ifNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*DirectorySetAccessControlResponse, error) {
+func (client directoryClient) SetAccessControl(ctx context.Context, timeout *int32, leaseID *string, owner *string, group *string, posixPermissions *string, posixACL *string, ifMatch *string, ifNoneMatch *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (*DirectorySetAccessControlResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -484,7 +484,7 @@ func (client directoryClient) SetAccessControl(ctx context.Context, timeout *int
 }
 
 // setAccessControlPreparer prepares the SetAccessControl request.
-func (client directoryClient) setAccessControlPreparer(timeout *int32, leaseID *string, owner *string, group *string, posixPermissions *string, posixACL *string, ifMatch *ETag, ifNoneMatch *ETag, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
+func (client directoryClient) setAccessControlPreparer(timeout *int32, leaseID *string, owner *string, group *string, posixPermissions *string, posixACL *string, ifMatch *string, ifNoneMatch *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PATCH", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")

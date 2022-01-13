@@ -16,8 +16,8 @@ type BlobURL struct {
 
 type BlobTagsMap map[string]string
 
-var DefaultAccessTier AccessTierType = AccessTierNone
-var DefaultPremiumBlobAccessTier PremiumPageBlobAccessTierType = PremiumPageBlobAccessTierNone
+var DefaultAccessTier = AccessTierNone
+var DefaultPremiumBlobAccessTier = PremiumPageBlobAccessTierNone
 
 // NewBlobURL creates a BlobURL object using the specified URL and request policy pipeline.
 func NewBlobURL(url url.URL, p pipeline.Pipeline) BlobURL {
@@ -361,4 +361,3 @@ func (b BlobURL) DeleteImmutabilityPolicy(ctx context.Context) (*BlobDeleteImmut
 func (b BlobURL) SetLegalHold(ctx context.Context, legalHold bool) (*BlobSetLegalHoldResponse, error) {
 	return b.blobClient.SetLegalHold(ctx, legalHold, nil, nil)
 }
-

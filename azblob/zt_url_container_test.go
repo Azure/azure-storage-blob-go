@@ -1089,7 +1089,7 @@ func (s *aztestsSuite) TestListLegalHoldsImmutabilityPolicies(c *chk.C) {
 
 	_, err = aURL.Create(ctx, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
 		ImmutabilityPolicyUntilDate: &expiry,
-		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+		ImmutabilityPolicyMode:      BlobImmutabilityPolicyModeUnlocked,
 	})
 	c.Assert(err, chk.IsNil)
 
@@ -1109,7 +1109,7 @@ func (s *aztestsSuite) TestListLegalHoldsImmutabilityPolicies(c *chk.C) {
 
 	legalHolds, immutabilityPolicies := 0, 0
 
-	boolv := func (b *bool) bool {
+	boolv := func(b *bool) bool {
 		if b == nil {
 			return false
 		}
@@ -1122,7 +1122,7 @@ func (s *aztestsSuite) TestListLegalHoldsImmutabilityPolicies(c *chk.C) {
 		resp, err := cURL.ListBlobsFlatSegment(ctx, m, ListBlobsSegmentOptions{Details: BlobListingDetails{LegalHold: true, ImmutabilityPolicy: true}})
 		c.Assert(err, chk.IsNil)
 
-		for _,v := range resp.Segment.BlobItems {
+		for _, v := range resp.Segment.BlobItems {
 			if boolv(v.Properties.LegalHold) {
 				legalHolds++
 			}

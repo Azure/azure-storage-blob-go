@@ -271,9 +271,9 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 	type j map[string]interface{}
 
 	body, err := json.Marshal(
-		j {
-			"properties": j {
-				"immutableStorageWithVersioning": j {
+		j{
+			"properties": j{
+				"immutableStorageWithVersioning": j{
 					"enabled": true,
 				},
 			},
@@ -288,7 +288,7 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 	cred, err := getOAuthCredential("", "https://management.azure.com/")
 	c.Assert(err, chk.IsNil)
 
-	req.Header["Authorization"] = []string {"Bearer " + cred.Token()}
+	req.Header["Authorization"] = []string{"Bearer " + cred.Token()}
 
 	resp, err := http.DefaultClient.Do(req)
 	c.Assert(err, chk.IsNil)
@@ -307,7 +307,7 @@ func createNewContainerWithVersionLevelWORM(c *chk.C, bsu ServiceURL) (Container
 }
 
 func deleteContainer(c *chk.C, container ContainerURL, hasImmutability bool) {
-	boolv := func (b *bool) bool {
+	boolv := func(b *bool) bool {
 		if b == nil {
 			return false
 		}

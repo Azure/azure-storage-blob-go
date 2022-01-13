@@ -115,7 +115,7 @@ func (pb PageBlobURL) UploadPagesFromURL(ctx context.Context, sourceURL url.URL,
 		ifSequenceNumberLessThanOrEqual, ifSequenceNumberLessThan, ifSequenceNumberEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, nil)
 }
 
 // ClearPages frees the specified pages from the page blob.

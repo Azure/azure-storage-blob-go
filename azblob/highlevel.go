@@ -509,13 +509,13 @@ type UploadStreamToBlockBlobOptions struct {
 	// BufferSize sizes the buffer used to read data from source. If < 1 MiB, defaults to 1 MiB.
 	BufferSize int
 	// MaxBuffers defines the number of simultaneous uploads will be performed to upload the file.
-	MaxBuffers               int
-	BlobHTTPHeaders          BlobHTTPHeaders
-	Metadata                 Metadata
-	AccessConditions         BlobAccessConditions
-	BlobAccessTier           AccessTierType
-	BlobTagsMap              BlobTagsMap
-	ClientProvidedKeyOptions ClientProvidedKeyOptions
+	MaxBuffers                int
+	BlobHTTPHeaders           BlobHTTPHeaders
+	Metadata                  Metadata
+	AccessConditions          BlobAccessConditions
+	BlobAccessTier            AccessTierType
+	BlobTagsMap               BlobTagsMap
+	ClientProvidedKeyOptions  ClientProvidedKeyOptions
 	ImmutabilityPolicyOptions ImmutabilityPolicyOptions
 }
 

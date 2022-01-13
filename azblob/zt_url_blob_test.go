@@ -1955,10 +1955,9 @@ func (s *aztestsSuite) TestImmutabilityPolicyOnUpload(c *chk.C) {
 
 	_, err := bURL.Upload(ctx, strings.NewReader("Hello world!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
 		ImmutabilityPolicyUntilDate: &expiry,
-		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+		ImmutabilityPolicyMode:      BlobImmutabilityPolicyModeUnlocked,
 	})
 	c.Assert(err, chk.IsNil)
-
 
 	bgpr, err := bURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -2004,16 +2003,16 @@ func (s *aztestsSuite) TestLegalHoldWithSAS(c *chk.C) {
 	defer deleteContainer(c, akeyCURL, true)
 
 	containerParams, err := BlobSASSignatureValues{
-		Protocol:           SASProtocolHTTPS,
-		StartTime:          time.Now().UTC(),
-		ExpiryTime:         time.Now().Add(time.Hour * 24 * 7).UTC(),
-		Permissions:        ContainerSASPermissions{
-			Read: true,
-			Add: true,
-			Create: true,
-			Write: true,
-			Delete: true,
-			List: true,
+		Protocol:   SASProtocolHTTPS,
+		StartTime:  time.Now().UTC(),
+		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions: ContainerSASPermissions{
+			Read:         true,
+			Add:          true,
+			Create:       true,
+			Write:        true,
+			Delete:       true,
+			List:         true,
 			Immutability: true,
 		}.String(),
 		ContainerName: cName,
@@ -2021,25 +2020,25 @@ func (s *aztestsSuite) TestLegalHoldWithSAS(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	accountParams, err := AccountSASSignatureValues{
-		Protocol: SASProtocolHTTPS,
-		StartTime: time.Now().UTC(),
+		Protocol:   SASProtocolHTTPS,
+		StartTime:  time.Now().UTC(),
 		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
 		Permissions: AccountSASPermissions{
-			Read: true,
-			Add: true,
-			Create: true,
-			Write: true,
-			Delete: true,
-			List: true,
+			Read:         true,
+			Add:          true,
+			Create:       true,
+			Write:        true,
+			Delete:       true,
+			List:         true,
 			Immutability: true,
 		}.String(),
 		Services: AccountSASServices{
 			Blob: true,
 		}.String(),
 		ResourceTypes: AccountSASResourceTypes{
-			Service: true,
+			Service:   true,
 			Container: true,
-			Object: true,
+			Object:    true,
 		}.String(),
 	}.NewSASQueryParameters(cred)
 	c.Assert(err, chk.IsNil)
@@ -2073,16 +2072,16 @@ func (s *aztestsSuite) TestImmutabilityPolicyWithSAS(c *chk.C) {
 	defer deleteContainer(c, akeyCURL, true)
 
 	containerParams, err := BlobSASSignatureValues{
-		Protocol:           SASProtocolHTTPS,
-		StartTime:          time.Now().UTC(),
-		ExpiryTime:         time.Now().Add(time.Hour * 24 * 7).UTC(),
-		Permissions:        ContainerSASPermissions{
-			Read: true,
-			Add: true,
-			Create: true,
-			Write: true,
-			Delete: true,
-			List: true,
+		Protocol:   SASProtocolHTTPS,
+		StartTime:  time.Now().UTC(),
+		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
+		Permissions: ContainerSASPermissions{
+			Read:         true,
+			Add:          true,
+			Create:       true,
+			Write:        true,
+			Delete:       true,
+			List:         true,
 			Immutability: true,
 		}.String(),
 		ContainerName: cName,
@@ -2090,25 +2089,25 @@ func (s *aztestsSuite) TestImmutabilityPolicyWithSAS(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 
 	accountParams, err := AccountSASSignatureValues{
-		Protocol: SASProtocolHTTPS,
-		StartTime: time.Now().UTC(),
+		Protocol:   SASProtocolHTTPS,
+		StartTime:  time.Now().UTC(),
 		ExpiryTime: time.Now().Add(time.Hour * 24 * 7).UTC(),
 		Permissions: AccountSASPermissions{
-			Read: true,
-			Add: true,
-			Create: true,
-			Write: true,
-			Delete: true,
-			List: true,
+			Read:         true,
+			Add:          true,
+			Create:       true,
+			Write:        true,
+			Delete:       true,
+			List:         true,
 			Immutability: true,
 		}.String(),
 		Services: AccountSASServices{
 			Blob: true,
 		}.String(),
 		ResourceTypes: AccountSASResourceTypes{
-			Service: true,
+			Service:   true,
 			Container: true,
-			Object: true,
+			Object:    true,
 		}.String(),
 	}.NewSASQueryParameters(cred)
 	c.Assert(err, chk.IsNil)
@@ -2125,7 +2124,7 @@ func (s *aztestsSuite) TestImmutabilityPolicyWithSAS(c *chk.C) {
 
 	_, err = cSAS.NewBlockBlobURL("test").Upload(ctx, strings.NewReader("Hello World!"), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, AccessTierHot, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{
 		ImmutabilityPolicyUntilDate: &expiry,
-		ImmutabilityPolicyMode: BlobImmutabilityPolicyModeUnlocked,
+		ImmutabilityPolicyMode:      BlobImmutabilityPolicyModeUnlocked,
 	})
 	c.Assert(err, chk.IsNil)
 
