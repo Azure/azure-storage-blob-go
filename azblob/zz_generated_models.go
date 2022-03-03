@@ -404,6 +404,8 @@ const (
 	ListBlobsIncludeItemCopy ListBlobsIncludeItemType = "copy"
 	// ListBlobsIncludeItemDeleted ...
 	ListBlobsIncludeItemDeleted ListBlobsIncludeItemType = "deleted"
+	// ListBlobsIncludeItemDeletedwithversions ...
+	ListBlobsIncludeItemDeletedwithversions ListBlobsIncludeItemType = "deletedwithversions"
 	// ListBlobsIncludeItemImmutabilitypolicy ...
 	ListBlobsIncludeItemImmutabilitypolicy ListBlobsIncludeItemType = "immutabilitypolicy"
 	// ListBlobsIncludeItemLegalhold ...
@@ -426,7 +428,7 @@ const (
 
 // PossibleListBlobsIncludeItemTypeValues returns an array of possible values for the ListBlobsIncludeItemType const type.
 func PossibleListBlobsIncludeItemTypeValues() []ListBlobsIncludeItemType {
-	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemPermissions, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
+	return []ListBlobsIncludeItemType{ListBlobsIncludeItemCopy, ListBlobsIncludeItemDeleted, ListBlobsIncludeItemDeletedwithversions, ListBlobsIncludeItemImmutabilitypolicy, ListBlobsIncludeItemLegalhold, ListBlobsIncludeItemMetadata, ListBlobsIncludeItemNone, ListBlobsIncludeItemPermissions, ListBlobsIncludeItemSnapshots, ListBlobsIncludeItemTags, ListBlobsIncludeItemUncommittedblobs, ListBlobsIncludeItemVersions}
 }
 
 // ListContainersIncludeType enumerates the values for list containers include type.
@@ -444,23 +446,6 @@ const (
 // PossibleListContainersIncludeTypeValues returns an array of possible values for the ListContainersIncludeType const type.
 func PossibleListContainersIncludeTypeValues() []ListContainersIncludeType {
 	return []ListContainersIncludeType{ListContainersIncludeDeleted, ListContainersIncludeMetadata, ListContainersIncludeNone}
-}
-
-// PathRenameModeType enumerates the values for path rename mode type.
-type PathRenameModeType string
-
-const (
-	// PathRenameModeLegacy ...
-	PathRenameModeLegacy PathRenameModeType = "legacy"
-	// PathRenameModeNone represents an empty PathRenameModeType.
-	PathRenameModeNone PathRenameModeType = ""
-	// PathRenameModePosix ...
-	PathRenameModePosix PathRenameModeType = "posix"
-)
-
-// PossiblePathRenameModeTypeValues returns an array of possible values for the PathRenameModeType const type.
-func PossiblePathRenameModeTypeValues() []PathRenameModeType {
-	return []PathRenameModeType{PathRenameModeLegacy, PathRenameModeNone, PathRenameModePosix}
 }
 
 // PremiumPageBlobAccessTierType enumerates the values for premium page blob access tier type.
@@ -805,10 +790,10 @@ const (
 	StorageErrorCodeSequenceNumberIncrementTooLarge StorageErrorCodeType = "SequenceNumberIncrementTooLarge"
 	// StorageErrorCodeServerBusy ...
 	StorageErrorCodeServerBusy StorageErrorCodeType = "ServerBusy"
-	// StorageErrorCodeSnaphotOperationRateExceeded ...
-	StorageErrorCodeSnaphotOperationRateExceeded StorageErrorCodeType = "SnaphotOperationRateExceeded"
 	// StorageErrorCodeSnapshotCountExceeded ...
 	StorageErrorCodeSnapshotCountExceeded StorageErrorCodeType = "SnapshotCountExceeded"
+	// StorageErrorCodeSnapshotOperationRateExceeded ...
+	StorageErrorCodeSnapshotOperationRateExceeded StorageErrorCodeType = "SnapshotOperationRateExceeded"
 	// StorageErrorCodeSnapshotsPresent ...
 	StorageErrorCodeSnapshotsPresent StorageErrorCodeType = "SnapshotsPresent"
 	// StorageErrorCodeSourceConditionNotMet ...
@@ -831,7 +816,7 @@ const (
 
 // PossibleStorageErrorCodeTypeValues returns an array of possible values for the StorageErrorCodeType const type.
 func PossibleStorageErrorCodeTypeValues() []StorageErrorCodeType {
-	return []StorageErrorCodeType{StorageErrorCodeAccountAlreadyExists, StorageErrorCodeAccountBeingCreated, StorageErrorCodeAccountIsDisabled, StorageErrorCodeAppendPositionConditionNotMet, StorageErrorCodeAuthenticationFailed, StorageErrorCodeAuthorizationFailure, StorageErrorCodeAuthorizationPermissionMismatch, StorageErrorCodeAuthorizationProtocolMismatch, StorageErrorCodeAuthorizationResourceTypeMismatch, StorageErrorCodeAuthorizationServiceMismatch, StorageErrorCodeAuthorizationSourceIPMismatch, StorageErrorCodeBlobAlreadyExists, StorageErrorCodeBlobArchived, StorageErrorCodeBlobBeingRehydrated, StorageErrorCodeBlobImmutableDueToPolicy, StorageErrorCodeBlobNotArchived, StorageErrorCodeBlobNotFound, StorageErrorCodeBlobOverwritten, StorageErrorCodeBlobTierInadequateForContentLength, StorageErrorCodeBlobUsesCustomerSpecifiedEncryption, StorageErrorCodeBlockCountExceedsLimit, StorageErrorCodeBlockListTooLong, StorageErrorCodeCannotChangeToLowerTier, StorageErrorCodeCannotVerifyCopySource, StorageErrorCodeConditionHeadersNotSupported, StorageErrorCodeConditionNotMet, StorageErrorCodeContainerAlreadyExists, StorageErrorCodeContainerBeingDeleted, StorageErrorCodeContainerDisabled, StorageErrorCodeContainerNotFound, StorageErrorCodeContentLengthLargerThanTierLimit, StorageErrorCodeCopyAcrossAccountsNotSupported, StorageErrorCodeCopyIDMismatch, StorageErrorCodeEmptyMetadataKey, StorageErrorCodeFeatureVersionMismatch, StorageErrorCodeIncrementalCopyBlobMismatch, StorageErrorCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed, StorageErrorCodeIncrementalCopySourceMustBeSnapshot, StorageErrorCodeInfiniteLeaseDurationRequired, StorageErrorCodeInsufficientAccountPermissions, StorageErrorCodeInternalError, StorageErrorCodeInvalidAuthenticationInfo, StorageErrorCodeInvalidBlobOrBlock, StorageErrorCodeInvalidBlobTier, StorageErrorCodeInvalidBlobType, StorageErrorCodeInvalidBlockID, StorageErrorCodeInvalidBlockList, StorageErrorCodeInvalidHeaderValue, StorageErrorCodeInvalidHTTPVerb, StorageErrorCodeInvalidInput, StorageErrorCodeInvalidMd5, StorageErrorCodeInvalidMetadata, StorageErrorCodeInvalidOperation, StorageErrorCodeInvalidPageRange, StorageErrorCodeInvalidQueryParameterValue, StorageErrorCodeInvalidRange, StorageErrorCodeInvalidResourceName, StorageErrorCodeInvalidSourceBlobType, StorageErrorCodeInvalidSourceBlobURL, StorageErrorCodeInvalidURI, StorageErrorCodeInvalidVersionForPageBlobOperation, StorageErrorCodeInvalidXMLDocument, StorageErrorCodeInvalidXMLNodeValue, StorageErrorCodeLeaseAlreadyBroken, StorageErrorCodeLeaseAlreadyPresent, StorageErrorCodeLeaseIDMismatchWithBlobOperation, StorageErrorCodeLeaseIDMismatchWithContainerOperation, StorageErrorCodeLeaseIDMismatchWithLeaseOperation, StorageErrorCodeLeaseIDMissing, StorageErrorCodeLeaseIsBreakingAndCannotBeAcquired, StorageErrorCodeLeaseIsBreakingAndCannotBeChanged, StorageErrorCodeLeaseIsBrokenAndCannotBeRenewed, StorageErrorCodeLeaseLost, StorageErrorCodeLeaseNotPresentWithBlobOperation, StorageErrorCodeLeaseNotPresentWithContainerOperation, StorageErrorCodeLeaseNotPresentWithLeaseOperation, StorageErrorCodeMaxBlobSizeConditionNotMet, StorageErrorCodeMd5Mismatch, StorageErrorCodeMetadataTooLarge, StorageErrorCodeMissingContentLengthHeader, StorageErrorCodeMissingRequiredHeader, StorageErrorCodeMissingRequiredQueryParameter, StorageErrorCodeMissingRequiredXMLNode, StorageErrorCodeMultipleConditionHeadersNotSupported, StorageErrorCodeNoAuthenticationInformation, StorageErrorCodeNone, StorageErrorCodeNoPendingCopyOperation, StorageErrorCodeOperationNotAllowedOnIncrementalCopyBlob, StorageErrorCodeOperationTimedOut, StorageErrorCodeOutOfRangeInput, StorageErrorCodeOutOfRangeQueryParameterValue, StorageErrorCodePendingCopyOperation, StorageErrorCodePreviousSnapshotCannotBeNewer, StorageErrorCodePreviousSnapshotNotFound, StorageErrorCodePreviousSnapshotOperationNotSupported, StorageErrorCodeRequestBodyTooLarge, StorageErrorCodeRequestURLFailedToParse, StorageErrorCodeResourceAlreadyExists, StorageErrorCodeResourceNotFound, StorageErrorCodeResourceTypeMismatch, StorageErrorCodeSequenceNumberConditionNotMet, StorageErrorCodeSequenceNumberIncrementTooLarge, StorageErrorCodeServerBusy, StorageErrorCodeSnaphotOperationRateExceeded, StorageErrorCodeSnapshotCountExceeded, StorageErrorCodeSnapshotsPresent, StorageErrorCodeSourceConditionNotMet, StorageErrorCodeSystemInUse, StorageErrorCodeTargetConditionNotMet, StorageErrorCodeUnauthorizedBlobOverwrite, StorageErrorCodeUnsupportedHeader, StorageErrorCodeUnsupportedHTTPVerb, StorageErrorCodeUnsupportedQueryParameter, StorageErrorCodeUnsupportedXMLNode}
+	return []StorageErrorCodeType{StorageErrorCodeAccountAlreadyExists, StorageErrorCodeAccountBeingCreated, StorageErrorCodeAccountIsDisabled, StorageErrorCodeAppendPositionConditionNotMet, StorageErrorCodeAuthenticationFailed, StorageErrorCodeAuthorizationFailure, StorageErrorCodeAuthorizationPermissionMismatch, StorageErrorCodeAuthorizationProtocolMismatch, StorageErrorCodeAuthorizationResourceTypeMismatch, StorageErrorCodeAuthorizationServiceMismatch, StorageErrorCodeAuthorizationSourceIPMismatch, StorageErrorCodeBlobAlreadyExists, StorageErrorCodeBlobArchived, StorageErrorCodeBlobBeingRehydrated, StorageErrorCodeBlobImmutableDueToPolicy, StorageErrorCodeBlobNotArchived, StorageErrorCodeBlobNotFound, StorageErrorCodeBlobOverwritten, StorageErrorCodeBlobTierInadequateForContentLength, StorageErrorCodeBlobUsesCustomerSpecifiedEncryption, StorageErrorCodeBlockCountExceedsLimit, StorageErrorCodeBlockListTooLong, StorageErrorCodeCannotChangeToLowerTier, StorageErrorCodeCannotVerifyCopySource, StorageErrorCodeConditionHeadersNotSupported, StorageErrorCodeConditionNotMet, StorageErrorCodeContainerAlreadyExists, StorageErrorCodeContainerBeingDeleted, StorageErrorCodeContainerDisabled, StorageErrorCodeContainerNotFound, StorageErrorCodeContentLengthLargerThanTierLimit, StorageErrorCodeCopyAcrossAccountsNotSupported, StorageErrorCodeCopyIDMismatch, StorageErrorCodeEmptyMetadataKey, StorageErrorCodeFeatureVersionMismatch, StorageErrorCodeIncrementalCopyBlobMismatch, StorageErrorCodeIncrementalCopyOfEralierVersionSnapshotNotAllowed, StorageErrorCodeIncrementalCopySourceMustBeSnapshot, StorageErrorCodeInfiniteLeaseDurationRequired, StorageErrorCodeInsufficientAccountPermissions, StorageErrorCodeInternalError, StorageErrorCodeInvalidAuthenticationInfo, StorageErrorCodeInvalidBlobOrBlock, StorageErrorCodeInvalidBlobTier, StorageErrorCodeInvalidBlobType, StorageErrorCodeInvalidBlockID, StorageErrorCodeInvalidBlockList, StorageErrorCodeInvalidHeaderValue, StorageErrorCodeInvalidHTTPVerb, StorageErrorCodeInvalidInput, StorageErrorCodeInvalidMd5, StorageErrorCodeInvalidMetadata, StorageErrorCodeInvalidOperation, StorageErrorCodeInvalidPageRange, StorageErrorCodeInvalidQueryParameterValue, StorageErrorCodeInvalidRange, StorageErrorCodeInvalidResourceName, StorageErrorCodeInvalidSourceBlobType, StorageErrorCodeInvalidSourceBlobURL, StorageErrorCodeInvalidURI, StorageErrorCodeInvalidVersionForPageBlobOperation, StorageErrorCodeInvalidXMLDocument, StorageErrorCodeInvalidXMLNodeValue, StorageErrorCodeLeaseAlreadyBroken, StorageErrorCodeLeaseAlreadyPresent, StorageErrorCodeLeaseIDMismatchWithBlobOperation, StorageErrorCodeLeaseIDMismatchWithContainerOperation, StorageErrorCodeLeaseIDMismatchWithLeaseOperation, StorageErrorCodeLeaseIDMissing, StorageErrorCodeLeaseIsBreakingAndCannotBeAcquired, StorageErrorCodeLeaseIsBreakingAndCannotBeChanged, StorageErrorCodeLeaseIsBrokenAndCannotBeRenewed, StorageErrorCodeLeaseLost, StorageErrorCodeLeaseNotPresentWithBlobOperation, StorageErrorCodeLeaseNotPresentWithContainerOperation, StorageErrorCodeLeaseNotPresentWithLeaseOperation, StorageErrorCodeMaxBlobSizeConditionNotMet, StorageErrorCodeMd5Mismatch, StorageErrorCodeMetadataTooLarge, StorageErrorCodeMissingContentLengthHeader, StorageErrorCodeMissingRequiredHeader, StorageErrorCodeMissingRequiredQueryParameter, StorageErrorCodeMissingRequiredXMLNode, StorageErrorCodeMultipleConditionHeadersNotSupported, StorageErrorCodeNoAuthenticationInformation, StorageErrorCodeNone, StorageErrorCodeNoPendingCopyOperation, StorageErrorCodeOperationNotAllowedOnIncrementalCopyBlob, StorageErrorCodeOperationTimedOut, StorageErrorCodeOutOfRangeInput, StorageErrorCodeOutOfRangeQueryParameterValue, StorageErrorCodePendingCopyOperation, StorageErrorCodePreviousSnapshotCannotBeNewer, StorageErrorCodePreviousSnapshotNotFound, StorageErrorCodePreviousSnapshotOperationNotSupported, StorageErrorCodeRequestBodyTooLarge, StorageErrorCodeRequestURLFailedToParse, StorageErrorCodeResourceAlreadyExists, StorageErrorCodeResourceNotFound, StorageErrorCodeResourceTypeMismatch, StorageErrorCodeSequenceNumberConditionNotMet, StorageErrorCodeSequenceNumberIncrementTooLarge, StorageErrorCodeServerBusy, StorageErrorCodeSnapshotCountExceeded, StorageErrorCodeSnapshotOperationRateExceeded, StorageErrorCodeSnapshotsPresent, StorageErrorCodeSourceConditionNotMet, StorageErrorCodeSystemInUse, StorageErrorCodeTargetConditionNotMet, StorageErrorCodeUnauthorizedBlobOverwrite, StorageErrorCodeUnsupportedHeader, StorageErrorCodeUnsupportedHTTPVerb, StorageErrorCodeUnsupportedQueryParameter, StorageErrorCodeUnsupportedXMLNode}
 }
 
 // SyncCopyStatusType enumerates the values for sync copy status type.
@@ -1922,92 +1907,6 @@ type BlobFlatListSegment struct {
 	BlobItems []BlobItemInternal `xml:"Blob"`
 }
 
-// BlobGetAccessControlResponse ...
-type BlobGetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (bgacr BlobGetAccessControlResponse) Response() *http.Response {
-	return bgacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bgacr BlobGetAccessControlResponse) StatusCode() int {
-	return bgacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bgacr BlobGetAccessControlResponse) Status() string {
-	return bgacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (bgacr BlobGetAccessControlResponse) ClientRequestID() string {
-	return bgacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (bgacr BlobGetAccessControlResponse) Date() time.Time {
-	s := bgacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (bgacr BlobGetAccessControlResponse) ETag() ETag {
-	return ETag(bgacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (bgacr BlobGetAccessControlResponse) LastModified() time.Time {
-	s := bgacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (bgacr BlobGetAccessControlResponse) RequestID() string {
-	return bgacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (bgacr BlobGetAccessControlResponse) Version() string {
-	return bgacr.rawResponse.Header.Get("x-ms-version")
-}
-
-// XMsACL returns the value for header x-ms-acl.
-func (bgacr BlobGetAccessControlResponse) XMsACL() string {
-	return bgacr.rawResponse.Header.Get("x-ms-acl")
-}
-
-// XMsGroup returns the value for header x-ms-group.
-func (bgacr BlobGetAccessControlResponse) XMsGroup() string {
-	return bgacr.rawResponse.Header.Get("x-ms-group")
-}
-
-// XMsOwner returns the value for header x-ms-owner.
-func (bgacr BlobGetAccessControlResponse) XMsOwner() string {
-	return bgacr.rawResponse.Header.Get("x-ms-owner")
-}
-
-// XMsPermissions returns the value for header x-ms-permissions.
-func (bgacr BlobGetAccessControlResponse) XMsPermissions() string {
-	return bgacr.rawResponse.Header.Get("x-ms-permissions")
-}
-
 // BlobGetAccountInfoResponse ...
 type BlobGetAccountInfoResponse struct {
 	rawResponse *http.Response
@@ -2474,6 +2373,7 @@ type BlobItemInternal struct {
 	Metadata                  Metadata               `xml:"Metadata"`
 	BlobTags                  *BlobTags              `xml:"Tags"`
 	ObjectReplicationMetadata map[string]string      `xml:"ObjectReplicationMetadata"`
+	HasVersionsOnly           *bool                  `xml:"HasVersionsOnly"`
 }
 
 // BlobPrefix ...
@@ -2625,85 +2525,6 @@ func (brlr BlobReleaseLeaseResponse) Version() string {
 	return brlr.rawResponse.Header.Get("x-ms-version")
 }
 
-// BlobRenameResponse ...
-type BlobRenameResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (brr BlobRenameResponse) Response() *http.Response {
-	return brr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (brr BlobRenameResponse) StatusCode() int {
-	return brr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (brr BlobRenameResponse) Status() string {
-	return brr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (brr BlobRenameResponse) ClientRequestID() string {
-	return brr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// ContentLength returns the value for header Content-Length.
-func (brr BlobRenameResponse) ContentLength() int64 {
-	s := brr.rawResponse.Header.Get("Content-Length")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		i = 0
-	}
-	return i
-}
-
-// Date returns the value for header Date.
-func (brr BlobRenameResponse) Date() time.Time {
-	s := brr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (brr BlobRenameResponse) ETag() ETag {
-	return ETag(brr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (brr BlobRenameResponse) LastModified() time.Time {
-	s := brr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (brr BlobRenameResponse) RequestID() string {
-	return brr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (brr BlobRenameResponse) Version() string {
-	return brr.rawResponse.Header.Get("x-ms-version")
-}
-
 // BlobRenewLeaseResponse ...
 type BlobRenewLeaseResponse struct {
 	rawResponse *http.Response
@@ -2778,72 +2599,6 @@ func (brlr BlobRenewLeaseResponse) RequestID() string {
 // Version returns the value for header x-ms-version.
 func (brlr BlobRenewLeaseResponse) Version() string {
 	return brlr.rawResponse.Header.Get("x-ms-version")
-}
-
-// BlobSetAccessControlResponse ...
-type BlobSetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (bsacr BlobSetAccessControlResponse) Response() *http.Response {
-	return bsacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (bsacr BlobSetAccessControlResponse) StatusCode() int {
-	return bsacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (bsacr BlobSetAccessControlResponse) Status() string {
-	return bsacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (bsacr BlobSetAccessControlResponse) ClientRequestID() string {
-	return bsacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (bsacr BlobSetAccessControlResponse) Date() time.Time {
-	s := bsacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (bsacr BlobSetAccessControlResponse) ETag() ETag {
-	return ETag(bsacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (bsacr BlobSetAccessControlResponse) LastModified() time.Time {
-	s := bsacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (bsacr BlobSetAccessControlResponse) RequestID() string {
-	return bsacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (bsacr BlobSetAccessControlResponse) Version() string {
-	return bsacr.rawResponse.Header.Get("x-ms-version")
 }
 
 // BlobSetExpiryResponse ...
@@ -5153,22 +4908,6 @@ type CorsRule struct {
 	MaxAgeInSeconds int32 `xml:"MaxAgeInSeconds"`
 }
 
-// DataLakeStorageError ...
-type DataLakeStorageError struct {
-	// DataLakeStorageErrorDetails - The service error response object.
-	DataLakeStorageErrorDetails *DataLakeStorageErrorError `xml:"error"`
-}
-
-// DataLakeStorageErrorError - The service error response object.
-type DataLakeStorageErrorError struct {
-	// XMLName is used for marshalling and is subject to removal in a future release.
-	XMLName xml.Name `xml:"DataLakeStorageError_error"`
-	// Code - The service error code.
-	Code *string `xml:"Code"`
-	// Message - The service error message.
-	Message *string `xml:"Message"`
-}
-
 // DelimitedTextConfiguration - Groups the settings used for interpreting the blob data if the blob is
 // delimited text formatted.
 type DelimitedTextConfiguration struct {
@@ -5182,374 +4921,6 @@ type DelimitedTextConfiguration struct {
 	EscapeChar *string `xml:"EscapeChar"`
 	// HeadersPresent - Represents whether the data has headers.
 	HeadersPresent *bool `xml:"HasHeaders"`
-}
-
-// DirectoryCreateResponse ...
-type DirectoryCreateResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dcr DirectoryCreateResponse) Response() *http.Response {
-	return dcr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dcr DirectoryCreateResponse) StatusCode() int {
-	return dcr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dcr DirectoryCreateResponse) Status() string {
-	return dcr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dcr DirectoryCreateResponse) ClientRequestID() string {
-	return dcr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// ContentLength returns the value for header Content-Length.
-func (dcr DirectoryCreateResponse) ContentLength() int64 {
-	s := dcr.rawResponse.Header.Get("Content-Length")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		i = 0
-	}
-	return i
-}
-
-// Date returns the value for header Date.
-func (dcr DirectoryCreateResponse) Date() time.Time {
-	s := dcr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dcr DirectoryCreateResponse) ETag() ETag {
-	return ETag(dcr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dcr DirectoryCreateResponse) LastModified() time.Time {
-	s := dcr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dcr DirectoryCreateResponse) RequestID() string {
-	return dcr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dcr DirectoryCreateResponse) Version() string {
-	return dcr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectoryDeleteResponse ...
-type DirectoryDeleteResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (ddr DirectoryDeleteResponse) Response() *http.Response {
-	return ddr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (ddr DirectoryDeleteResponse) StatusCode() int {
-	return ddr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (ddr DirectoryDeleteResponse) Status() string {
-	return ddr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (ddr DirectoryDeleteResponse) ClientRequestID() string {
-	return ddr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (ddr DirectoryDeleteResponse) Date() time.Time {
-	s := ddr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// Marker returns the value for header x-ms-continuation.
-func (ddr DirectoryDeleteResponse) Marker() string {
-	return ddr.rawResponse.Header.Get("x-ms-continuation")
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (ddr DirectoryDeleteResponse) RequestID() string {
-	return ddr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (ddr DirectoryDeleteResponse) Version() string {
-	return ddr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectoryGetAccessControlResponse ...
-type DirectoryGetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dgacr DirectoryGetAccessControlResponse) Response() *http.Response {
-	return dgacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dgacr DirectoryGetAccessControlResponse) StatusCode() int {
-	return dgacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dgacr DirectoryGetAccessControlResponse) Status() string {
-	return dgacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dgacr DirectoryGetAccessControlResponse) ClientRequestID() string {
-	return dgacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (dgacr DirectoryGetAccessControlResponse) Date() time.Time {
-	s := dgacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dgacr DirectoryGetAccessControlResponse) ETag() ETag {
-	return ETag(dgacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dgacr DirectoryGetAccessControlResponse) LastModified() time.Time {
-	s := dgacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dgacr DirectoryGetAccessControlResponse) RequestID() string {
-	return dgacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dgacr DirectoryGetAccessControlResponse) Version() string {
-	return dgacr.rawResponse.Header.Get("x-ms-version")
-}
-
-// XMsACL returns the value for header x-ms-acl.
-func (dgacr DirectoryGetAccessControlResponse) XMsACL() string {
-	return dgacr.rawResponse.Header.Get("x-ms-acl")
-}
-
-// XMsGroup returns the value for header x-ms-group.
-func (dgacr DirectoryGetAccessControlResponse) XMsGroup() string {
-	return dgacr.rawResponse.Header.Get("x-ms-group")
-}
-
-// XMsOwner returns the value for header x-ms-owner.
-func (dgacr DirectoryGetAccessControlResponse) XMsOwner() string {
-	return dgacr.rawResponse.Header.Get("x-ms-owner")
-}
-
-// XMsPermissions returns the value for header x-ms-permissions.
-func (dgacr DirectoryGetAccessControlResponse) XMsPermissions() string {
-	return dgacr.rawResponse.Header.Get("x-ms-permissions")
-}
-
-// DirectoryRenameResponse ...
-type DirectoryRenameResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (drr DirectoryRenameResponse) Response() *http.Response {
-	return drr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (drr DirectoryRenameResponse) StatusCode() int {
-	return drr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (drr DirectoryRenameResponse) Status() string {
-	return drr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (drr DirectoryRenameResponse) ClientRequestID() string {
-	return drr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// ContentLength returns the value for header Content-Length.
-func (drr DirectoryRenameResponse) ContentLength() int64 {
-	s := drr.rawResponse.Header.Get("Content-Length")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		i = 0
-	}
-	return i
-}
-
-// Date returns the value for header Date.
-func (drr DirectoryRenameResponse) Date() time.Time {
-	s := drr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (drr DirectoryRenameResponse) ETag() ETag {
-	return ETag(drr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (drr DirectoryRenameResponse) LastModified() time.Time {
-	s := drr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// Marker returns the value for header x-ms-continuation.
-func (drr DirectoryRenameResponse) Marker() string {
-	return drr.rawResponse.Header.Get("x-ms-continuation")
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (drr DirectoryRenameResponse) RequestID() string {
-	return drr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (drr DirectoryRenameResponse) Version() string {
-	return drr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectorySetAccessControlResponse ...
-type DirectorySetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dsacr DirectorySetAccessControlResponse) Response() *http.Response {
-	return dsacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dsacr DirectorySetAccessControlResponse) StatusCode() int {
-	return dsacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dsacr DirectorySetAccessControlResponse) Status() string {
-	return dsacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dsacr DirectorySetAccessControlResponse) ClientRequestID() string {
-	return dsacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (dsacr DirectorySetAccessControlResponse) Date() time.Time {
-	s := dsacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dsacr DirectorySetAccessControlResponse) ETag() ETag {
-	return ETag(dsacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dsacr DirectorySetAccessControlResponse) LastModified() time.Time {
-	s := dsacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dsacr DirectorySetAccessControlResponse) RequestID() string {
-	return dsacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dsacr DirectorySetAccessControlResponse) Version() string {
-	return dsacr.rawResponse.Header.Get("x-ms-version")
 }
 
 // downloadResponse - Wraps the response from the blobClient.Download method.
@@ -7777,7 +7148,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05Z"
+	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
 // used to convert times from UTC to GMT before sending across the wire

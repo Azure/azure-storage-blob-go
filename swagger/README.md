@@ -11,7 +11,7 @@ gofmt -w Go_BlobStorage/*
 
 ### Settings
 ``` yaml
-input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/storage-dataplane-preview/specification/storage/data-plane/Microsoft.BlobStorage/preview/2020-08-04/blob.json
+input-file: https://raw.githubusercontent.com/Azure/azure-rest-api-specs/storage-main/specification/storage/data-plane/Microsoft.BlobStorage/preview/2020-10-02/blob.json
 go: true
 output-folder: Go_BlobStorage
 namespace: azblob
@@ -86,6 +86,77 @@ directive:
       $.properties["Acl"] = {
         "type": "string"
       };
+```
+
+### ETags
+
+#### Headers
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"].*.*.responses.*.headers["ETag"]
+    transform: >
+      $.format = "etag"
+```
+
+#### Properties
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.BlobPropertiesInternal.properties.Etag
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.ContainerProperties.properties.Etag
+    transform: >
+      $.format = "etag"
+```
+
+#### \[Source\]If*Match
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.IfMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.IfNoneMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.SourceIfMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.SourceIfNoneMatch
+    transform: >
+      $.format = "etag"
+```
+
+### Remove BlobName & ContainerName parameters
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"].*
+    transform: >
+      $.parameters = $.parameters.filter(x => x["$ref"] == undefined || !(x["$ref"] == "#/parameters/ContainerName" || x["$ref"] == "#/parameters/Blob"))
 ```
 
 ### TODO: Get rid of StorageError since we define it

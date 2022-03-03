@@ -185,15 +185,16 @@ func (client appendBlobClient) appendBlockResponder(resp pipeline.Response) (pip
 // specified date/time. sourceIfMatch is specify an ETag value to operate only on blobs with a matching value.
 // sourceIfNoneMatch is specify an ETag value to operate only on blobs without a matching value. requestID is provides
 // a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
-// analytics logging is enabled.
-func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (*AppendBlobAppendBlockFromURLResponse, error) {
+// analytics logging is enabled. copySourceAuthorization is only Bearer type is supported. Credentials should be a
+// valid OAuth access token to copy source.
+func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string, copySourceAuthorization *string) (*AppendBlobAppendBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
 		return nil, err
 	}
-	req, err := client.appendBlockFromURLPreparer(sourceURL, contentLength, sourceRange, sourceContentMD5, sourceContentcrc64, timeout, transactionalContentMD5, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID)
+	req, err := client.appendBlockFromURLPreparer(sourceURL, contentLength, sourceRange, sourceContentMD5, sourceContentcrc64, timeout, transactionalContentMD5, encryptionKey, encryptionKeySha256, encryptionAlgorithm, encryptionScope, leaseID, maxSize, appendPosition, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatch, sourceIfNoneMatch, requestID, copySourceAuthorization)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +206,7 @@ func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL
 }
 
 // appendBlockFromURLPreparer prepares the AppendBlockFromURL request.
-func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string) (pipeline.Request, error) {
+func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string, copySourceAuthorization *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -281,6 +282,9 @@ func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, cont
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
 		req.Header.Set("x-ms-client-request-id", *requestID)
+	}
+	if copySourceAuthorization != nil {
+		req.Header.Set("x-ms-copy-source-authorization", *copySourceAuthorization)
 	}
 	return req, nil
 }

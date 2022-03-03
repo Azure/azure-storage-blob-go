@@ -31,7 +31,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithIncorrectURL(c *chk.C) {
 	defer delContainer(c, container)
 
 	// Invoke put blob from URL with URL without SAS and make sure it fails
-	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, url.URL{}, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
+	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, url.URL{}, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.NotNil)
 	c.Assert(resp, chk.IsNil)
 }
@@ -46,7 +46,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithMissingSAS(c *chk.C) {
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
 	// Invoke put blob from URL with URL without SAS and make sure it fails
-	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlob.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
+	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlob.URL(), basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.NotNil)
 	c.Assert(resp, chk.IsNil)
 }
@@ -77,7 +77,7 @@ func (s *aztestsSuite) TestSetTierOnPutBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	for _, tier := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
 		destBlob := container.NewBlockBlobURL(generateBlobName())
-		resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], tier, BlobTagsMap{}, ClientProvidedKeyOptions{})
+		resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], tier, BlobTagsMap{}, ClientProvidedKeyOptions{}, nil)
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 
@@ -114,7 +114,7 @@ func (s *aztestsSuite) TestPutBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke put blob from URL.
-	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{})
+	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, BlobTagsMap{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -161,7 +161,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke put blob from URL
-	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, nil, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(resp.Version(), chk.Not(chk.Equals), "")
@@ -178,7 +178,7 @@ func (s *aztestsSuite) TestPutBlobFromURLWithSASReturnsVID(c *chk.C) {
 	c.Assert(downloadResp.NewMetadata(), chk.DeepEquals, basicMetadata)
 
 	// Edge case: Not providing any source MD5 should see the CRC getting returned instead and service version matches
-	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(resp.rawResponse.Header.Get("x-mx-content-crc64"), chk.NotNil)
@@ -217,7 +217,7 @@ func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke put blob from URL
-	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
+	resp, err := destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, basicMetadata, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], sourceDataMD5Value[:], DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -238,11 +238,11 @@ func (s *aztestsSuite) TestPutBlockBlobFromURLWithTags(c *chk.C) {
 
 	// Edge case 1: Provide bad MD5 and make sure the put fails
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, badMD5, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
+	_, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, badMD5, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.NotNil)
 
 	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
-	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{})
+	resp, err = destBlob.PutBlobFromURL(ctx, BlobHTTPHeaders{}, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, nil, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(resp.rawResponse.Header.Get("x-mx-content-crc64"), chk.NotNil)

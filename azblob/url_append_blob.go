@@ -98,7 +98,7 @@ func (ab AppendBlobURL) AppendBlock(ctx context.Context, body io.ReadSeeker, ac 
 
 // AppendBlockFromURL copies a new block of data from source URL to the end of the existing append blob.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/append-block-from-url.
-func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.URL, offset int64, count int64, destinationAccessConditions AppendBlobAccessConditions, sourceAccessConditions ModifiedAccessConditions, transactionalMD5 []byte, cpk ClientProvidedKeyOptions) (*AppendBlobAppendBlockFromURLResponse, error) {
+func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.URL, offset int64, count int64, destinationAccessConditions AppendBlobAccessConditions, sourceAccessConditions ModifiedAccessConditions, transactionalMD5 []byte, cpk ClientProvidedKeyOptions, sourceAuthorization TokenCredential) (*AppendBlobAppendBlockFromURLResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := destinationAccessConditions.ModifiedAccessConditions.pointers()
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	ifAppendPositionEqual, ifMaxSizeLessThanOrEqual := destinationAccessConditions.AppendPositionAccessConditions.pointers()
@@ -110,7 +110,7 @@ func (ab AppendBlobURL) AppendBlockFromURL(ctx context.Context, sourceURL url.UR
 		ifMaxSizeLessThanOrEqual, ifAppendPositionEqual,
 		ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag,
 		nil, // Blob ifTags
-		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, sourceAuthorization.pointers())
 }
 
 type AppendBlobAccessConditions struct {

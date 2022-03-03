@@ -102,12 +102,12 @@ func (bb BlockBlobURL) StageBlock(ctx context.Context, base64BlockID string, bod
 // StageBlockFromURL copies the specified block from a source URL to the block blob's "staging area" to be later committed by a call to CommitBlockList.
 // If count is CountToEnd (0), then data is read from specified offset to the end.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/put-block-from-url.
-func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID string, sourceURL url.URL, offset int64, count int64, destinationAccessConditions LeaseAccessConditions, sourceAccessConditions ModifiedAccessConditions, cpk ClientProvidedKeyOptions) (*BlockBlobStageBlockFromURLResponse, error) {
+func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID string, sourceURL url.URL, offset int64, count int64, destinationAccessConditions LeaseAccessConditions, sourceAccessConditions ModifiedAccessConditions, cpk ClientProvidedKeyOptions, sourceAuthorization TokenCredential) (*BlockBlobStageBlockFromURLResponse, error) {
 	sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag := sourceAccessConditions.pointers()
 	return bb.bbClient.StageBlockFromURL(ctx, base64BlockID, 0, sourceURL.String(), httpRange{offset: offset, count: count}.pointers(), nil, nil, nil,
 		cpk.EncryptionKey, cpk.EncryptionKeySha256, cpk.EncryptionAlgorithm, // CPK
 		cpk.EncryptionScope, // CPK-N
-		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil)
+		destinationAccessConditions.pointers(), sourceIfModifiedSince, sourceIfUnmodifiedSince, sourceIfMatchETag, sourceIfNoneMatchETag, nil, sourceAuthorization.pointers())
 }
 
 // CommitBlockList writes a blob by specifying the list of block IDs that make up the blob.
@@ -144,7 +144,7 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 
 // CopyFromURL synchronously copies the data at the source URL to a block blob, with sizes up to 256 MB.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/copy-blob-from-url.
-func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap) (*BlobCopyFromURLResponse, error) {
+func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap, sourceAuthorization TokenCredential) (*BlobCopyFromURLResponse, error) {
 
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
@@ -159,13 +159,13 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
 		// immutability policy
-		nil, BlobImmutabilityPolicyModeNone, nil,
+		nil, BlobImmutabilityPolicyModeNone, nil, sourceAuthorization.pointers(),
 	)
 }
 
 // PutBlobFromURL synchronously creates a new Block Blob with data from the source URL up to a max length of 256MB.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url.
-func (bb BlockBlobURL) PutBlobFromURL(ctx context.Context, h BlobHTTPHeaders, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, dstContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions) (*BlockBlobPutBlobFromURLResponse, error) {
+func (bb BlockBlobURL) PutBlobFromURL(ctx context.Context, h BlobHTTPHeaders, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, dstContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions, sourceAuthorization TokenCredential) (*BlockBlobPutBlobFromURLResponse, error) {
 
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
@@ -177,5 +177,5 @@ func (bb BlockBlobURL) PutBlobFromURL(ctx context.Context, h BlobHTTPHeaders, so
 		metadata, dstLeaseID, &h.ContentDisposition, cpk.EncryptionKey, cpk.EncryptionKeySha256,
 		cpk.EncryptionAlgorithm, cpk.EncryptionScope, tier, dstIfModifiedSince, dstIfUnmodifiedSince,
 		dstIfMatchETag, dstIfNoneMatchETag, nil, srcIfModifiedSince, srcIfUnmodifiedSince,
-		srcIfMatchETag, srcIfNoneMatchETag, nil, nil, srcContentMD5, blobTagsString, nil)
+		srcIfMatchETag, srcIfNoneMatchETag, nil, nil, srcContentMD5, blobTagsString, nil, sourceAuthorization.pointers())
 }

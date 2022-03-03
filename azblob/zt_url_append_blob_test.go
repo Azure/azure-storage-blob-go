@@ -126,7 +126,7 @@ func (s *aztestsSuite) TestAppendBlockFromURL(c *chk.C) {
 	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
-	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
@@ -198,7 +198,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
-	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, md5Value[:], ClientProvidedKeyOptions{})
+	appendFromURLResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, md5Value[:], ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendFromURLResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(appendFromURLResp.BlobAppendOffset(), chk.Equals, "0")
@@ -219,7 +219,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithMD5(c *chk.C) {
 
 	// Test append block from URL with bad MD5 value
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, badMD5, ClientProvidedKeyOptions{})
+	_, err = destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, badMD5, ClientProvidedKeyOptions{}, nil)
 	validateStorageError(c, err, ServiceCodeMd5Mismatch)
 }
 

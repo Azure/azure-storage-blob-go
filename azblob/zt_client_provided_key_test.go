@@ -43,10 +43,10 @@ func blockIDIntToBase64(blockID int) string {
 	return blockIDBinaryToBase64(binaryBlockID)
 }
 
-//func blockIDBase64ToInt(blockID string) int {
+// func blockIDBase64ToInt(blockID string) int {
 //	blockIDBase64ToBinary(blockID)
 //	return int(binary.LittleEndian.Uint32(blockIDBase64ToBinary(blockID)))
-//}
+// }
 
 func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 	bsu := getBSU()
@@ -174,7 +174,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 	blockID1, blockID2 := blockIDIntToBase64(0), blockIDIntToBase64(1)
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -183,7 +183,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 	c.Assert(stageResp1.IsServerEncrypted(), chk.Equals, "true")
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -255,7 +255,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 	blockID1, blockID2 := blockIDIntToBase64(0), blockIDIntToBase64(1)
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1)
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -264,7 +264,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 	c.Assert(stageResp1.IsServerEncrypted(), chk.Equals, "true")
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1)
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -453,7 +453,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
 
-	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK)
+	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
@@ -552,7 +552,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -601,7 +601,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), testCPK)
-	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.ETag(), chk.NotNil)
 	c.Assert(uploadResp.LastModified(), chk.NotNil)
@@ -617,7 +617,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, srcData)
 
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	validateStorageError(c, err, ServiceCodeMd5Mismatch)
 }
 

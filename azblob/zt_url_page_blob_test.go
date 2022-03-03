@@ -81,7 +81,7 @@ func (s *aztestsSuite) TestUploadPagesFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Upload page from URL.
-	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(pResp1.ETag(), chk.NotNil)
 	c.Assert(pResp1.LastModified(), chk.NotNil)
@@ -137,7 +137,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Upload page from URL with MD5.
-	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	pResp1, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(pResp1.ETag(), chk.NotNil)
 	c.Assert(pResp1.LastModified(), chk.NotNil)
@@ -157,7 +157,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5(c *chk.C) {
 
 	// Upload page from URL with bad MD5
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	validateStorageError(c, err, ServiceCodeMd5Mismatch)
 }
 
