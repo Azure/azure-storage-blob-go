@@ -21,7 +21,15 @@ type TokenCredential interface {
 	Credential
 	Token() string
 	SetToken(newToken string)
-	pointers() *string
+}
+
+func tokenCredentialPointers(credential TokenCredential) *string {
+	if credential == nil {
+		return nil
+	}
+
+	out := "Bearer " + credential.Token()
+	return &out
 }
 
 // NewTokenCredential creates a token credential for use with role-based access control (RBAC) access to Azure Storage
@@ -67,16 +75,6 @@ func (f *tokenCredentialWithRefresh) SetToken(token string) { f.token.SetToken(t
 // New satisfies pipeline.Factory's New method creating a pipeline policy object.
 func (f *tokenCredentialWithRefresh) New(next pipeline.Policy, po *pipeline.PolicyOptions) pipeline.Policy {
 	return f.token.New(next, po)
-}
-
-func (f *tokenCredentialWithRefresh) pointers() *string {
-	if f == nil {
-		return nil
-	}
-
-	out := "Bearer " + f.Token()
-
-	return &out
 }
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -145,14 +143,4 @@ func (f *tokenCredential) New(next pipeline.Policy, po *pipeline.PolicyOptions) 
 		request.Header[headerAuthorization] = []string{"Bearer " + f.Token()}
 		return next.Do(ctx, request)
 	})
-}
-
-func (f *tokenCredential) pointers() *string {
-	if f == nil {
-		return nil
-	}
-
-	out := "Bearer " + f.Token()
-
-	return &out
 }
