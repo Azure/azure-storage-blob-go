@@ -7148,7 +7148,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
+	rfc3339Format = "2006-01-02T15:04:05Z"
 )
 
 // used to convert times from UTC to GMT before sending across the wire
