@@ -257,7 +257,7 @@ func (s *aztestsSuite) TestUndelete(c *chk.C) {
 	c.Assert(blobProp.StatusCode(), chk.Equals, 200)
 }
 
-func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
+/*func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
 	defer deleteContainer(c, containerURL)
 
@@ -297,7 +297,7 @@ func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobResp3.Segment.BlobItems, chk.HasLen, 1)
 	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
-}
+}*/
 
 func (s *aztestsSuite) TestPermanentDeleteAccountSAS(c *chk.C) {
 	accountName, accountKey := accountInfo()
