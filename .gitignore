@@ -292,3 +292,5 @@ __pycache__/
 
 vendor/
 *.env
+
+*.bin

@@ -256,7 +256,7 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 						tryCancel() // If we're returning an error, cancel this current/last per-retry timeout context
 					} else {
 						// We wrap the last per-try context in a body and overwrite the Response's Body field with our wrapper.
-						// So, when the user closes the Body, the our per-try context gets closed too.
+						// So, when the user closes the Body, then our per-try context gets closed too.
 						// Another option, is that the Last Policy do this wrapping for a per-retry context (not for the user's context)
 						if response == nil || response.Response() == nil {
 							// We do panic in the case response or response.Response() is nil,
@@ -265,7 +265,12 @@ func NewRetryPolicyFactory(o RetryOptions) pipeline.Factory {
 							// as in this case, current per-try has nothing to do in future.
 							return nil, errors.New("invalid state, response should not be nil when the operation is executed successfully")
 						}
-						response.Response().Body = &contextCancelReadCloser{cf: tryCancel, body: response.Response().Body}
+						if response.Response().Body == http.NoBody {
+							// If the response is empty the caller isn't obligated to call close
+							tryCancel();
+						} else {
+							response.Response().Body = &contextCancelReadCloser{cf: tryCancel, body: response.Response().Body}
+						}
 					}
 					break // Don't retry
 				}

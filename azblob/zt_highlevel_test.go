@@ -25,7 +25,7 @@ func performUploadStreamToBlockBlobTest(c *chk.C, blobSize, bufferSize, maxBuffe
 	// Set up test container
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Set up test blob
 	blobURL, _ := getBlockBlobURL(c, containerURL)
@@ -101,7 +101,7 @@ func performUploadAndDownloadFileTest(c *chk.C, fileSize, blockSize, parallelism
 	// Set up test container
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Set up test blob
 	blockBlobURL, _ := getBlockBlobURL(c, containerURL)
@@ -226,7 +226,7 @@ func performUploadAndDownloadBufferTest(c *chk.C, blobSize, blockSize, paralleli
 	// Set up test container
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Set up test blob
 	blockBlobURL, _ := getBlockBlobURL(c, containerURL)
