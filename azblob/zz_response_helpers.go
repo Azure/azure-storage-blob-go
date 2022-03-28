@@ -45,7 +45,7 @@ func (dr downloadResponse) NewHTTPHeaders() BlobHTTPHeaders {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// downloadResponse wraps AutoRest generated downloadResponse and helps to provide info for retry.
+// DownloadResponse wraps AutoRest generated downloadResponse and helps to provide info for retry.
 type DownloadResponse struct {
 	r       *downloadResponse
 	ctx     context.Context
@@ -196,7 +196,7 @@ func (r DownloadResponse) Date() time.Time {
 
 // ETag returns the value for header ETag.
 func (r DownloadResponse) ETag() ETag {
-	return r.r.ETag()
+	return ETag(r.r.ETag())
 }
 
 // IsServerEncrypted returns the value for header x-ms-server-encrypted.
@@ -238,3 +238,13 @@ func (r DownloadResponse) Version() string {
 func (r DownloadResponse) NewMetadata() Metadata {
 	return r.r.NewMetadata()
 }
+
+type ETag string
+
+const (
+	// ETagNone represents an empty entity tag.
+	ETagNone ETag = ""
+
+	// ETagAny matches any entity tag.
+	ETagAny ETag = "*"
+)

@@ -275,7 +275,7 @@ func (o *ListBlobsSegmentOptions) pointers() (prefix *string, include []ListBlob
 
 // BlobListingDetails indicates what additional information the service should return with each blob.
 type BlobListingDetails struct {
-	Copy, Metadata, Snapshots, UncommittedBlobs, Deleted, Tags, Versions, Permissions bool
+	Copy, Metadata, Snapshots, UncommittedBlobs, Deleted, Tags, Versions, Permissions, LegalHold, ImmutabilityPolicy, DeletedWithVersions bool
 }
 
 // string produces the Include query parameter's value.
@@ -287,6 +287,15 @@ func (d *BlobListingDetails) slice() []ListBlobsIncludeItemType {
 	}
 	if d.Deleted {
 		items = append(items, ListBlobsIncludeItemDeleted)
+	}
+	if d.DeletedWithVersions {
+		items = append(items, ListBlobsIncludeItemDeletedwithversions)
+	}
+	if d.ImmutabilityPolicy {
+		items = append(items, ListBlobsIncludeItemImmutabilitypolicy)
+	}
+	if d.LegalHold {
+		items = append(items, ListBlobsIncludeItemLegalhold)
 	}
 	if d.Metadata {
 		items = append(items, ListBlobsIncludeItemMetadata)

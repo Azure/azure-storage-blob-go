@@ -13,7 +13,7 @@ type ModifiedAccessConditions struct {
 }
 
 // pointers is for internal infrastructure. It returns the fields as pointers.
-func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *ETag, inme *ETag) {
+func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, ime *string, inme *string) {
 	if !ac.IfModifiedSince.IsZero() {
 		ims = &ac.IfModifiedSince
 	}
@@ -21,10 +21,10 @@ func (ac ModifiedAccessConditions) pointers() (ims *time.Time, ius *time.Time, i
 		ius = &ac.IfUnmodifiedSince
 	}
 	if ac.IfMatch != ETagNone {
-		ime = &ac.IfMatch
+		ime = (*string)(&ac.IfMatch)
 	}
 	if ac.IfNoneMatch != ETagNone {
-		inme = &ac.IfNoneMatch
+		inme = (*string)(&ac.IfNoneMatch)
 	}
 	return
 }

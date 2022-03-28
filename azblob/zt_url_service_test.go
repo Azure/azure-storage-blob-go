@@ -18,7 +18,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// Test on a container
 	cURL := sa.NewContainerURL(generateContainerName())
-	defer delContainer(c, cURL)
+	defer deleteContainer(c, cURL, false)
 	_, err = cURL.Create(ctx, Metadata{}, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	cAccInfo, err := cURL.GetAccountInfo(ctx)
@@ -27,7 +27,7 @@ func (s *aztestsSuite) TestGetAccountInfo(c *chk.C) {
 
 	// test on a block blob URL. They all call the same thing on the base URL, so only one test is needed for that.
 	bbURL := cURL.NewBlockBlobURL(generateBlobName())
-	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	_, err = bbURL.Upload(ctx, strings.NewReader("blah"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	bAccInfo, err := bbURL.GetAccountInfo(ctx)
 	c.Assert(err, chk.IsNil)
@@ -45,7 +45,7 @@ func (s *aztestsSuite) TestListContainers(c *chk.C) {
 	c.Assert(resp.ServiceEndpoint, chk.NotNil)
 
 	container, name := createNewContainer(c, sa)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	md := Metadata{
 		"foo": "foovalue",
@@ -82,7 +82,7 @@ func (s *aztestsSuite) TestListContainersPaged(c *chk.C) {
 
 	defer func() {
 		for i := range containers {
-			delContainer(c, containers[i])
+			deleteContainer(c, containers[i], false)
 		}
 	}()
 
@@ -103,9 +103,9 @@ func (s *aztestsSuite) TestListContainersPaged(c *chk.C) {
 func (s *aztestsSuite) TestAccountListContainersEmptyPrefix(c *chk.C) {
 	bsu := getBSU()
 	containerURL1, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL1)
+	defer deleteContainer(c, containerURL1, false)
 	containerURL2, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL2)
+	defer deleteContainer(c, containerURL2, false)
 
 	response, err := bsu.ListContainersSegment(ctx, Marker{}, ListContainersSegmentOptions{})
 
@@ -116,9 +116,9 @@ func (s *aztestsSuite) TestAccountListContainersEmptyPrefix(c *chk.C) {
 func (s *aztestsSuite) TestAccountListContainersIncludeTypeMetadata(c *chk.C) {
 	bsu := getBSU()
 	containerURLNoMetadata, nameNoMetadata := createNewContainerWithSuffix(c, bsu, "a")
-	defer deleteContainer(c, containerURLNoMetadata)
+	defer deleteContainer(c, containerURLNoMetadata, false)
 	containerURLMetadata, nameMetadata := createNewContainerWithSuffix(c, bsu, "b")
-	defer deleteContainer(c, containerURLMetadata)
+	defer deleteContainer(c, containerURLMetadata, false)
 
 	// Test on containers with and without metadata
 	_, err := containerURLMetadata.SetMetadata(ctx, basicMetadata, ContainerAccessConditions{})
@@ -138,7 +138,7 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsNegative(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	_, err := bsu.ListContainersSegment(ctx,
 		Marker{}, *(&ListContainersSegmentOptions{Prefix: containerPrefix, MaxResults: -2}))
 	c.Assert(err, chk.Not(chk.IsNil))
@@ -148,7 +148,7 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsZero(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
 
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Max Results = 0 means the value will be ignored, the header not set, and the server default used
 	resp, err := bsu.ListContainersSegment(ctx,
@@ -163,9 +163,9 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsExact(c *chk.C) {
 	// If this test fails, ensure there are no extra containers prefixed with go in the account. These may be left over if a test is interrupted.
 	bsu := getBSU()
 	containerURL1, containerName1 := createNewContainerWithSuffix(c, bsu, "a")
-	defer deleteContainer(c, containerURL1)
+	defer deleteContainer(c, containerURL1, false)
 	containerURL2, containerName2 := createNewContainerWithSuffix(c, bsu, "b")
-	defer deleteContainer(c, containerURL2)
+	defer deleteContainer(c, containerURL2, false)
 
 	response, err := bsu.ListContainersSegment(ctx,
 		Marker{}, *(&ListContainersSegmentOptions{Prefix: containerPrefix, MaxResults: 2}))
@@ -179,9 +179,9 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsExact(c *chk.C) {
 func (s *aztestsSuite) TestAccountListContainersMaxResultsInsufficient(c *chk.C) {
 	bsu := getBSU()
 	containerURL1, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL1)
+	defer deleteContainer(c, containerURL1, false)
 	containerURL2, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL2)
+	defer deleteContainer(c, containerURL2, false)
 
 	response, err := bsu.ListContainersSegment(ctx, Marker{},
 		*(&ListContainersSegmentOptions{Prefix: containerPrefix, MaxResults: 1}))
@@ -193,9 +193,9 @@ func (s *aztestsSuite) TestAccountListContainersMaxResultsInsufficient(c *chk.C)
 func (s *aztestsSuite) TestAccountListContainersMaxResultsSufficient(c *chk.C) {
 	bsu := getBSU()
 	containerURL1, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL1)
+	defer deleteContainer(c, containerURL1, false)
 	containerURL2, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL2)
+	defer deleteContainer(c, containerURL2, false)
 
 	response, err := bsu.ListContainersSegment(ctx, Marker{},
 		*(&ListContainersSegmentOptions{Prefix: containerPrefix, MaxResults: 3}))
@@ -224,7 +224,7 @@ func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL) {
 	r, _ := getRandomDataAndReader(testSize)
 	blobURL, _ := getBlockBlobURL(c, containerURL)
 
-	cResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	cResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp.StatusCode(), chk.Equals, 201)
 
@@ -233,7 +233,7 @@ func CreateBlobWithRetentionPolicy(c *chk.C) (BlockBlobURL, ContainerURL) {
 
 func (s *aztestsSuite) TestUndelete(c *chk.C) {
 	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Soft delete blob
 	_, err := blobURL.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{}) //soft delete
@@ -255,7 +255,7 @@ func (s *aztestsSuite) TestUndelete(c *chk.C) {
 
 func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 
 	// Create snapshot for second blob
 	snapResp, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
