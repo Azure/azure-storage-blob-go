@@ -118,6 +118,7 @@ func (p AccountSASPermissions) String() string {
 	}
 	if p.PermanentDelete {
 		buffer.WriteRune('y')
+	}
 	if p.Immutability {
 		buffer.WriteRune('i')
 	}
