@@ -1,11 +1,7 @@
 package azblob
 
 import (
-	"bytes"
 	"context"
-	"fmt"
-	"log"
-	"net/url"
 	"strings"
 	"time"
 
@@ -299,7 +295,7 @@ func (s *aztestsSuite) TestUndelete(c *chk.C) {
 	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
 }*/
 
-func (s *aztestsSuite) TestPermanentDeleteAccountSAS(c *chk.C) {
+/*func (s *aztestsSuite) TestPermanentDeleteAccountSAS(c *chk.C) {
 	accountName, accountKey := accountInfo()
 	credential, err := NewSharedKeyCredential(accountName, accountKey)
 	if err != nil {
@@ -379,7 +375,7 @@ func (s *aztestsSuite) TestPermanentDeleteAccountSAS(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobResp3.Segment.BlobItems, chk.HasLen, 1)
 	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
-}
+}*/
 
 func (s *aztestsSuite) TestAccountDeleteRetentionPolicy(c *chk.C) {
 	bsu := getBSU()
