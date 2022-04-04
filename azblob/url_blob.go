@@ -183,10 +183,10 @@ func (b BlobURL) Undelete(ctx context.Context) (*BlobUndeleteResponse, error) {
 // Note: VersionId is an optional parameter which is part of request URL query params.
 // It can be explicitly set by calling WithVersionID(versionID string) function and hence it not required to pass it here.
 // For detailed information about block blob level tiering see https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blob-storage-tiers.
-func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions) (*BlobSetTierResponse, error) {
+func (b BlobURL) SetTier(ctx context.Context, tier AccessTierType, lac LeaseAccessConditions, rehydratePriority RehydratePriorityType) (*BlobSetTierResponse, error) {
 	return b.blobClient.SetTier(ctx, tier, nil,
 		nil, // Blob versioning
-		nil, RehydratePriorityNone, nil, lac.pointers(),
+		nil, rehydratePriority, nil, lac.pointers(),
 		nil) // Blob ifTags
 }
 

@@ -1700,7 +1700,7 @@ func (s *aztestsSuite) TestBlobsUndelete(c *chk.C) {
 }
 
 func setAndCheckBlobTier(c *chk.C, containerURL ContainerURL, blobURL BlobURL, tier AccessTierType) {
-	_, err := blobURL.SetTier(ctx, tier, LeaseAccessConditions{})
+	_, err := blobURL.SetTier(ctx, tier, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -1762,7 +1762,7 @@ func (s *aztestsSuite) TestBlobTierInferred(c *chk.C) {
 	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTierInferred, chk.NotNil)
 	c.Assert(resp2.Segment.BlobItems[0].Properties.AccessTier, chk.Not(chk.Equals), "")
 
-	_, err = blobURL.SetTier(ctx, AccessTierP4, LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierP4, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -1784,9 +1784,9 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, AccessTierArchive, LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierArchive, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.SetTier(ctx, AccessTierCool, LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierCool, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, err := blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -1803,9 +1803,9 @@ func (s *aztestsSuite) TestBlobArchiveStatus(c *chk.C) {
 
 	blobURL, _ = createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, AccessTierArchive, LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierArchive, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
-	_, err = blobURL.SetTier(ctx, AccessTierHot, LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierHot, LeaseAccessConditions{}, RehydratePriorityNone)
 	c.Assert(err, chk.IsNil)
 
 	resp, err = blobURL.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -1827,7 +1827,7 @@ func (s *aztestsSuite) TestBlobTierInvalidValue(c *chk.C) {
 	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlob(c, containerURL)
 
-	_, err = blobURL.SetTier(ctx, AccessTierType("garbage"), LeaseAccessConditions{})
+	_, err = blobURL.SetTier(ctx, AccessTierType("garbage"), LeaseAccessConditions{}, RehydratePriorityNone)
 	validateStorageError(c, err, ServiceCodeInvalidHeaderValue)
 }
 
