@@ -1086,110 +1086,73 @@ func (client blobClient) getTagsResponder(resp pipeline.Response) (pipeline.Resp
 	return result, nil
 }
 
-// Funky quick query code
-// // Query the Query operation enables users to select/project on blob data by providing simple query expressions.
-// //
-// // snapshot is the snapshot parameter is an opaque DateTime value that, when present, specifies the blob snapshot to
-// // retrieve. For more information on working with blob snapshots, see <a
-// // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/creating-a-snapshot-of-a-blob">Creating
-// // a Snapshot of a Blob.</a> timeout is the timeout parameter is expressed in seconds. For more information, see <a
-// // href="https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/setting-timeouts-for-blob-service-operations">Setting
-// // Timeouts for Blob Service Operations.</a> leaseID is if specified, the operation only succeeds if the resource's
-// // lease is active and matches this ID. encryptionKey is optional. Specifies the encryption key to use to encrypt the
-// // data provided in the request. If not specified, encryption is performed with the root account encryption key.  For
-// // more information, see Encryption at Rest for Azure Storage Services. encryptionKeySha256 is the SHA-256 hash of the
-// // provided encryption key. Must be provided if the x-ms-encryption-key header is provided. encryptionAlgorithm is the
-// // algorithm used to produce the encryption key hash. Currently, the only accepted value is "AES256". Must be provided
-// // if the x-ms-encryption-key header is provided. ifModifiedSince is specify this header value to operate only on a
-// // blob if it has been modified since the specified date/time. ifUnmodifiedSince is specify this header value to
-// // operate only on a blob if it has not been modified since the specified date/time. ifMatch is specify an ETag value
-// // to operate only on blobs with a matching value. ifNoneMatch is specify an ETag value to operate only on blobs
-// // without a matching value. ifTags is specify a SQL where clause on blob tags to operate only on blobs with a matching
-// // value. requestID is provides a client-generated, opaque value with a 1 KB character limit that is recorded in the
-// // analytics logs when storage analytics logging is enabled.
-// func (client blobClient) Query(ctx context.Context, snapshot *string, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*QueryResponse, error) {
-// 	if err := validate([]validation{
-// 		{targetValue: timeout,
-// 			constraints: []constraint{{target: "timeout", name: null, rule: false,
-// 				chain: []constraint{{target: "timeout", name: inclusiveMinimum, rule: 0, chain: nil}}}}}}); err != nil {
-// 		return nil, err
-// 	}
-// 	req, err := client.queryPreparer(snapshot, timeout, leaseID, encryptionKey, encryptionKeySha256, encryptionAlgorithm, ifModifiedSince, ifUnmodifiedSince, ifMatch, ifNoneMatch, ifTags, requestID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	resp, err := client.Pipeline().Do(ctx, responderPolicyFactory{responder: client.queryResponder}, req)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return resp.(*QueryResponse), err
-// }
+// Query the Query operation enables users to select/project on blob data by providing simple query expressions.
 //
 // // queryPreparer prepares the Query request.
-// func (client blobClient) queryPreparer(snapshot *string, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
-// 	req, err := pipeline.NewRequest("POST", client.url, nil)
-// 	if err != nil {
-// 		return req, pipeline.NewError(err, "failed to create request")
-// 	}
-// 	params := req.URL.Query()
-// 	if snapshot != nil && len(*snapshot) > 0 {
-// 		params.Set("snapshot", *snapshot)
-// 	}
-// 	if timeout != nil {
-// 		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
-// 	}
-// 	params.Set("comp", "query")
-// 	req.URL.RawQuery = params.Encode()
-// 	if leaseID != nil {
-// 		req.Header.Set("x-ms-lease-id", *leaseID)
-// 	}
-// 	if encryptionKey != nil {
-// 		req.Header.Set("x-ms-encryption-key", *encryptionKey)
-// 	}
-// 	if encryptionKeySha256 != nil {
-// 		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
-// 	}
-// 	if encryptionAlgorithm != EncryptionAlgorithmNone {
-// 		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
-// 	}
-// 	if ifModifiedSince != nil {
-// 		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
-// 	}
-// 	if ifUnmodifiedSince != nil {
-// 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
-// 	}
-// 	if ifMatch != nil {
-// 		req.Header.Set("If-Match", string(*ifMatch))
-// 	}
-// 	if ifNoneMatch != nil {
-// 		req.Header.Set("If-None-Match", string(*ifNoneMatch))
-// 	}
-// 	if ifTags != nil {
-// 		req.Header.Set("x-ms-if-tags", *ifTags)
-// 	}
-// 	req.Header.Set("x-ms-version", ServiceVersion)
-// 	if requestID != nil {
-// 		req.Header.Set("x-ms-client-request-id", *requestID)
-// 	}
-// 	b, err := xml.Marshal(queryRequest)
-// 	if err != nil {
-// 		return req, pipeline.NewError(err, "failed to marshal request body")
-// 	}
-// 	req.Header.Set("Content-Type", "application/xml")
-// 	err = req.SetBody(bytes.NewReader(b))
-// 	if err != nil {
-// 		return req, pipeline.NewError(err, "failed to set request body")
-// 	}
-// 	return req, nil
+// func (client blobClient) queryPreparer(snapshot *string, timeout *int32, leaseID *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
+//	req, err := pipeline.NewRequest("POST", client.url, nil)
+//	if err != nil {
+//		return req, pipeline.NewError(err, "failed to create request")
+//	}
+//	params := req.URL.Query()
+//	if snapshot != nil && len(*snapshot) > 0 {
+//		params.Set("snapshot", *snapshot)
+//	}
+//	if timeout != nil {
+//		params.Set("timeout", strconv.FormatInt(int64(*timeout), 10))
+//	}
+//	params.Set("comp", "query")
+//	req.URL.RawQuery = params.Encode()
+//	if leaseID != nil {
+//		req.Header.Set("x-ms-lease-id", *leaseID)
+//	}
+//	if encryptionKey != nil {
+//		req.Header.Set("x-ms-encryption-key", *encryptionKey)
+//	}
+//	if encryptionKeySha256 != nil {
+//		req.Header.Set("x-ms-encryption-key-sha256", *encryptionKeySha256)
+//	}
+//	if encryptionAlgorithm != EncryptionAlgorithmNone {
+//		req.Header.Set("x-ms-encryption-algorithm", string(encryptionAlgorithm))
+//	}
+//	if ifModifiedSince != nil {
+//		req.Header.Set("If-Modified-Since", (*ifModifiedSince).In(gmt).Format(time.RFC1123))
+//	}
+//	if ifUnmodifiedSince != nil {
+//		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
+//	}
+//	if ifMatch != nil {
+//		req.Header.Set("If-Match", *ifMatch)
+//	}
+//	if ifNoneMatch != nil {
+//		req.Header.Set("If-None-Match", *ifNoneMatch)
+//	}
+//	if ifTags != nil {
+//		req.Header.Set("x-ms-if-tags", *ifTags)
+//	}
+//	req.Header.Set("x-ms-version", ServiceVersion)
+//	if requestID != nil {
+//		req.Header.Set("x-ms-client-request-id", *requestID)
+//	}
+//	b, err := xml.Marshal(queryRequest)
+//	if err != nil {
+//		return req, pipeline.NewError(err, "failed to marshal request body")
+//	}
+//	req.Header.Set("Content-Type", "application/xml")
+//	err = req.SetBody(bytes.NewReader(b))
+//	if err != nil {
+//		return req, pipeline.NewError(err, "failed to set request body")
+//	}
+//	return req, nil
 // }
 //
 // // queryResponder handles the response to the Query request.
 // func (client blobClient) queryResponder(resp pipeline.Response) (pipeline.Response, error) {
-// 	err := validateResponse(resp, http.StatusOK, http.StatusPartialContent)
-// 	if resp == nil {
-// 		return nil, err
-// 	}
-// 	return &QueryResponse{rawResponse: resp.Response()}, err
+//	err := validateResponse(resp, http.StatusOK, http.StatusPartialContent)
+//	if resp == nil {
+//		return nil, err
+//	}
+//	return &QueryResponse{rawResponse: resp.Response()}, err
 // }
 
 // ReleaseLease [Update] The Lease Blob operation establishes and manages a lock on a blob for write and delete

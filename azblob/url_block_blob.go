@@ -64,10 +64,11 @@ func (bb BlockBlobURL) GetAccountInfo(ctx context.Context) (*BlobGetAccountInfoR
 // This method panics if the stream is not at position 0.
 // Note that the http client closes the body stream after the request is sent to the service.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-blob.
-func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions) (*BlockBlobUploadResponse, error) {
+func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions, immutability ImmutabilityPolicyOptions) (*BlockBlobUploadResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	count, err := validateSeekableStreamAt0AndGetCount(body)
 	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
+	immutabilityExpiry, immutabilityMode, legalHold := immutability.pointers()
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +82,7 @@ func (bb BlockBlobURL) Upload(ctx context.Context, body io.ReadSeeker, h BlobHTT
 		nil,
 		blobTagsString, // Blob tags
 		// immutability policy
-		nil, BlobImmutabilityPolicyModeNone, nil,
+		immutabilityExpiry, immutabilityMode, legalHold,
 	)
 }
 
@@ -116,9 +117,10 @@ func (bb BlockBlobURL) StageBlockFromURL(ctx context.Context, base64BlockID stri
 // by uploading only those blocks that have changed, then committing the new and existing
 // blocks together. Any blocks not specified in the block list and permanently deleted.
 // For more information, see https://docs.microsoft.com/rest/api/storageservices/put-block-list.
-func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
+func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []string, h BlobHTTPHeaders, metadata Metadata, ac BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, cpk ClientProvidedKeyOptions, immutability ImmutabilityPolicyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	ifModifiedSince, ifUnmodifiedSince, ifMatchETag, ifNoneMatchETag := ac.ModifiedAccessConditions.pointers()
 	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
+	immutabilityExpiry, immutabilityMode, legalHold := immutability.pointers()
 	return bb.bbClient.CommitBlockList(ctx, BlockLookupList{Latest: base64BlockIDs}, nil,
 		&h.CacheControl, &h.ContentType, &h.ContentEncoding, &h.ContentLanguage, h.ContentMD5, nil, nil,
 		metadata, ac.LeaseAccessConditions.pointers(), &h.ContentDisposition,
@@ -130,7 +132,7 @@ func (bb BlockBlobURL) CommitBlockList(ctx context.Context, base64BlockIDs []str
 		nil,
 		blobTagsString, // Blob tags
 		// immutability policy
-		nil, BlobImmutabilityPolicyModeNone, nil,
+		immutabilityExpiry, immutabilityMode, legalHold,
 	)
 }
 
@@ -144,12 +146,12 @@ func (bb BlockBlobURL) GetBlockList(ctx context.Context, listType BlockListType,
 
 // CopyFromURL synchronously copies the data at the source URL to a block blob, with sizes up to 256 MB.
 // For more information, see https://docs.microsoft.com/en-us/rest/api/storageservices/copy-blob-from-url.
-func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap, sourceAuthorization TokenCredential) (*BlobCopyFromURLResponse, error) {
-
+func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata Metadata, srcac ModifiedAccessConditions, dstac BlobAccessConditions, srcContentMD5 []byte, tier AccessTierType, blobTagsMap BlobTagsMap, immutability ImmutabilityPolicyOptions, sourceAuthorization TokenCredential) (*BlobCopyFromURLResponse, error) {
 	srcIfModifiedSince, srcIfUnmodifiedSince, srcIfMatchETag, srcIfNoneMatchETag := srcac.pointers()
 	dstIfModifiedSince, dstIfUnmodifiedSince, dstIfMatchETag, dstIfNoneMatchETag := dstac.ModifiedAccessConditions.pointers()
 	dstLeaseID := dstac.LeaseAccessConditions.pointers()
 	blobTagsString := SerializeBlobTagsHeader(blobTagsMap)
+	immutabilityExpiry, immutabilityMode, legalHold := immutability.pointers()
 	return bb.blobClient.CopyFromURL(ctx, source.String(), nil, metadata, tier,
 		srcIfModifiedSince, srcIfUnmodifiedSince,
 		srcIfMatchETag, srcIfNoneMatchETag,
@@ -159,8 +161,7 @@ func (bb BlockBlobURL) CopyFromURL(ctx context.Context, source url.URL, metadata
 		dstLeaseID, nil, srcContentMD5,
 		blobTagsString, // Blob tags
 		// immutability policy
-		nil, BlobImmutabilityPolicyModeNone, nil, tokenCredentialPointers(sourceAuthorization),
-	)
+		immutabilityExpiry, immutabilityMode, legalHold, tokenCredentialPointers(sourceAuthorization))
 }
 
 // PutBlobFromURL synchronously creates a new Block Blob with data from the source URL up to a max length of 256MB.

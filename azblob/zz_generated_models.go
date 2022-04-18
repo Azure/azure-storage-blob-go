@@ -215,13 +215,13 @@ type BlobImmutabilityPolicyModeType string
 
 const (
 	// BlobImmutabilityPolicyModeLocked ...
-	BlobImmutabilityPolicyModeLocked BlobImmutabilityPolicyModeType = "Locked"
+	BlobImmutabilityPolicyModeLocked BlobImmutabilityPolicyModeType = "locked"
 	// BlobImmutabilityPolicyModeMutable ...
-	BlobImmutabilityPolicyModeMutable BlobImmutabilityPolicyModeType = "Mutable"
+	BlobImmutabilityPolicyModeMutable BlobImmutabilityPolicyModeType = "mutable"
 	// BlobImmutabilityPolicyModeNone represents an empty BlobImmutabilityPolicyModeType.
 	BlobImmutabilityPolicyModeNone BlobImmutabilityPolicyModeType = ""
 	// BlobImmutabilityPolicyModeUnlocked ...
-	BlobImmutabilityPolicyModeUnlocked BlobImmutabilityPolicyModeType = "Unlocked"
+	BlobImmutabilityPolicyModeUnlocked BlobImmutabilityPolicyModeType = "unlocked"
 )
 
 // PossibleBlobImmutabilityPolicyModeTypeValues returns an array of possible values for the BlobImmutabilityPolicyModeType const type.
@@ -441,11 +441,13 @@ const (
 	ListContainersIncludeMetadata ListContainersIncludeType = "metadata"
 	// ListContainersIncludeNone represents an empty ListContainersIncludeType.
 	ListContainersIncludeNone ListContainersIncludeType = ""
+	// ListContainersIncludeSystem ...
+	ListContainersIncludeSystem ListContainersIncludeType = "system"
 )
 
 // PossibleListContainersIncludeTypeValues returns an array of possible values for the ListContainersIncludeType const type.
 func PossibleListContainersIncludeTypeValues() []ListContainersIncludeType {
-	return []ListContainersIncludeType{ListContainersIncludeDeleted, ListContainersIncludeMetadata, ListContainersIncludeNone}
+	return []ListContainersIncludeType{ListContainersIncludeDeleted, ListContainersIncludeMetadata, ListContainersIncludeNone, ListContainersIncludeSystem}
 }
 
 // PremiumPageBlobAccessTierType enumerates the values for premium page blob access tier type.
@@ -5170,7 +5172,7 @@ func (dr downloadResponse) ImmutabilityPolicyExpiresOn() time.Time {
 
 // ImmutabilityPolicyMode returns the value for header x-ms-immutability-policy-mode.
 func (dr downloadResponse) ImmutabilityPolicyMode() string {
-	return dr.rawResponse.Header.Get("x-ms-immutability-policy-mode")
+	return string(dr.rawResponse.Header.Get("x-ms-immutability-policy-mode"))
 }
 
 // IsCurrentVersion returns the value for header x-ms-is-current-version.
@@ -6296,6 +6298,7 @@ type PageList struct {
 	rawResponse *http.Response
 	PageRange   []PageRange  `xml:"PageRange"`
 	ClearRange  []ClearRange `xml:"ClearRange"`
+	NextMarker  Marker       `xml:"NextMarker"`
 }
 
 // Response returns the raw HTTP response object.
@@ -7148,7 +7151,7 @@ func init() {
 }
 
 const (
-	rfc3339Format = "2006-01-02T15:04:05Z"
+	rfc3339Format = "2006-01-02T15:04:05.0000000Z07:00"
 )
 
 // used to convert times from UTC to GMT before sending across the wire
