@@ -7,20 +7,24 @@ import (
 	"strings"
 )
 
-func (s *aztestsSuite) TestBlockBlobS2SOAuth(c *chk.C) {
+func createS2SContainersWithCredential(c *chk.C, credential Credential) (source, dest ContainerURL) {
 	bsu := getBSU()
-	ocred, err := getOAuthCredential("", "")
-	c.Assert(err, chk.IsNil)
+	bsu.WithPipeline(NewPipeline(credential, PipelineOptions{}))
 
-	bsu = bsu.WithPipeline(NewPipeline(ocred, PipelineOptions{})) // get based on the OAuth token
+	source, dest = bsu.NewContainerURL(newUUID().String()), bsu.NewContainerURL(newUUID().String())
 
-	source := bsu.NewContainerURL(newUUID().String())
-	dest := bsu.NewContainerURL(newUUID().String())
-
-	_, err = source.Create(ctx, nil, PublicAccessNone)
+	_, err := source.Create(ctx, nil, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
 	_, err = dest.Create(ctx, nil, PublicAccessNone)
 	c.Assert(err, chk.IsNil)
+
+	return
+}
+
+func (s *aztestsSuite) TestBlockBlobS2SOAuth(c *chk.C) {
+	ocred, err := getOAuthCredential("", "")
+	c.Assert(err, chk.IsNil)
+	source, dest := createS2SContainersWithCredential(c, ocred)
 
 	sourceBlob := source.NewBlockBlobURL("SourceBlob")
 
@@ -34,19 +38,9 @@ func (s *aztestsSuite) TestBlockBlobS2SOAuth(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestBlockBlobS2SOAuthByBlock(c *chk.C) {
-	bsu := getBSU()
 	ocred, err := getOAuthCredential("", "")
 	c.Assert(err, chk.IsNil)
-
-	bsu = bsu.WithPipeline(NewPipeline(ocred, PipelineOptions{})) // get based on the OAuth token
-
-	source := bsu.NewContainerURL(newUUID().String())
-	dest := bsu.NewContainerURL(newUUID().String())
-
-	_, err = source.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
-	_, err = dest.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
+	source, dest := createS2SContainersWithCredential(c, ocred)
 
 	sourceBlob := source.NewBlockBlobURL("SourceBlob")
 
@@ -60,19 +54,9 @@ func (s *aztestsSuite) TestBlockBlobS2SOAuthByBlock(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestBlockBlobS2SOAuthCopyFromURL(c *chk.C) {
-	bsu := getBSU()
 	ocred, err := getOAuthCredential("", "")
 	c.Assert(err, chk.IsNil)
-
-	bsu = bsu.WithPipeline(NewPipeline(ocred, PipelineOptions{})) // get based on the OAuth token
-
-	source := bsu.NewContainerURL(newUUID().String())
-	dest := bsu.NewContainerURL(newUUID().String())
-
-	_, err = source.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
-	_, err = dest.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
+	source, dest := createS2SContainersWithCredential(c, ocred)
 
 	sourceBlob := source.NewBlockBlobURL("SourceBlob")
 
@@ -86,19 +70,9 @@ func (s *aztestsSuite) TestBlockBlobS2SOAuthCopyFromURL(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestPageBlobS2SOAuth(c *chk.C) {
-	bsu := getBSU()
 	ocred, err := getOAuthCredential("", "")
 	c.Assert(err, chk.IsNil)
-
-	bsu = bsu.WithPipeline(NewPipeline(ocred, PipelineOptions{})) // get based on the OAuth token
-
-	source := bsu.NewContainerURL(newUUID().String())
-	dest := bsu.NewContainerURL(newUUID().String())
-
-	_, err = source.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
-	_, err = dest.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
+	source, dest := createS2SContainersWithCredential(c, ocred)
 
 	sourceBlob := source.NewPageBlobURL("SourceBlob")
 
@@ -122,19 +96,9 @@ func (s *aztestsSuite) TestPageBlobS2SOAuth(c *chk.C) {
 }
 
 func (s *aztestsSuite) TestAppendBlobS2SOAuth(c *chk.C) {
-	bsu := getBSU()
 	ocred, err := getOAuthCredential("", "")
 	c.Assert(err, chk.IsNil)
-
-	bsu = bsu.WithPipeline(NewPipeline(ocred, PipelineOptions{})) // get based on the OAuth token
-
-	source := bsu.NewContainerURL(newUUID().String())
-	dest := bsu.NewContainerURL(newUUID().String())
-
-	_, err = source.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
-	_, err = dest.Create(ctx, nil, PublicAccessNone)
-	c.Assert(err, chk.IsNil)
+	source, dest := createS2SContainersWithCredential(c, ocred)
 
 	sourceBlob := source.NewAppendBlobURL("SourceBlob")
 
