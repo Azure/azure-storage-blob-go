@@ -16,6 +16,17 @@ import (
 	"unsafe"
 )
 
+// ETag is an entity tag.
+type ETag string
+
+const (
+	// ETagNone represents an empty entity tag.
+	ETagNone ETag = ""
+
+	// ETagAny matches any entity tag.
+	ETagAny ETag = "*"
+)
+
 // Metadata contains metadata key/value pairs.
 type Metadata map[string]string
 
@@ -2378,7 +2389,7 @@ type BlobPropertiesInternal struct {
 	XMLName      xml.Name   `xml:"Properties"`
 	CreationTime *time.Time `xml:"Creation-Time"`
 	LastModified time.Time  `xml:"Last-Modified"`
-	Etag         string     `xml:"Etag"`
+	Etag         ETag       `xml:"Etag"`
 	// ContentLength - Size in bytes
 	ContentLength      *int64  `xml:"Content-Length"`
 	ContentType        *string `xml:"Content-Type"`
@@ -4456,7 +4467,7 @@ type ContainerItem struct {
 // ContainerProperties - Properties of a container
 type ContainerProperties struct {
 	LastModified time.Time `xml:"Last-Modified"`
-	Etag         string    `xml:"Etag"`
+	Etag         ETag      `xml:"Etag"`
 	// LeaseStatus - Possible values include: 'LeaseStatusLocked', 'LeaseStatusUnlocked', 'LeaseStatusNone'
 	LeaseStatus LeaseStatusType `xml:"LeaseStatus"`
 	// LeaseState - Possible values include: 'LeaseStateAvailable', 'LeaseStateLeased', 'LeaseStateExpired', 'LeaseStateBreaking', 'LeaseStateBroken', 'LeaseStateNone'
@@ -4912,374 +4923,6 @@ type DelimitedTextConfiguration struct {
 	EscapeChar *string `xml:"EscapeChar"`
 	// HeadersPresent - Represents whether the data has headers.
 	HeadersPresent *bool `xml:"HasHeaders"`
-}
-
-// DirectoryCreateResponse ...
-type DirectoryCreateResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dcr DirectoryCreateResponse) Response() *http.Response {
-	return dcr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dcr DirectoryCreateResponse) StatusCode() int {
-	return dcr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dcr DirectoryCreateResponse) Status() string {
-	return dcr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dcr DirectoryCreateResponse) ClientRequestID() string {
-	return dcr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// ContentLength returns the value for header Content-Length.
-func (dcr DirectoryCreateResponse) ContentLength() int64 {
-	s := dcr.rawResponse.Header.Get("Content-Length")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		i = 0
-	}
-	return i
-}
-
-// Date returns the value for header Date.
-func (dcr DirectoryCreateResponse) Date() time.Time {
-	s := dcr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dcr DirectoryCreateResponse) ETag() ETag {
-	return ETag(dcr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dcr DirectoryCreateResponse) LastModified() time.Time {
-	s := dcr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dcr DirectoryCreateResponse) RequestID() string {
-	return dcr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dcr DirectoryCreateResponse) Version() string {
-	return dcr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectoryDeleteResponse ...
-type DirectoryDeleteResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (ddr DirectoryDeleteResponse) Response() *http.Response {
-	return ddr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (ddr DirectoryDeleteResponse) StatusCode() int {
-	return ddr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (ddr DirectoryDeleteResponse) Status() string {
-	return ddr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (ddr DirectoryDeleteResponse) ClientRequestID() string {
-	return ddr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (ddr DirectoryDeleteResponse) Date() time.Time {
-	s := ddr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// Marker returns the value for header x-ms-continuation.
-func (ddr DirectoryDeleteResponse) Marker() string {
-	return ddr.rawResponse.Header.Get("x-ms-continuation")
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (ddr DirectoryDeleteResponse) RequestID() string {
-	return ddr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (ddr DirectoryDeleteResponse) Version() string {
-	return ddr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectoryGetAccessControlResponse ...
-type DirectoryGetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dgacr DirectoryGetAccessControlResponse) Response() *http.Response {
-	return dgacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dgacr DirectoryGetAccessControlResponse) StatusCode() int {
-	return dgacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dgacr DirectoryGetAccessControlResponse) Status() string {
-	return dgacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dgacr DirectoryGetAccessControlResponse) ClientRequestID() string {
-	return dgacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (dgacr DirectoryGetAccessControlResponse) Date() time.Time {
-	s := dgacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dgacr DirectoryGetAccessControlResponse) ETag() ETag {
-	return ETag(dgacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dgacr DirectoryGetAccessControlResponse) LastModified() time.Time {
-	s := dgacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dgacr DirectoryGetAccessControlResponse) RequestID() string {
-	return dgacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dgacr DirectoryGetAccessControlResponse) Version() string {
-	return dgacr.rawResponse.Header.Get("x-ms-version")
-}
-
-// XMsACL returns the value for header x-ms-acl.
-func (dgacr DirectoryGetAccessControlResponse) XMsACL() string {
-	return dgacr.rawResponse.Header.Get("x-ms-acl")
-}
-
-// XMsGroup returns the value for header x-ms-group.
-func (dgacr DirectoryGetAccessControlResponse) XMsGroup() string {
-	return dgacr.rawResponse.Header.Get("x-ms-group")
-}
-
-// XMsOwner returns the value for header x-ms-owner.
-func (dgacr DirectoryGetAccessControlResponse) XMsOwner() string {
-	return dgacr.rawResponse.Header.Get("x-ms-owner")
-}
-
-// XMsPermissions returns the value for header x-ms-permissions.
-func (dgacr DirectoryGetAccessControlResponse) XMsPermissions() string {
-	return dgacr.rawResponse.Header.Get("x-ms-permissions")
-}
-
-// DirectoryRenameResponse ...
-type DirectoryRenameResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (drr DirectoryRenameResponse) Response() *http.Response {
-	return drr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (drr DirectoryRenameResponse) StatusCode() int {
-	return drr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (drr DirectoryRenameResponse) Status() string {
-	return drr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (drr DirectoryRenameResponse) ClientRequestID() string {
-	return drr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// ContentLength returns the value for header Content-Length.
-func (drr DirectoryRenameResponse) ContentLength() int64 {
-	s := drr.rawResponse.Header.Get("Content-Length")
-	if s == "" {
-		return -1
-	}
-	i, err := strconv.ParseInt(s, 10, 64)
-	if err != nil {
-		i = 0
-	}
-	return i
-}
-
-// Date returns the value for header Date.
-func (drr DirectoryRenameResponse) Date() time.Time {
-	s := drr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (drr DirectoryRenameResponse) ETag() ETag {
-	return ETag(drr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (drr DirectoryRenameResponse) LastModified() time.Time {
-	s := drr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// Marker returns the value for header x-ms-continuation.
-func (drr DirectoryRenameResponse) Marker() string {
-	return drr.rawResponse.Header.Get("x-ms-continuation")
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (drr DirectoryRenameResponse) RequestID() string {
-	return drr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (drr DirectoryRenameResponse) Version() string {
-	return drr.rawResponse.Header.Get("x-ms-version")
-}
-
-// DirectorySetAccessControlResponse ...
-type DirectorySetAccessControlResponse struct {
-	rawResponse *http.Response
-}
-
-// Response returns the raw HTTP response object.
-func (dsacr DirectorySetAccessControlResponse) Response() *http.Response {
-	return dsacr.rawResponse
-}
-
-// StatusCode returns the HTTP status code of the response, e.g. 200.
-func (dsacr DirectorySetAccessControlResponse) StatusCode() int {
-	return dsacr.rawResponse.StatusCode
-}
-
-// Status returns the HTTP status message of the response, e.g. "200 OK".
-func (dsacr DirectorySetAccessControlResponse) Status() string {
-	return dsacr.rawResponse.Status
-}
-
-// ClientRequestID returns the value for header x-ms-client-request-id.
-func (dsacr DirectorySetAccessControlResponse) ClientRequestID() string {
-	return dsacr.rawResponse.Header.Get("x-ms-client-request-id")
-}
-
-// Date returns the value for header Date.
-func (dsacr DirectorySetAccessControlResponse) Date() time.Time {
-	s := dsacr.rawResponse.Header.Get("Date")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// ETag returns the value for header ETag.
-func (dsacr DirectorySetAccessControlResponse) ETag() ETag {
-	return ETag(dsacr.rawResponse.Header.Get("ETag"))
-}
-
-// LastModified returns the value for header Last-Modified.
-func (dsacr DirectorySetAccessControlResponse) LastModified() time.Time {
-	s := dsacr.rawResponse.Header.Get("Last-Modified")
-	if s == "" {
-		return time.Time{}
-	}
-	t, err := time.Parse(time.RFC1123, s)
-	if err != nil {
-		t = time.Time{}
-	}
-	return t
-}
-
-// RequestID returns the value for header x-ms-request-id.
-func (dsacr DirectorySetAccessControlResponse) RequestID() string {
-	return dsacr.rawResponse.Header.Get("x-ms-request-id")
-}
-
-// Version returns the value for header x-ms-version.
-func (dsacr DirectorySetAccessControlResponse) Version() string {
-	return dsacr.rawResponse.Header.Get("x-ms-version")
 }
 
 // downloadResponse - Wraps the response from the blobClient.Download method.
@@ -6655,6 +6298,7 @@ type PageList struct {
 	rawResponse *http.Response
 	PageRange   []PageRange  `xml:"PageRange"`
 	ClearRange  []ClearRange `xml:"ClearRange"`
+	NextMarker  Marker       `xml:"NextMarker"`
 }
 
 // Response returns the raw HTTP response object.
@@ -7590,7 +7234,7 @@ type blobPropertiesInternal struct {
 	XMLName                     xml.Name                       `xml:"Properties"`
 	CreationTime                *timeRFC1123                   `xml:"Creation-Time"`
 	LastModified                timeRFC1123                    `xml:"Last-Modified"`
-	Etag                        string                         `xml:"Etag"`
+	Etag                        ETag                           `xml:"Etag"`
 	ContentLength               *int64                         `xml:"Content-Length"`
 	ContentType                 *string                        `xml:"Content-Type"`
 	ContentEncoding             *string                        `xml:"Content-Encoding"`
@@ -7637,7 +7281,7 @@ type blobPropertiesInternal struct {
 // internal type used for marshalling
 type containerProperties struct {
 	LastModified                            timeRFC1123       `xml:"Last-Modified"`
-	Etag                                    string            `xml:"Etag"`
+	Etag                                    ETag              `xml:"Etag"`
 	LeaseStatus                             LeaseStatusType   `xml:"LeaseStatus"`
 	LeaseState                              LeaseStateType    `xml:"LeaseState"`
 	LeaseDuration                           LeaseDurationType `xml:"LeaseDuration"`

@@ -258,7 +258,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -266,7 +266,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -283,7 +283,7 @@ func (s *aztestsSuite) TestStageBlockFromURLWithTags(c *chk.C) {
 	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, blobTagsMap, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
-	//versionId := listResp.VersionID()
+	// versionId := listResp.VersionID()
 
 	downloadResp, err := destBlob.BlobURL.Download(ctx, 0, CountToEnd, BlobAccessConditions{}, false, ClientProvidedKeyOptions{})
 	c.Assert(err, chk.IsNil)
@@ -340,7 +340,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier, nil, ImmutabilityPolicyOptions{})
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier, nil, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -360,10 +360,10 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURLWithTags(c *chk.C) {
 	c.Assert(len(downloadResp.NewMetadata()), chk.Equals, 1)
 
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, blobTagsMap, ImmutabilityPolicyOptions{})
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, blobTagsMap, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.NotNil)
 
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, blobTagsMap, ImmutabilityPolicyOptions{})
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, blobTagsMap, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
@@ -575,8 +575,8 @@ func (s *aztestsSuite) TestFindBlobsByTags(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(lResp.Blobs, chk.HasLen, 0)
 
-	//where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND\"@container\"='"+ containerName1 + "'"
-	//TODO: Figure out how to do a composite query based on container.
+	// where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'AND\"@container\"='"+ containerName1 + "'"
+	// TODO: Figure out how to do a composite query based on container.
 	where = "\"tag1\"='firsttag'AND\"tag2\"='secondtag'"
 
 	lResp, err = bsu.FindBlobsByTags(ctx, nil, nil, &where, Marker{}, nil)

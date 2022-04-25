@@ -23,6 +23,15 @@ type TokenCredential interface {
 	SetToken(newToken string)
 }
 
+func tokenCredentialPointers(credential TokenCredential) *string {
+	if credential == nil {
+		return nil
+	}
+
+	out := "Bearer " + credential.Token()
+	return &out
+}
+
 // NewTokenCredential creates a token credential for use with role-based access control (RBAC) access to Azure Storage
 // resources. You initialize the TokenCredential with an initial token value. If you pass a non-nil value for
 // tokenRefresher, then the function you pass will be called immediately so it can refresh and change the
@@ -68,7 +77,7 @@ func (f *tokenCredentialWithRefresh) New(next pipeline.Policy, po *pipeline.Poli
 	return f.token.New(next, po)
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 // tokenCredential is a pipeline.Factory is the credential's policy factory.
 type tokenCredential struct {

@@ -29,7 +29,7 @@ func (bgpr BlobGetPropertiesResponse) NewHTTPHeaders() BlobHTTPHeaders {
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 // NewHTTPHeaders returns the user-modifiable properties for this blob.
 func (dr downloadResponse) NewHTTPHeaders() BlobHTTPHeaders {
@@ -43,7 +43,7 @@ func (dr downloadResponse) NewHTTPHeaders() BlobHTTPHeaders {
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////////////////
 
 // DownloadResponse wraps AutoRest generated downloadResponse and helps to provide info for retry.
 type DownloadResponse struct {
@@ -238,13 +238,3 @@ func (r DownloadResponse) Version() string {
 func (r DownloadResponse) NewMetadata() Metadata {
 	return r.r.NewMetadata()
 }
-
-type ETag string
-
-const (
-	// ETagNone represents an empty entity tag.
-	ETagNone ETag = ""
-
-	// ETagAny matches any entity tag.
-	ETagAny ETag = "*"
-)

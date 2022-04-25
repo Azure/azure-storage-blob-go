@@ -131,5 +131,94 @@ directive:
       };
 ```
 
+### ETags
+
+#### Headers
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"].*.*.responses.*.headers["ETag"]
+    transform: >
+      $.format = "etag"
+```
+
+#### Properties
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.BlobPropertiesInternal.properties.Etag
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.definitions.ContainerProperties.properties.Etag
+    transform: >
+      $.format = "etag"
+```
+
+#### \[Source\]If*Match
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.IfMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.IfNoneMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.SourceIfMatch
+    transform: >
+      $.format = "etag"
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $.parameters.SourceIfNoneMatch
+    transform: >
+      $.format = "etag"
+```
+
+### Remove BlobName & ContainerName parameters
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"].*
+    transform: >
+      $.parameters = $.parameters.filter(x => x["$ref"] == undefined || !(x["$ref"] == "#/parameters/ContainerName" || x["$ref"] == "#/parameters/Blob"))
+```
+
+### Remove Marker & MaxResults from GetPageRange & GetPageRangeDiff
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=pagelist"]["get"]
+    transform: >
+      $.parameters = $.parameters.filter(x => x["$ref"] == undefined || !(x["$ref"] == "#/parameters/Marker" || x["$ref"] == "#/parameters/MaxResults"))
+```
+
+```yaml
+directive:
+  - from: swagger-document
+    where: $["x-ms-paths"]["/{containerName}/{blob}?comp=pagelist&diff"]["get"]
+    transform: >
+      $.parameters = $.parameters.filter(x => x["$ref"] == undefined || !(x["$ref"] == "#/parameters/Marker" || x["$ref"] == "#/parameters/MaxResults"))
+```
+
 ### TODO: Get rid of StorageError since we define it
 ### TODO: rfc3339Format = "2006-01-02T15:04:05Z" //This was wrong in the generated code

@@ -108,7 +108,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 
 	// Stage blocks from URL.
 	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -116,7 +116,7 @@ func (s *aztestsSuite) TestStageBlockFromURL(c *chk.C) {
 	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -182,7 +182,7 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
 	// Invoke copy blob from URL.
-	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier, nil, ImmutabilityPolicyOptions{})
+	resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], DefaultAccessTier, nil, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.ETag(), chk.Not(chk.Equals), "")
@@ -205,11 +205,11 @@ func (s *aztestsSuite) TestCopyBlockBlobFromURL(c *chk.C) {
 
 	// Edge case 1: Provide bad MD5 and make sure the copy fails
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, nil, ImmutabilityPolicyOptions{})
+	_, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, badMD5, DefaultAccessTier, nil, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.NotNil)
 
 	// Edge case 2: Not providing any source MD5 should see the CRC getting returned instead
-	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, nil, ImmutabilityPolicyOptions{})
+	resp, err = destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{}, ModifiedAccessConditions{}, BlobAccessConditions{}, nil, DefaultAccessTier, nil, ImmutabilityPolicyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 	c.Assert(resp.XMsContentCrc64(), chk.Not(chk.Equals), "")
@@ -955,7 +955,7 @@ func (s *aztestsSuite) TestSetTierOnCopyBlockBlobFromURL(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	for _, tier := range []AccessTierType{AccessTierArchive, AccessTierCool, AccessTierHot} {
 		destBlob := container.NewBlockBlobURL(generateBlobName())
-		resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], tier, nil, ImmutabilityPolicyOptions{})
+		resp, err := destBlob.CopyFromURL(ctx, srcBlobURLWithSAS, Metadata{"foo": "bar"}, ModifiedAccessConditions{}, BlobAccessConditions{}, sourceDataMD5Value[:], tier, nil, ImmutabilityPolicyOptions{}, nil)
 		c.Assert(err, chk.IsNil)
 		c.Assert(resp.Response().StatusCode, chk.Equals, 202)
 		c.Assert(string(resp.CopyStatus()), chk.DeepEquals, "success")
@@ -1006,7 +1006,7 @@ func (s *aztestsSuite) TestSetTierOnStageBlockFromURL(c *chk.C) {
 
 	// Stage blocks from URL.
 	blockID1, blockID2 := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 0))), base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%6d", 1)))
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 4*1024*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -1014,7 +1014,7 @@ func (s *aztestsSuite) TestSetTierOnStageBlockFromURL(c *chk.C) {
 	c.Assert(stageResp1.Version(), chk.Not(chk.Equals), "")
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 4*1024*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")

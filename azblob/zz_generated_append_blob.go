@@ -57,7 +57,7 @@ func newAppendBlobClient(url url.URL, p pipeline.Pipeline) appendBlobClient {
 // SQL where clause on blob tags to operate only on blobs with a matching value. requestID is provides a
 // client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled.
-func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, leaseID *string, maxSize *int64, appendPosition *int64, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (*AppendBlobAppendBlockResponse, error) {
+func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, leaseID *string, maxSize *int64, appendPosition *int64, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (*AppendBlobAppendBlockResponse, error) {
 	if err := validate([]validation{
 		{targetValue: body,
 			constraints: []constraint{{target: "body", name: null, rule: true, chain: nil}}},
@@ -78,7 +78,7 @@ func (client appendBlobClient) AppendBlock(ctx context.Context, body io.ReadSeek
 }
 
 // appendBlockPreparer prepares the AppendBlock request.
-func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, leaseID *string, maxSize *int64, appendPosition *int64, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string) (pipeline.Request, error) {
+func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLength int64, timeout *int32, transactionalContentMD5 []byte, transactionalContentCrc64 []byte, leaseID *string, maxSize *int64, appendPosition *int64, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, body)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -124,10 +124,10 @@ func (client appendBlobClient) appendBlockPreparer(body io.ReadSeeker, contentLe
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", *ifMatch)
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", *ifNoneMatch)
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -187,7 +187,7 @@ func (client appendBlobClient) appendBlockResponder(resp pipeline.Response) (pip
 // a client-generated, opaque value with a 1 KB character limit that is recorded in the analytics logs when storage
 // analytics logging is enabled. copySourceAuthorization is only Bearer type is supported. Credentials should be a
 // valid OAuth access token to copy source.
-func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string, copySourceAuthorization *string) (*AppendBlobAppendBlockFromURLResponse, error) {
+func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string, copySourceAuthorization *string) (*AppendBlobAppendBlockFromURLResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -206,7 +206,7 @@ func (client appendBlobClient) AppendBlockFromURL(ctx context.Context, sourceURL
 }
 
 // appendBlockFromURLPreparer prepares the AppendBlockFromURL request.
-func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *string, sourceIfNoneMatch *string, requestID *string, copySourceAuthorization *string) (pipeline.Request, error) {
+func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, contentLength int64, sourceRange *string, sourceContentMD5 []byte, sourceContentcrc64 []byte, timeout *int32, transactionalContentMD5 []byte, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, leaseID *string, maxSize *int64, appendPosition *int64, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, sourceIfModifiedSince *time.Time, sourceIfUnmodifiedSince *time.Time, sourceIfMatch *ETag, sourceIfNoneMatch *ETag, requestID *string, copySourceAuthorization *string) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -259,10 +259,10 @@ func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, cont
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", *ifMatch)
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", *ifNoneMatch)
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -274,10 +274,10 @@ func (client appendBlobClient) appendBlockFromURLPreparer(sourceURL string, cont
 		req.Header.Set("x-ms-source-if-unmodified-since", (*sourceIfUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if sourceIfMatch != nil {
-		req.Header.Set("x-ms-source-if-match", *sourceIfMatch)
+		req.Header.Set("x-ms-source-if-match", string(*sourceIfMatch))
 	}
 	if sourceIfNoneMatch != nil {
-		req.Header.Set("x-ms-source-if-none-match", *sourceIfNoneMatch)
+		req.Header.Set("x-ms-source-if-none-match", string(*sourceIfNoneMatch))
 	}
 	req.Header.Set("x-ms-version", ServiceVersion)
 	if requestID != nil {
@@ -336,7 +336,7 @@ func (client appendBlobClient) appendBlockFromURLResponder(resp pipeline.Respons
 // blobTagsString is optional.  Used to set blob tags in various blob operations. immutabilityPolicyExpiry is specifies
 // the date time when the blobs immutability policy is set to expire. immutabilityPolicyMode is specifies the
 // immutability policy mode to set on the blob. legalHold is specified if a legal hold should be set on the blob.
-func (client appendBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*AppendBlobCreateResponse, error) {
+func (client appendBlobClient) Create(ctx context.Context, contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (*AppendBlobCreateResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -355,7 +355,7 @@ func (client appendBlobClient) Create(ctx context.Context, contentLength int64, 
 }
 
 // createPreparer prepares the Create request.
-func (client appendBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
+func (client appendBlobClient) createPreparer(contentLength int64, timeout *int32, blobContentType *string, blobContentEncoding *string, blobContentLanguage *string, blobContentMD5 []byte, blobCacheControl *string, metadata map[string]string, leaseID *string, blobContentDisposition *string, encryptionKey *string, encryptionKeySha256 *string, encryptionAlgorithm EncryptionAlgorithmType, encryptionScope *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, ifTags *string, requestID *string, blobTagsString *string, immutabilityPolicyExpiry *time.Time, immutabilityPolicyMode BlobImmutabilityPolicyModeType, legalHold *bool) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -411,10 +411,10 @@ func (client appendBlobClient) createPreparer(contentLength int64, timeout *int3
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", *ifMatch)
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", *ifNoneMatch)
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
 	if ifTags != nil {
 		req.Header.Set("x-ms-if-tags", *ifTags)
@@ -465,7 +465,7 @@ func (client appendBlobClient) createResponder(resp pipeline.Response) (pipeline
 // header, used only for the Append Block operation. A number indicating the byte offset to compare. Append Block will
 // succeed only if the append position is equal to this number. If it is not, the request will fail with the
 // AppendPositionConditionNotMet error (HTTP status code 412 - Precondition Failed).
-func (client appendBlobClient) Seal(ctx context.Context, timeout *int32, requestID *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, appendPosition *int64) (*AppendBlobSealResponse, error) {
+func (client appendBlobClient) Seal(ctx context.Context, timeout *int32, requestID *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, appendPosition *int64) (*AppendBlobSealResponse, error) {
 	if err := validate([]validation{
 		{targetValue: timeout,
 			constraints: []constraint{{target: "timeout", name: null, rule: false,
@@ -484,7 +484,7 @@ func (client appendBlobClient) Seal(ctx context.Context, timeout *int32, request
 }
 
 // sealPreparer prepares the Seal request.
-func (client appendBlobClient) sealPreparer(timeout *int32, requestID *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *string, ifNoneMatch *string, appendPosition *int64) (pipeline.Request, error) {
+func (client appendBlobClient) sealPreparer(timeout *int32, requestID *string, leaseID *string, ifModifiedSince *time.Time, ifUnmodifiedSince *time.Time, ifMatch *ETag, ifNoneMatch *ETag, appendPosition *int64) (pipeline.Request, error) {
 	req, err := pipeline.NewRequest("PUT", client.url, nil)
 	if err != nil {
 		return req, pipeline.NewError(err, "failed to create request")
@@ -509,10 +509,10 @@ func (client appendBlobClient) sealPreparer(timeout *int32, requestID *string, l
 		req.Header.Set("If-Unmodified-Since", (*ifUnmodifiedSince).In(gmt).Format(time.RFC1123))
 	}
 	if ifMatch != nil {
-		req.Header.Set("If-Match", *ifMatch)
+		req.Header.Set("If-Match", string(*ifMatch))
 	}
 	if ifNoneMatch != nil {
-		req.Header.Set("If-None-Match", *ifNoneMatch)
+		req.Header.Set("If-None-Match", string(*ifNoneMatch))
 	}
 	if appendPosition != nil {
 		req.Header.Set("x-ms-blob-condition-appendpos", strconv.FormatInt(*appendPosition, 10))
