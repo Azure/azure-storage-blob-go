@@ -77,7 +77,7 @@ func (b BlobURL) ToPageBlobURL() PageBlobURL {
 }
 
 func SerializeBlobTagsHeader(blobTagsMap BlobTagsMap) *string {
-	if blobTagsMap == nil {
+	if len(blobTagsMap) == 0 {
 		return nil
 	}
 	tags := make([]string, 0)
@@ -90,7 +90,7 @@ func SerializeBlobTagsHeader(blobTagsMap BlobTagsMap) *string {
 }
 
 func SerializeBlobTags(blobTagsMap BlobTagsMap) BlobTags {
-	if blobTagsMap == nil {
+	if len(blobTagsMap) == 0 {
 		return BlobTags{}
 	}
 	blobTagSet := make([]BlobTag, 0, len(blobTagsMap))
