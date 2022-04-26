@@ -253,11 +253,11 @@ func (s *aztestsSuite) TestUndelete(c *chk.C) {
 	c.Assert(blobProp.StatusCode(), chk.Equals, 200)
 }
 
-func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
+/*func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	blobURL, containerURL := CreateBlobWithRetentionPolicy(c)
 	defer deleteContainer(c, containerURL, false)
 
-	// Create snapshot for second blob
+	// Create snapshot for blob
 	snapResp, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
 	c.Assert(snapResp, chk.NotNil)
 	c.Assert(err, chk.IsNil)
@@ -293,7 +293,89 @@ func (s *aztestsSuite) TestPermanentDelete(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(listBlobResp3.Segment.BlobItems, chk.HasLen, 1)
 	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
-}
+}*/
+
+/*func (s *aztestsSuite) TestPermanentDeleteAccountSAS(c *chk.C) {
+	accountName, accountKey := accountInfo()
+	credential, err := NewSharedKeyCredential(accountName, accountKey)
+	if err != nil {
+		c.Fail()
+	}
+
+	sasQueryParams, err := AccountSASSignatureValues{
+		Protocol:      SASProtocolHTTPS,
+		ExpiryTime:    time.Now().UTC().Add(48 * time.Hour),
+		Permissions:   AccountSASPermissions{Read: true, List: true, Write: true, Create: true, PermanentDelete: true, Delete: true}.String(),
+		Services:      AccountSASServices{Blob: true}.String(),
+		ResourceTypes: AccountSASResourceTypes{Service: true, Container: true, Object: true}.String(),
+	}.NewSASQueryParameters(credential)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	qp := sasQueryParams.Encode()
+	urlToSendToSomeone := fmt.Sprintf("https://%s.blob.core.windows.net?%s", accountName, qp)
+	u, _ := url.Parse(urlToSendToSomeone)
+	serviceURL := NewServiceURL(*u, NewPipeline(NewAnonymousCredential(), PipelineOptions{}))
+	days := int32(5)
+	allowDelete := true
+	_, err = serviceURL.SetProperties(ctx, StorageServiceProperties{DeleteRetentionPolicy: &RetentionPolicy{Enabled: true, Days: &days, AllowPermanentDelete: &allowDelete}})
+	c.Assert(err, chk.IsNil)
+
+	// From FE, 30 seconds is guaranteed to be enough.
+	time.Sleep(time.Second * 30)
+
+	containerName := generateContainerName()
+	containerURL := serviceURL.NewContainerURL(containerName)
+	_, err = containerURL.Create(ctx, Metadata{}, PublicAccessNone)
+	defer containerURL.Delete(ctx, ContainerAccessConditions{})
+	if err != nil {
+		c.Fatal(err)
+	}
+
+	blobURL := containerURL.NewBlockBlobURL("temp")
+	_, err = blobURL.Upload(ctx, bytes.NewReader([]byte("random data")), BlobHTTPHeaders{}, basicMetadata, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	if err != nil {
+		c.Fail()
+	}
+
+	// Create snapshot for blob
+	snapResp, err := blobURL.CreateSnapshot(ctx, Metadata{}, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(snapResp, chk.NotNil)
+	c.Assert(err, chk.IsNil)
+
+	// Check snapshot and blob exist
+	listBlobResp1, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Snapshots: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobResp1.Segment.BlobItems, chk.HasLen, 2)
+
+	// Soft delete snapshot
+	snapshotBlob := blobURL.WithSnapshot(snapResp.Snapshot())
+	_, err = snapshotBlob.Delete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+
+	// Check that both blobs and snapshot exist
+	listBlobResp2, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobResp2.Segment.BlobItems, chk.HasLen, 2)
+
+	// Permanent delete snapshot
+	delResp, err := snapshotBlob.PermanentDelete(ctx, DeleteSnapshotsOptionNone, BlobAccessConditions{})
+	c.Assert(err, chk.IsNil)
+	c.Assert(delResp, chk.NotNil)
+	c.Assert(delResp.StatusCode(), chk.Equals, 202)
+
+	// Check that snapshot has been deleted
+	spBlobResp, err := snapshotBlob.GetProperties(ctx, BlobAccessConditions{}, ClientProvidedKeyOptions{})
+	c.Assert(err, chk.NotNil)
+	c.Assert(spBlobResp, chk.IsNil)
+
+	// Check that only blob exists
+	listBlobResp3, err := containerURL.ListBlobsFlatSegment(ctx, Marker{}, ListBlobsSegmentOptions{Details: BlobListingDetails{Deleted: true, Snapshots: true}})
+	c.Assert(err, chk.IsNil)
+	c.Assert(listBlobResp3.Segment.BlobItems, chk.HasLen, 1)
+	c.Assert(listBlobResp3.Segment.BlobItems[0].Deleted, chk.Equals, false)
+}*/
 
 func (s *aztestsSuite) TestAccountDeleteRetentionPolicy(c *chk.C) {
 	bsu := getBSU()

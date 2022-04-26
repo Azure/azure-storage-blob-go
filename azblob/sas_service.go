@@ -278,7 +278,7 @@ func (p *ContainerSASPermissions) Parse(s string) error {
 // The BlobSASPermissions type simplifies creating the permissions string for an Azure Storage blob SAS.
 // Initialize an instance of this type and then call its String method to set BlobSASSignatureValues's Permissions field.
 type BlobSASPermissions struct {
-	Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List, Move, Execute, Ownership, Permissions, Immutability bool
+	Read, Add, Create, Write, Delete, DeletePreviousVersion, Tag, List, Move, Execute, Ownership, Permissions, PermanentDelete, Immutability bool
 }
 
 // String produces the SAS permissions string for an Azure Storage blob.
@@ -321,6 +321,9 @@ func (p BlobSASPermissions) String() string {
 	if p.Permissions {
 		b.WriteRune('p')
 	}
+	if p.PermanentDelete {
+		b.WriteRune('y')
+	}
 	if p.Immutability {
 		b.WriteRune('i')
 	}
@@ -356,6 +359,8 @@ func (p *BlobSASPermissions) Parse(s string) error {
 			p.Ownership = true
 		case 'p':
 			p.Permissions = true
+		case 'y':
+			p.PermanentDelete = true
 		case 'i':
 			p.Immutability = true
 		default:
