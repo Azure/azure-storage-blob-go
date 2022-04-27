@@ -40,6 +40,8 @@ func newFakeBlockWriter() *fakeBlockWriter {
 func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.ReadSeeker, cond LeaseAccessConditions, md5 []byte, cpk ClientProvidedKeyOptions) (*BlockBlobStageBlockResponse, error) {
 	n := atomic.AddInt32(&f.block, 1)
 	if n == f.errOnBlock {
+		// simulate activity
+		time.Sleep(100 * time.Millisecond)
 		return nil, io.ErrNoProgress
 	}
 
@@ -58,7 +60,7 @@ func (f *fakeBlockWriter) StageBlock(ctx context.Context, blockID string, r io.R
 	return &BlockBlobStageBlockResponse{}, nil
 }
 
-func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, options ClientProvidedKeyOptions) (*BlockBlobCommitBlockListResponse, error) {
+func (f *fakeBlockWriter) CommitBlockList(ctx context.Context, blockIDs []string, headers BlobHTTPHeaders, meta Metadata, access BlobAccessConditions, tier AccessTierType, blobTagsMap BlobTagsMap, options ClientProvidedKeyOptions, immutability ImmutabilityPolicyOptions) (*BlockBlobCommitBlockListResponse, error) {
 	dst, err := os.OpenFile(filepath.Join(f.path, finalFileName), os.O_CREATE+os.O_WRONLY, 0600)
 	if err != nil {
 		return nil, err
@@ -219,6 +221,13 @@ func TestCopyFromReader(t *testing.T) {
 			desc:     "Send file(1.5 MiB) with default UploadStreamToBlockBlobOptions",
 			ctx:      context.Background(),
 			fileSize: _1MiB + 500*1024,
+		},
+		{
+			desc:      "Send file(12 MiB) with default UploadStreamToBlockBlobOptions and a write error",
+			ctx:       context.Background(),
+			fileSize:  12 * _1MiB,
+			uploadErr: true,
+			err:       true,
 		},
 		{
 			desc:     "Send file(1.5 MiB) with 2 writers",
