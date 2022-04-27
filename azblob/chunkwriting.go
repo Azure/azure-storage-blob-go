@@ -99,6 +99,7 @@ type copier struct {
 type copierChunk struct {
 	buffer []byte
 	id     string
+	length int
 }
 
 // getErr returns an error by priority. First, if a function set an error, it returns that error. Next, if the Context has an error
@@ -125,37 +126,31 @@ func (c *copier) sendChunk() error {
 	}
 
 	n, err := io.ReadFull(c.reader, buffer)
-	switch {
-	case err == nil && n == 0:
-		return nil
-	case err == nil:
+	if n > 0 {
+		// Some data was read, schedule the write.
 		id := c.id.next()
 		c.wg.Add(1)
 		c.o.TransferManager.Run(
 			func() {
 				defer c.wg.Done()
-				c.write(copierChunk{buffer: buffer[0:n], id: id})
+				c.write(copierChunk{buffer: buffer, id: id, length: n})
 			},
 		)
+	} else {
+		// Return the unused buffer to the manager.
+		c.o.TransferManager.Put(buffer)
+	}
+
+	if err == nil {
 		return nil
-	case err != nil && (err == io.EOF || err == io.ErrUnexpectedEOF) && n == 0:
+	} else if err == io.EOF || err == io.ErrUnexpectedEOF {
 		return io.EOF
 	}
 
-	if err == io.EOF || err == io.ErrUnexpectedEOF {
-		id := c.id.next()
-		c.wg.Add(1)
-		c.o.TransferManager.Run(
-			func() {
-				defer c.wg.Done()
-				c.write(copierChunk{buffer: buffer[0:n], id: id})
-			},
-		)
-		return io.EOF
+	if cerr := c.getErr(); cerr != nil {
+		return cerr
 	}
-	if err := c.getErr(); err != nil {
-		return err
-	}
+
 	return err
 }
 
@@ -167,7 +162,7 @@ func (c *copier) write(chunk copierChunk) {
 		return
 	}
 
-	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer), c.o.AccessConditions.LeaseAccessConditions, nil, c.o.ClientProvidedKeyOptions)
+	_, err := c.to.StageBlock(c.ctx, chunk.id, bytes.NewReader(chunk.buffer[:chunk.length]), c.o.AccessConditions.LeaseAccessConditions, nil, c.o.ClientProvidedKeyOptions)
 	if err != nil {
 		c.errCh <- fmt.Errorf("write error: %w", err)
 		return
