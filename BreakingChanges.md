@@ -2,6 +2,9 @@
 
 > See the [Change Log](ChangeLog.md) for a summary of storage library changes.
 
+## Version 0.15.0:
+- Cleaned the function signatures for GetTags() and SetTags()
+
 ## Version 0.12.0:
 - Added [`ClientProvidedKeyOptions`](https://github.com/Azure/azure-storage-blob-go/blob/dev/azblob/request_common.go#L11) in function signatures. 
 
