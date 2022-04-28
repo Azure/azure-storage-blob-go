@@ -2,6 +2,19 @@
 
 > See [BreakingChanges](BreakingChanges.md) for a detailed list of API breaks.
 
+## Version 0.15.0:
+- Cleaned the function signatures for GetTags() and SetTags()
+- Added Support for PutBlobFromUrl
+- Added MSI login example
+- Offered knob to disable syslog
+- Fixed issue in copierChunk by returning the original buffer to the pool
+- Fixed issue where chunkwriter hangs on cancel
+- Added support for Permanent Delete to remove soft-deleted versions and snapshots
+- Added updates to support new user delegation SAS
+- Implemented version/object level WORM
+- Added rehydrate priority in SetTier
+- Implemented copy source authorization for service-to-service copies
+
 ## Version 0.14.0:
 - Updated [Get Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/get-blob-tags) and [Set Blob Tags](https://docs.microsoft.com/en-us/rest/api/storageservices/set-blob-tags) function signatures
 - Added [Put Blob From URL](https://docs.microsoft.com/en-us/rest/api/storageservices/put-blob-from-url)
