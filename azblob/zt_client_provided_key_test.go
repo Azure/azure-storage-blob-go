@@ -43,15 +43,15 @@ func blockIDIntToBase64(blockID int) string {
 	return blockIDBinaryToBase64(binaryBlockID)
 }
 
-//func blockIDBase64ToInt(blockID string) int {
+// func blockIDBase64ToInt(blockID string) int {
 //	blockIDBase64ToBinary(blockID)
 //	return int(binary.LittleEndian.Uint32(blockIDBase64ToBinary(blockID)))
-//}
+// }
 
 func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
@@ -63,7 +63,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 		c.Assert(err, chk.IsNil)
 	}
 
-	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK)
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 
 	c.Assert(resp.ETag(), chk.NotNil)
@@ -90,7 +90,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
@@ -102,7 +102,7 @@ func (s *aztestsSuite) TestPutBlockAndPutBlockListWithCPKByScope(c *chk.C) {
 		c.Assert(err, chk.IsNil)
 	}
 
-	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1)
+	resp, err := blobURL.CommitBlockList(ctx, base64BlockIDs, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -147,14 +147,14 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 2 * 1024 // 2KB
 	r, srcData := getRandomDataAndReader(testSize)
 	ctx := context.Background()
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -174,7 +174,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 	blockID1, blockID2 := blockIDIntToBase64(0), blockIDIntToBase64(1)
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -183,7 +183,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 	c.Assert(stageResp1.IsServerEncrypted(), chk.Equals, "true")
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -198,7 +198,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPK(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.IsServerEncrypted(), chk.Equals, "true")
@@ -228,14 +228,14 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 2 * 1024 // 2KB
 	r, srcData := getRandomDataAndReader(testSize)
 	ctx := context.Background()
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{})
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -255,7 +255,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob := container.NewBlockBlobURL(generateBlobName())
 	blockID1, blockID2 := blockIDIntToBase64(0), blockIDIntToBase64(1)
-	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1)
+	stageResp1, err := destBlob.StageBlockFromURL(ctx, blockID1, srcBlobURLWithSAS, 0, 1*1024, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp1.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp1.ContentMD5(), chk.Not(chk.Equals), "")
@@ -264,7 +264,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	c.Assert(stageResp1.Date().IsZero(), chk.Equals, false)
 	c.Assert(stageResp1.IsServerEncrypted(), chk.Equals, "true")
 
-	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1)
+	stageResp2, err := destBlob.StageBlockFromURL(ctx, blockID2, srcBlobURLWithSAS, 1*1024, CountToEnd, LeaseAccessConditions{}, ModifiedAccessConditions{}, testCPK1, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(stageResp2.Response().StatusCode, chk.Equals, 201)
 	c.Assert(stageResp2.ContentMD5(), chk.Not(chk.Equals), "")
@@ -279,7 +279,7 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 	c.Assert(blockList.UncommittedBlocks, chk.HasLen, 2)
 	c.Assert(blockList.CommittedBlocks, chk.HasLen, 0)
 
-	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1)
+	listResp, err := destBlob.CommitBlockList(ctx, []string{blockID1, blockID2}, BlobHTTPHeaders{}, nil, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(listResp.Response().StatusCode, chk.Equals, 201)
 	c.Assert(listResp.IsServerEncrypted(), chk.Equals, "true")
@@ -303,14 +303,14 @@ func (s *aztestsSuite) TestPutBlockFromURLAndCommitWithCPKWithScope(c *chk.C) {
 func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
 	md5Val := md5.Sum(srcData)
 	blobURL := container.NewBlockBlobURL(generateBlobName())
 
-	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK)
+	uploadSrcResp, err := blobURL.Upload(ctx, r, BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadSrcResp.Response().StatusCode, chk.Equals, 201)
 
@@ -330,11 +330,11 @@ func (s *aztestsSuite) TestUploadBlobWithMD5WithCPK(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	appendBlobURL := container.NewAppendBlobURL(generateBlobName())
 
-	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK)
+	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
@@ -372,11 +372,11 @@ func (s *aztestsSuite) TestAppendBlockWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestAppendBlockWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	appendBlobURL := container.NewAppendBlobURL(generateBlobName())
 
-	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK1)
+	resp, err := appendBlobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK1, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.StatusCode(), chk.Equals, 201)
 
@@ -416,7 +416,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 2 * 1024 * 1024 // 2MB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -424,7 +424,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 	blobURL := container.NewAppendBlobURL(generateName("src"))
 	destBlob := container.NewAppendBlobURL(generateName("dest"))
 
-	cResp1, err := blobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{})
+	cResp1, err := blobURL.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, ClientProvidedKeyOptions{}, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp1.StatusCode(), chk.Equals, 201)
 
@@ -449,11 +449,11 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK)
+	cResp2, err := destBlob.Create(context.Background(), BlobHTTPHeaders{}, nil, BlobAccessConditions{}, nil, testCPK, ImmutabilityPolicyOptions{})
 	c.Assert(err, chk.IsNil)
 	c.Assert(cResp2.StatusCode(), chk.Equals, 201)
 
-	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK)
+	appendResp, err := destBlob.AppendBlockFromURL(ctx, srcBlobURLWithSAS, 0, int64(testSize), AppendBlobAccessConditions{}, ModifiedAccessConditions{}, nil, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(appendResp.ETag(), chk.Not(chk.Equals), ETagNone)
 	c.Assert(appendResp.LastModified().IsZero(), chk.Equals, false)
@@ -474,7 +474,7 @@ func (s *aztestsSuite) TestAppendBlockFromURLWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -499,7 +499,7 @@ func (s *aztestsSuite) TestPageBlockWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestPageBlockWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	container, _ := createNewContainer(c, bsu)
-	// defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -526,7 +526,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024 // 1MB
 	r, srcData := getRandomDataAndReader(testSize)
@@ -552,7 +552,7 @@ func (s *aztestsSuite) TestPageBlockFromURLWithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 
-	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	resp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), nil, PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(resp.ETag(), chk.NotNil)
 	c.Assert(resp.LastModified(), chk.NotNil)
@@ -575,7 +575,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 		c.Fatal("Invalid credential")
 	}
 	container, _ := createNewContainer(c, bsu)
-	defer delContainer(c, container)
+	defer deleteContainer(c, container, false)
 
 	testSize := 1 * 1024 * 1024
 	r, srcData := getRandomDataAndReader(testSize)
@@ -601,7 +601,7 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 
 	srcBlobURLWithSAS := srcBlobParts.URL()
 	destBlob, _ := createNewPageBlobWithCPK(c, container, int64(testSize), testCPK)
-	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK)
+	uploadResp, err := destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), md5Value[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, testCPK, nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(uploadResp.ETag(), chk.NotNil)
 	c.Assert(uploadResp.LastModified(), chk.NotNil)
@@ -617,14 +617,14 @@ func (s *aztestsSuite) TestUploadPagesFromURLWithMD5WithCPK(c *chk.C) {
 	c.Assert(destData, chk.DeepEquals, srcData)
 
 	_, badMD5 := getRandomDataAndReader(16)
-	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{})
+	_, err = destBlob.UploadPagesFromURL(ctx, srcBlobURLWithSAS, 0, 0, int64(testSize), badMD5[:], PageBlobAccessConditions{}, ModifiedAccessConditions{}, ClientProvidedKeyOptions{}, nil)
 	validateStorageError(c, err, ServiceCodeMd5Mismatch)
 }
 
 func (s *aztestsSuite) TestGetSetBlobMetadataWithCPK(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
 
 	metadata := Metadata{"key": "value", "another_key": "1234"}
@@ -657,7 +657,7 @@ func (s *aztestsSuite) TestGetSetBlobMetadataWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestGetSetBlobMetadataWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK1)
 
 	metadata := Metadata{"key": "value", "another_key": "1234"}
@@ -685,9 +685,9 @@ func (s *aztestsSuite) TestGetSetBlobMetadataWithCPKByScope(c *chk.C) {
 func (s *aztestsSuite) TestBlobSnapshotWithCPK(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
-	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK)
+	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK, ImmutabilityPolicyOptions{})
 
 	// Create Snapshot of an encrypted blob without encryption key should fail the request.
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
@@ -713,9 +713,9 @@ func (s *aztestsSuite) TestBlobSnapshotWithCPK(c *chk.C) {
 func (s *aztestsSuite) TestBlobSnapshotWithCPKByScope(c *chk.C) {
 	bsu := getBSU()
 	containerURL, _ := createNewContainer(c, bsu)
-	defer deleteContainer(c, containerURL)
+	defer deleteContainer(c, containerURL, false)
 	blobURL, _ := createNewBlockBlobWithCPK(c, containerURL, testCPK)
-	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1)
+	_, err := blobURL.Upload(ctx, strings.NewReader("113333555555"), BlobHTTPHeaders{}, Metadata{}, BlobAccessConditions{}, DefaultAccessTier, nil, testCPK1, ImmutabilityPolicyOptions{})
 
 	// Create Snapshot of an encrypted blob without encryption key should fail the request.
 	resp, err := blobURL.CreateSnapshot(ctx, nil, BlobAccessConditions{}, ClientProvidedKeyOptions{})
