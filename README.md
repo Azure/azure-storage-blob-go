@@ -1,9 +1,15 @@
-# Azure Storage Blob SDK for Go (PREVIEW)
+# Azure Storage Blob SDK for Go (PREVIEW) (Deprecated)
 [![GoDoc Widget]][GoDoc]
+
+This project will be in [Community Support](https://azure.github.io/azure-sdk/policies_support.html#package-lifecycle) until 13 September 2024. After this date the project and associated client libraries will be retired permanently. For more details on the retirement and alternatives to using this project, visit [Retirement notice: The legacy Azure Storage Go client libraries will be retired on 13 September 2024](https://azure.microsoft.com/updates/retirement-notice-the-legacy-azure-storage-go-client-libraries-will-be-retired-on-13-september-2024/).
+
+---
 
 ## If you would like to access our latest Go SDK, please refer to the new preview azblob package [here](https://github.com/Azure/azure-sdk-for-go/tree/main/sdk/storage/azblob#readme). If you would like more information on Azure's burgeoning effort to coordinate the development of the SDKs across services, of which this change is a part, please refer to [this article](https://azure.microsoft.com/en-us/blog/previewing-azure-sdks-following-new-azure-sdk-api-standards/).
 
 ## We will continue to respond to issues here, but prefer that you post them on the [new repo](https://github.com/Azure/azure-sdk-for-go). Thank you for your patience. We look forward to continuing to work together with you.
+
+---
 
 The Microsoft Azure Storage SDK for Go allows you to build applications that takes advantage of Azure's scalable cloud storage. 
 
